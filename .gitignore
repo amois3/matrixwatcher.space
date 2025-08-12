@@ -1,0 +1,96 @@
+# ── Python ───────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+venv/
+.venv/
+env/
+
+# ── Editors / IDEs ───────────────────────────────────────
+.idea/
+.vscode/
+.kiro/
+*.swp
+*.swo
+.DS_Store
+
+# ── Secrets & local config (NEVER COMMIT) ────────────────
+config.json
+config.local.json
+*.local.json
+
+# ── Runtime data & datasets (NEVER COMMIT) ───────────────
+logs/
+*.log
+*.jsonl
+web/events/*.jsonl
+patterns.json
+recent_conditions.json
+current.json
+base_rates.json
+calibration/
+*_backup*/
+
+# ── Backups & scratch files ──────────────────────────────
+*.bak
+*.bak-*
+*.orig
+*~
+
+# ── Tests & local helper scripts (kept out of the package) ─
+tests/
+test_*.py
+.pytest_cache/
+.hypothesis/
+setup_*.sh
+setup_*.py
+update_*.py
+upload_*.sh
+verify_*.py
+check_*.py
+rebuild_*.py
+analyze*.py
+start.py
+
+# ── Internal / working documents (not part of the project) ─
+# Only README.md, CONTRIBUTING.md and LICENSE are published.
+*.local.md
+notes/
+AUDIT_*.md
+*_AUDIT*.md
+*_REPORT*.md
+SYSTEM_AUDIT*.md
+MATRIX_WATCHER_*.md
+ROADMAP_*.md
+SEO_SETUP.md
+SUMMARY.md
+UPGRADE_INSTRUCTIONS.md
+PWA_*.md
+PATTERN_TRACKER*.md
+OG_IMAGE*.md
+CRYPTO_*.md
+llms-full.txt
+
+# ── Deployment / infra (environment-specific, local only) ─
+Procfile
+railway.json
+railway*.md
+RAILWAY_*.md
+CLOUDFLARE_*.md
+ORACLE_*.md
+ORACLE_*.txt
+cloudflared
+*.pkg
+*.tgz
+
+
+# ── Backup source trees ──────────────────────────────────
+src/stable_ver/
+logs_backup*/

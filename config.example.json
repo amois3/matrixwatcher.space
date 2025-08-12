@@ -1,0 +1,160 @@
+{
+  "sensors": {
+    "system": {
+      "enabled": false,
+      "interval_seconds": 1.0,
+      "priority": "high",
+      "custom_params": {}
+    },
+    "time_drift": {
+      "enabled": false,
+      "interval_seconds": 2.0,
+      "priority": "high",
+      "custom_params": {
+        "ntp_servers": [
+          "pool.ntp.org",
+          "time.google.com"
+        ],
+        "api_endpoint": "https://api.binance.com/api/v3/time"
+      }
+    },
+    "earthquake": {
+      "enabled": true,
+      "interval_seconds": 60.0,
+      "priority": "high",
+      "custom_params": {
+        "min_magnitude": 4.5
+      }
+    },
+    "space_weather": {
+      "enabled": true,
+      "interval_seconds": 300.0,
+      "priority": "high",
+      "custom_params": {}
+    },
+    "quantum_rng": {
+      "enabled": true,
+      "interval_seconds": 300.0,
+      "priority": "high",
+      "custom_params": {
+        "sample_size": 512
+      }
+    },
+    "network": {
+      "enabled": false,
+      "interval_seconds": 5.0,
+      "priority": "medium",
+      "custom_params": {
+        "targets": [
+          "google.com",
+          "binance.com",
+          "cloudflare.com",
+          "random.org"
+        ],
+        "timeout_seconds": 10
+      }
+    },
+    "random": {
+      "enabled": false,
+      "interval_seconds": 5.0,
+      "priority": "medium",
+      "custom_params": {
+        "batch_size": 1024,
+        "use_random_org": false
+      }
+    },
+    "crypto": {
+      "enabled": true,
+      "interval_seconds": 2.0,
+      "priority": "high",
+      "custom_params": {
+        "pairs": [
+          "BTCUSDT",
+          "ETHUSDT"
+        ],
+        "exchange": "binance",
+        "price_delta_threshold": 2.5
+      }
+    },
+    "blockchain": {
+      "enabled": true,
+      "interval_seconds": 10.0,
+      "priority": "low",
+      "custom_params": {
+        "networks": [
+          "ethereum",
+          "bitcoin"
+        ],
+        "expected_block_intervals": {
+          "ethereum": 12,
+          "bitcoin": 600
+        }
+      }
+    },
+    "weather": {
+      "enabled": true,
+      "interval_seconds": 300.0,
+      "priority": "low",
+      "custom_params": {
+        "location": "New York,US",
+        "units": "metric"
+      }
+    },
+    "news": {
+      "enabled": true,
+      "interval_seconds": 300.0,
+      "priority": "low",
+      "custom_params": {
+        "sources": [
+          "https://feeds.bbci.co.uk/news/rss.xml",
+          "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+          "https://www.theguardian.com/world/rss",
+          "https://feeds.skynews.com/feeds/rss/world.xml"
+        ],
+        "max_headlines": 10
+      }
+    },
+    "solar_activity": {
+      "enabled": true,
+      "interval_seconds": 600,
+      "priority": "medium",
+      "custom_params": {}
+    },
+    "volcanic_activity": {
+      "enabled": true,
+      "interval_seconds": 3600,
+      "priority": "medium",
+      "custom_params": {}
+    }
+  },
+  "storage": {
+    "base_path": "logs",
+    "compression": false,
+    "max_file_size_mb": 100,
+    "buffer_size": 1
+  },
+  "analysis": {
+    "window_size": 200,
+    "z_score_threshold": 3.0,
+    "lag_range_seconds": 60,
+    "cluster_window_seconds": 30.0,
+    "correlation_threshold": 0.7,
+    "precursor_threshold": 0.3,
+    "precursor_lookback_seconds": 60,
+    "enable_realtime_correlation": true,
+    "enable_precursor_detection": true,
+    "hourly_report": true
+  },
+  "alerting": {
+    "enabled": true,
+    "webhook_url": null,
+    "cooldown_seconds": 300,
+    "alert_on_clusters": true,
+    "alert_on_correlations": true,
+    "alert_on_sensor_failure": true,
+    "min_cluster_sensors": 2
+  },
+  "api_keys": {
+    "anu_qrng": ""
+  }
+}
