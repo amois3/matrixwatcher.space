@@ -209,11 +209,23 @@
             text-align: center;
             line-height: 1.4;
             cursor: pointer;
-            transition: color 0.2s;
+            transition: all 0.2s;
+            border-bottom: 1px dashed transparent;
+            padding-bottom: 2px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .tagline:hover {
             color: var(--neon-blue);
+            border-bottom-color: var(--neon-blue);
+        }
+
+        .tagline::after {
+            content: "ⓘ";
+            font-size: 14px;
+            opacity: 0.6;
         }
 
         @media (max-width: 768px) {
@@ -221,6 +233,12 @@
                 font-size: 11px;
                 max-width: 100%;
                 order: 3;
+                border-bottom-color: var(--border);
+            }
+            
+            .tagline::after {
+                opacity: 1;
+                color: var(--neon-blue);
             }
         }
 
