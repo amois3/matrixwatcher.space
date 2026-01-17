@@ -79,21 +79,28 @@ def get_active_predictions() -> list:
     predictions = []
     patterns = load_patterns()
     
-    crypto_events = {
+    # All public event categories (excluding "other")
+    public_events = {
+        # Crypto
         "btc_pump_1h", "btc_dump_1h", "btc_pump_4h", "btc_dump_4h",
         "btc_pump_24h", "btc_dump_24h", "eth_pump_1h", "eth_dump_1h",
         "eth_pump_4h", "eth_dump_4h", "eth_pump_24h", "eth_dump_24h",
-        "btc_volatility_high", "btc_volatility_medium", "blockchain_anomaly"
+        "btc_volatility_high", "btc_volatility_medium", "blockchain_anomaly",
+        # Earthquakes
+        "earthquake_moderate", "earthquake_strong", "earthquake_major",
+        # Space Weather
+        "solar_storm"
     }
     
     for condition_key, events in patterns.items():
         for event_type, pattern in events.items():
-            if event_type not in crypto_events:
+            if event_type not in public_events:
                 continue
             
             if pattern["condition_count"] >= 5 and pattern["actual_probability"] >= 0.4:
                 avg_hours = pattern["avg_time_to_event"] / 3600 if pattern["avg_time_to_event"] > 0 else 0
                 
+                # Icons and colors by event type
                 if "pump" in event_type:
                     icon = "📈"
                     color = "#00ff88"
@@ -103,8 +110,17 @@ def get_active_predictions() -> list:
                 elif "volatility" in event_type:
                     icon = "⚡"
                     color = "#ffaa00"
-                else:
+                elif "blockchain" in event_type:
                     icon = "⛓️"
+                    color = "#8888ff"
+                elif "earthquake" in event_type:
+                    icon = "🌍"
+                    color = "#ff9500"
+                elif "solar" in event_type:
+                    icon = "☀️"
+                    color = "#ffee00"
+                else:
+                    icon = "📊"
                     color = "#8888ff"
                 
                 desc = event_type.replace("_", " ").upper()

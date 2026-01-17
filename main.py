@@ -435,22 +435,19 @@ class MatrixWatcher:
         )
         self.pattern_tracker.record_condition(condition)
         
-        # Get probabilistic estimates for CRYPTO events only (for notifications)
-        # Other events are still tracked internally for statistics
-        probabilities = self.pattern_tracker.get_probabilities(condition, category_filter="crypto")
+        # Get probabilistic estimates for ALL public events
+        # (crypto, earthquake, space_weather, blockchain - "other" excluded)
+        probabilities = self.pattern_tracker.get_probabilities(condition, category_filter=None)
         
-        # Send prediction notification if we have meaningful crypto predictions
+        # Send prediction notification if we have meaningful predictions
         if probabilities:
             await self._send_prediction_notification(condition, probabilities)
-        
-        # Get ALL probabilities for logging (including non-crypto)
-        all_probabilities = self.pattern_tracker.get_probabilities(condition, category_filter=None)
         
         # Generate enhanced message with probabilities
         message = self.enhanced_message_gen.generate_with_index(
             cluster, 
             index_snapshot,
-            probabilities=all_probabilities
+            probabilities=probabilities
         )
         
         # Determine message key for cooldown

@@ -237,11 +237,39 @@ class HistoricalPatternTracker:
             "blockchain_anomaly": {
                 "check": lambda data: self._check_blockchain_anomaly(data),
                 "severity": "medium",
-                "description": "Аномалия блокчейна (время блока)",
-                "category": "crypto"
+                "description": "Blockchain anomaly (block time)",
+                "category": "blockchain"
             },
             
-            # ============ OTHER (for correlation, no notifications) ============
+            # ============ EARTHQUAKES ============
+            "earthquake_moderate": {
+                "check": lambda data: self._check_earthquake(data, min_magnitude=4.5),
+                "severity": "medium",
+                "description": "Earthquake M4.5+",
+                "category": "earthquake"
+            },
+            "earthquake_strong": {
+                "check": lambda data: self._check_earthquake(data, min_magnitude=5.5),
+                "severity": "high",
+                "description": "Earthquake M5.5+",
+                "category": "earthquake"
+            },
+            "earthquake_major": {
+                "check": lambda data: self._check_earthquake(data, min_magnitude=6.5),
+                "severity": "critical",
+                "description": "Earthquake M6.5+",
+                "category": "earthquake"
+            },
+            
+            # ============ SPACE WEATHER ============
+            "solar_storm": {
+                "check": lambda data: self._check_solar_storm(data),
+                "severity": "high",
+                "description": "Solar storm detected",
+                "category": "space_weather"
+            },
+            
+            # ============ OTHER (recorded, not displayed) ============
             "earthquake_significant": {
                 "check": lambda data: self._check_earthquake(data, min_magnitude=5.5),
                 "severity": "high",
@@ -375,13 +403,13 @@ class HistoricalPatternTracker:
                     )
     
     def get_probabilities(self, condition: Condition, min_observations: int = 5, 
-                           category_filter: str | None = "crypto") -> dict[str, dict]:
+                           category_filter: str | None = None) -> dict[str, dict]:
         """Get probabilistic estimates for a condition.
         
         Args:
             condition: The current condition
             min_observations: Minimum observations needed for reliable estimate
-            category_filter: Only return events of this category ("crypto", "other", or None for all)
+            category_filter: Filter by category ("crypto", "earthquake", "space_weather", "blockchain", or None for all except "other")
             
         Returns:
             Dictionary of event_type → probability info
@@ -394,10 +422,16 @@ class HistoricalPatternTracker:
         
         for event_type, pattern in self._patterns[condition_key].items():
             # Filter by category if specified
-            if category_filter:
-                event_def = self._event_definitions.get(event_type, {})
-                if event_def.get("category") != category_filter:
-                    continue
+            event_def = self._event_definitions.get(event_type, {})
+            event_category = event_def.get("category", "other")
+            
+            # Skip "other" category events (internal use only)
+            if event_category == "other":
+                continue
+            
+            # Apply category filter if specified
+            if category_filter and event_category != category_filter:
+                continue
             
             # Only return if we have enough observations
             if pattern.condition_count >= min_observations:
@@ -717,6 +751,28 @@ class HistoricalPatternTracker:
             return False
         except Exception as e:
             logger.debug(f"Error checking blockchain anomaly: {e}")
+            return False
+    
+    def _check_solar_storm(self, data: dict) -> bool:
+        """Check for solar storm activity."""
+        try:
+            source = data.get('source', '')
+            if source != 'space_weather':
+                return False
+            
+            # Check for high solar activity
+            kp_index = data.get('kp_index', 0)
+            solar_wind_speed = data.get('solar_wind_speed', 0)
+            
+            # Kp index > 5 = geomagnetic storm
+            # Solar wind > 600 km/s = high speed stream
+            if kp_index >= 5 or solar_wind_speed >= 600:
+                logger.info(f"☀️ Solar storm detected: Kp={kp_index}, wind={solar_wind_speed}km/s")
+                return True
+            
+            return False
+        except Exception as e:
+            logger.debug(f"Error checking solar storm: {e}")
             return False
     
     def save(self):
