@@ -11,15 +11,15 @@ from .weather_sensor import WeatherSensor
 from .news_sensor import NewsSensor
 
 __all__ = [
-    "BaseSensor",
-    "SyncSensor",
-    "SensorConfig",
-    "SystemSensor",
-    "TimeDriftSensor",
-    "NetworkSensor",
-    "RandomSensor",
-    "CryptoSensor",
-    "BlockchainSensor",
-    "WeatherSensor",
-    "NewsSensor",
+ "BaseSensor",
+ "SyncSensor",
+ "SensorConfig",
+ "SystemSensor",
+ "TimeDriftSensor",
+ "NetworkSensor",
+ "RandomSensor",
+ "CryptoSensor",
+ "BlockchainSensor",
+ "WeatherSensor",
+ "NewsSensor",
 ]
