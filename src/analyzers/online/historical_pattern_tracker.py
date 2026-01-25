@@ -352,7 +352,9 @@ class HistoricalPatternTracker:
             
             # Increment condition count
             self._patterns[condition_key][event_type].condition_count += 1
-        
+            # Recalculate probability (fixes drift bug when conditions happen without events)
+            self._patterns[condition_key][event_type].update_probability()
+
         logger.debug(f"Recorded condition: {condition_key}, total patterns: {len(self._patterns)}")
     
     def check_events(self, sensor_data: dict[str, Any]) -> list[Event]:
