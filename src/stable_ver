@@ -47,3 +47,33 @@ ROLLBACK:
   git checkout bd15bdd  # Previous version before this release
 
 ================================================================================
+
+--------------------------------------------------------------------------------
+VERSION: v1.0.1-opensource
+COMMIT:  0562d2f
+DATE:    2026-01-25
+BRANCH:  main
+AUTHOR:  Aleksejs Moisejevs (amois)
+--------------------------------------------------------------------------------
+
+DESCRIPTION:
+  Open source release preparation. Repository ready for public access.
+
+CHANGES:
+  - Removed config.json from git history (contained API keys)
+  - Added config.example.json with placeholder values
+  - Added MIT LICENSE (Copyright Aleksejs Moisejevs and contributors)
+  - Added CONTRIBUTING.md guidelines
+  - Updated README.md to English for international audience
+  - Updated .gitignore to exclude sensitive files
+
+SECURITY:
+  - Telegram bot token was in history - MUST BE REGENERATED!
+  - OpenWeatherMap API key was exposed - consider regenerating
+
+READY FOR:
+  - GitHub public repository
+  - Community contributions
+  - International users
+
+================================================================================
