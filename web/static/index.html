@@ -10,10 +10,26 @@
     <!-- SEO Meta Tags -->
     <title>Matrix Watcher - Real-time Anomaly Detection & Correlation Monitor</title>
     <meta name="description" content="Matrix Watcher observes correlations across crypto markets, quantum randomness, space weather, and seismic activity. Real-time anomaly detection dashboard. We watch, we don't explain.">
-    <meta name="keywords" content="anomaly detection, correlation monitor, crypto prediction, quantum randomness, space weather, real-time monitoring, pattern recognition">
+    <meta name="keywords" content="anomaly detection, correlation monitor, crypto prediction, quantum randomness, space weather, real-time monitoring, pattern recognition, earthquake prediction, market analysis, data correlation, pattern detection, real-time dashboard, crypto anomalies, quantum RNG, seismic activity monitor">
     <meta name="author" content="Matrix Watcher">
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://matrixwatcher.space/">
+    
+    <!-- Additional SEO -->
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="1 days">
+    <meta name="distribution" content="global">
+    <meta name="rating" content="general">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
+    <!-- Geo Tags -->
+    <meta name="geo.region" content="GLOBAL">
+    <meta name="geo.placename" content="Worldwide">
+    
+    <!-- Verification (add your codes when ready) -->
+    <!-- <meta name="google-site-verification" content="YOUR_CODE_HERE"> -->
+    <!-- <meta name="msvalidate.01" content="YOUR_CODE_HERE"> -->
+    <!-- <meta name="yandex-verification" content="YOUR_CODE_HERE"> -->
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
@@ -896,7 +912,13 @@
         }
     </style>
 </head>
-<body>
+<body style="background:#0d0d12;color:#fff;">
+    <noscript>
+        <div style="padding:20px;text-align:center;font-family:monospace;">
+            <h1>Matrix Watcher</h1>
+            <p>JavaScript is required to view this page.</p>
+        </div>
+    </noscript>
     <header class="header">
         <div class="logo">
             <div class="logo-icon">
@@ -917,7 +939,6 @@
                 </svg>
             </div>
             <span class="logo-text">MATRIX WATCHER</span>
-            <span class="coming-soon-badge">Coming Soon</span>
         </div>
         <div class="tagline" onclick="openAboutModal()">
             Observing correlations in chaos. We watch, we don't explain.
@@ -1044,6 +1065,13 @@
     </div>
 
     <script>
+        // Global error handler
+        window.onerror = function(msg, url, line, col, error) {
+            console.error('JS Error:', msg, 'at', line + ':' + col);
+            document.body.innerHTML += '<div style="position:fixed;bottom:10px;left:10px;background:red;color:white;padding:10px;font-size:12px;z-index:9999;">Error: ' + msg + '</div>';
+            return false;
+        };
+
         let isConnected = false;
         let currentHours = 72;
 

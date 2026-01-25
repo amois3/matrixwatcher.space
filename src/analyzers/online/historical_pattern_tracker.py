@@ -80,9 +80,17 @@ class Pattern:
     event_locations: list[tuple[float, float]] = field(default_factory=list)  # [(lat, lon), ...]
     
     def update_probability(self):
-        """Update actual probability based on observations."""
+        """Update actual probability based on observations.
+
+        HONEST CALCULATION:
+        probability = unique_conditions_where_event_occurred / total_conditions
+
+        Example: If 100 L3_crypto conditions occurred and 30 of them were
+        followed by btc_pump_1h, probability = 30/100 = 30%
+
+        Capped at 1.0 for backwards compatibility with old data.
+        """
         if self.condition_count > 0:
-            # Cap at 1.0 (100%) since one event can match multiple conditions
             self.actual_probability = min(1.0, self.event_after_count / self.condition_count)
         else:
             self.actual_probability = 0.0
@@ -383,22 +391,33 @@ class HistoricalPatternTracker:
         return events
     
     def _match_event_with_conditions(self, event: Event):
-        """Match an event with recent conditions."""
+        """Match an event with recent conditions.
+
+        HONEST MATCHING RULES:
+        - Each condition can only be matched ONCE per event type
+        - This prevents inflated probabilities (e.g., 10000 matches for 1 event)
+        - probability = unique_conditions_with_event / total_conditions
+        """
         current_time = event.timestamp
         lookback_window = self.LOOKBACK_WINDOW_HOURS * 3600  # 72 hours in seconds
-        
+
         for item in self._recent_conditions:
             condition = item["condition"]
             time_diff = current_time - condition.timestamp
-            
+
             # Only match if event happened after condition (within window)
             if 0 < time_diff < lookback_window:
                 condition_key = condition.to_key()
-                
+
+                # HONEST: Skip if this condition was already matched with this event type
+                # Each condition counts only ONCE per event type
+                if event.event_type in item.get("matched_events", []):
+                    continue
+
                 if event.event_type in self._patterns[condition_key]:
                     pattern = self._patterns[condition_key][event.event_type]
-                    
-                    # Update statistics
+
+                    # Update statistics (only counts unique condition matches)
                     pattern.event_after_count += 1
                     
                     # Save location for geographic events (limit to 1000 most recent)

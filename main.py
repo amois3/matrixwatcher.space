@@ -612,10 +612,12 @@ class MatrixWatcher:
         index_snapshot = self.anomaly_index.calculate(cluster.anomalies)
         
         # Record condition for pattern tracking
+        # IMPORTANT: Use unique sources only (not duplicates from same sensor)
+        unique_sources = sorted(set(a.sensor_source for a in cluster.anomalies))
         condition = Condition(
             timestamp=cluster.timestamp,
             level=cluster.level,
-            sources=[a.sensor_source for a in cluster.anomalies],
+            sources=unique_sources,
             anomaly_index=index_snapshot.index,
             baseline_ratio=index_snapshot.baseline_ratio
         )

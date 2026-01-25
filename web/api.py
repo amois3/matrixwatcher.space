@@ -18,6 +18,13 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Matrix Watcher API", version="1.0.0")
 
+# Simple cache to avoid reading files on every request
+_cache = {
+    "predictions": {"data": [], "timestamp": 0},
+    "levels": {"data": [], "timestamp": 0},
+}
+CACHE_TTL = 5  # seconds
+
 # CORS for local dev
 app.add_middleware(
     CORSMiddleware,
@@ -127,12 +134,18 @@ def load_patterns() -> dict:
         return {}
 
 
-def get_active_predictions() -> list[dict]:
+def get_active_predictions(use_cache: bool = True) -> list[dict]:
     """Get active predictions from file (real-time sync with main.py).
-    
-    This ensures PWA shows EXACTLY the same data as Telegram.
-    File is updated by main.py whenever new predictions are generated.
+
+    ЧЕСТНАЯ СИСТЕМА: Показываем только ЛУЧШИЙ prediction для каждого события.
+    - Группируем по event type
+    - Выбираем самый свежий и специфичный
+    - Показываем ЕГО данные без обмана
     """
+    # Check cache first
+    if use_cache and time.time() - _cache["predictions"]["timestamp"] < CACHE_TTL:
+        return _cache["predictions"]["data"]
+
     predictions_file = Path("logs/predictions/current.json")
     
     if not predictions_file.exists():
@@ -152,12 +165,50 @@ def get_active_predictions() -> list[dict]:
             if p.get("timestamp", 0) > cutoff
         ]
         
-        logger.debug(f"Loaded {len(active_predictions)} active predictions from file (last update: {last_update})")
-        return active_predictions
+        # ДЕДУПЛИКАЦИЯ: Один prediction на событие
+        # Группируем по event type
+        by_event = {}
+        for p in active_predictions:
+            event = p.get("event", "unknown")
+            if event not in by_event:
+                by_event[event] = []
+            by_event[event].append(p)
         
+        # Выбираем ЛУЧШИЙ для каждого события
+        best_predictions = []
+        for event, preds in by_event.items():
+            # Сортируем по приоритету:
+            # 1. Больше источников в condition (более специфичный паттерн)
+            # 2. Свежее (недавно созданный)
+            # 3. Больше observations (надёжнее)
+            def score_prediction(p):
+                condition = p.get("condition", "")
+                source_count = condition.count("_") + 1  # L2_crypto_quantum = 2 источника
+                timestamp = p.get("timestamp", 0)
+                observations = p.get("observations", 0)
+                
+                # Приоритет: специфичность > свежесть > надёжность
+                return (
+                    source_count,  # Больше источников = интереснее
+                    timestamp,     # Свежее = актуальнее
+                    min(observations, 1000)  # Надёжнее, но не даём огромным числам доминировать
+                )
+            
+            best = max(preds, key=score_prediction)
+            best_predictions.append(best)
+        
+        # Сортируем по времени создания (свежие первые)
+        best_predictions.sort(key=lambda p: p.get("timestamp", 0), reverse=True)
+
+        # Cache result
+        _cache["predictions"]["data"] = best_predictions
+        _cache["predictions"]["timestamp"] = time.time()
+
+        return best_predictions
+
     except Exception as e:
         logger.error(f"Error loading predictions from file: {e}")
-        return []
+        return _cache["predictions"]["data"]  # Return cached on error
 
 
 def format_level_event(anomaly: dict) -> dict | None:
@@ -245,6 +296,18 @@ async def root():
     return FileResponse("web/static/index.html")
 
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    """Serve sitemap at root URL (Google standard)."""
+    return FileResponse("web/static/sitemap.xml", media_type="application/xml")
+
+
+@app.get("/robots.txt")
+async def robots():
+    """Serve robots.txt at root URL."""
+    return FileResponse("web/static/robots.txt", media_type="text/plain")
+
+
 @app.get("/api/health")
 async def health():
     """Health check."""
@@ -257,18 +320,28 @@ async def get_predictions():
     return {"predictions": get_active_predictions()}
 
 
-@app.get("/api/levels")
-async def get_levels():
-    """Get recent level events."""
+def get_cached_levels() -> list[dict]:
+    """Get levels with caching."""
+    if time.time() - _cache["levels"]["timestamp"] < CACHE_TTL:
+        return _cache["levels"]["data"]
+
     anomalies = load_recent_anomalies(24)
     levels = []
-    
     for a in anomalies:
         formatted = format_level_event(a)
         if formatted:
             levels.append(formatted)
-    
-    return {"levels": levels[:30]}
+    levels = levels[:30]
+
+    _cache["levels"]["data"] = levels
+    _cache["levels"]["timestamp"] = time.time()
+    return levels
+
+
+@app.get("/api/levels")
+async def get_levels():
+    """Get recent level events."""
+    return {"levels": get_cached_levels()}
 
 
 @app.get("/api/stats")
@@ -297,15 +370,9 @@ async def get_stats():
 @app.get("/api/all")
 async def get_all_data(hours: int = 72):
     """Get all data in one request."""
-    # Limit to 7 days max
-    hours = min(hours, 168)
-    
-    anomalies = load_recent_anomalies(hours)
-    level_list = [format_level_event(a) for a in anomalies if format_level_event(a)]
-    
     return {
         "predictions": get_active_predictions(),
-        "levels": level_list,
+        "levels": get_cached_levels(),
         "timestamp": time.time()
     }
 
@@ -314,32 +381,32 @@ async def get_all_data(hours: int = 72):
 async def websocket_endpoint(websocket: WebSocket):
     """WebSocket for real-time updates."""
     await manager.connect(websocket)
-    
+
     try:
-        # Send initial data
+        # Send initial data (using cache)
         await websocket.send_json({
             "type": "init",
             "predictions": get_active_predictions(),
-            "levels": [format_level_event(a) for a in load_recent_anomalies(24) if format_level_event(a)][:30]
+            "levels": get_cached_levels()
         })
-        
+
         # Keep connection alive and listen for messages
         while True:
             try:
-                # Wait for message with timeout
-                data = await asyncio.wait_for(websocket.receive_text(), timeout=30)
-                
+                # Wait for message with timeout (60 sec to reduce load)
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=60)
+
                 if data == "ping":
                     await websocket.send_json({"type": "pong"})
                 elif data == "refresh":
                     await websocket.send_json({
                         "type": "refresh",
                         "predictions": get_active_predictions(),
-                        "levels": [format_level_event(a) for a in load_recent_anomalies(24) if format_level_event(a)][:30]
+                        "levels": get_cached_levels()
                     })
             except asyncio.TimeoutError:
-                # Send heartbeat
-                await websocket.send_json({"type": "heartbeat", "timestamp": time.time()})
+                # Send lightweight heartbeat
+                await websocket.send_json({"type": "heartbeat"})
                 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
