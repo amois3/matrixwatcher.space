@@ -94,7 +94,7 @@ class ThresholdDetector:
                 parameter_pattern="crypto.*.price",
                 min_change_percent=self._get_calibrated_value("crypto.btcusdt.price.change_pct", 1.0),
                 lookback_seconds=60.0,
-                description="Резкое изменение цены криптовалюты"
+                description="Sharp cryptocurrency price change"
             ),
             
             # Crypto: Detect volume spikes > 50%
@@ -102,14 +102,14 @@ class ThresholdDetector:
                 parameter_pattern="crypto.*.volume_24h",
                 min_change_percent=self._get_calibrated_value("crypto.btcusdt.volume_24h.change_pct", 50.0),
                 lookback_seconds=300.0,
-                description="Всплеск объёма торгов"
+                description="Trading volume spike"
             ),
             
             # Network: Detect high latency > 1000ms
             ThresholdRule(
                 parameter_pattern="network.*.latency_ms",
                 max_absolute_value=1000.0,
-                description="Высокая задержка сети"
+                description="High network latency"
             ),
             
             # Network: Detect latency spikes > 100% increase
@@ -117,7 +117,7 @@ class ThresholdDetector:
                 parameter_pattern="network.avg_latency_ms",
                 min_change_percent=100.0,
                 lookback_seconds=30.0,
-                description="Резкий рост задержки сети"
+                description="Sharp network latency increase"
             ),
             
             # Time drift: Detect drift change > 100ms
@@ -125,7 +125,7 @@ class ThresholdDetector:
                 parameter_pattern="time_drift.diff_local_ntp_ms",
                 min_change_percent=150.0,  # Change in drift magnitude
                 lookback_seconds=60.0,
-                description="Резкое изменение синхронизации времени"
+                description="Sharp time sync change"
             ),
             
             # Time drift: Detect extreme drift > 500ms
@@ -133,7 +133,7 @@ class ThresholdDetector:
                 parameter_pattern="time_drift.diff_local_ntp_ms",
                 max_absolute_value=500.0,
                 min_absolute_value=-500.0,
-                description="Экстремальная рассинхронизация времени"
+                description="Extreme time desynchronization"
             ),
             
             # News: Detect headline spikes > 2x average
@@ -141,7 +141,7 @@ class ThresholdDetector:
                 parameter_pattern="news.headline_count",
                 min_change_percent=100.0,
                 lookback_seconds=300.0,
-                description="Всплеск новостей"
+                description="News spike"
             ),
             
             # Blockchain: Detect unusual block times
@@ -149,7 +149,7 @@ class ThresholdDetector:
                 parameter_pattern="blockchain.*.block_time_seconds",
                 min_change_percent=50.0,
                 lookback_seconds=600.0,
-                description="Необычное время блока"
+                description="Unusual block time"
             ),
             
             # Weather: Detect rapid temperature changes > 5°C
@@ -157,7 +157,7 @@ class ThresholdDetector:
                 parameter_pattern="weather.temperature",
                 min_change_percent=10.0,
                 lookback_seconds=300.0,
-                description="Резкое изменение температуры"
+                description="Sharp temperature change"
             ),
             
             # Weather: Detect rapid pressure changes
@@ -165,7 +165,7 @@ class ThresholdDetector:
                 parameter_pattern="weather.pressure",
                 min_change_percent=2.0,
                 lookback_seconds=300.0,
-                description="Резкое изменение давления"
+                description="Sharp pressure change"
             ),
             
             # Random: Detect bias in random numbers
@@ -173,35 +173,35 @@ class ThresholdDetector:
                 parameter_pattern="random.mean",
                 min_absolute_value=0.45,
                 max_absolute_value=0.55,
-                description="Смещение в генераторе случайных чисел"
+                description="Random number generator bias"
             ),
             
             # Quantum RNG: Detect low randomness (calibrated from data)
             ThresholdRule(
                 parameter_pattern="quantum_rng.randomness_score",
                 min_absolute_value=self._get_calibrated_value("quantum_rng.randomness_score.min", 0.85),
-                description="Квантовая случайность ниже нормы"
+                description="Quantum randomness below normal"
             ),
             
             # Earthquake: Detect significant earthquakes (calibrated)
             ThresholdRule(
                 parameter_pattern="earthquake.max_magnitude",
                 trigger_when_above=self._get_calibrated_value("earthquake.max_magnitude.trigger_above", 4.5),
-                description="Значительное землетрясение"
+                description="Significant earthquake"
             ),
             
             # Earthquake: Detect multiple earthquakes
             ThresholdRule(
                 parameter_pattern="earthquake.count",
                 trigger_when_above=self._get_calibrated_value("earthquake.count.trigger_above", 2),
-                description="Множественные землетрясения"
+                description="Multiple earthquakes"
             ),
             
             # Space Weather: Detect high Kp index >= 5 (geomagnetic storm)
             ThresholdRule(
                 parameter_pattern="space_weather.kp_index",
                 trigger_when_above=5.0,
-                description="Геомагнитная буря"
+                description="Geomagnetic storm"
             ),
             
             # Space Weather: Detect rapid Kp increase
@@ -209,14 +209,14 @@ class ThresholdDetector:
                 parameter_pattern="space_weather.kp_index",
                 min_change_percent=50.0,
                 lookback_seconds=3600.0,  # 1 hour
-                description="Резкий рост геомагнитной активности"
+                description="Sharp geomagnetic activity increase"
             ),
             
             # Space Weather: Detect solar flares
             ThresholdRule(
                 parameter_pattern="space_weather.flare_count",
                 trigger_when_above=0.5,  # > 0 (at least 1 flare)
-                description="Солнечная вспышка"
+                description="Solar flare"
             ),
         ]
     
@@ -311,7 +311,7 @@ class ThresholdDetector:
                     value=value,
                     timestamp=timestamp,
                     source=source,
-                    reason=f"Превышен порог: {value:.2f} > {rule.max_absolute_value:.2f}",
+                    reason=f"Threshold exceeded: {value:.2f} > {rule.max_absolute_value:.2f}",
                     rule_description=rule.description,
                     severity="high"
                 )
@@ -335,7 +335,7 @@ class ThresholdDetector:
                     value=value,
                     timestamp=timestamp,
                     source=source,
-                    reason=f"Ниже порога: {value:.2f} < {rule.min_absolute_value:.2f}",
+                    reason=f"Below threshold: {value:.2f} < {rule.min_absolute_value:.2f}",
                     rule_description=rule.description,
                     severity="high"
                 )
@@ -359,7 +359,7 @@ class ThresholdDetector:
                     value=value,
                     timestamp=timestamp,
                     source=source,
-                    reason=f"Обнаружено: {value:.2f} >= {rule.trigger_when_above:.2f}",
+                    reason=f"Detected: {value:.2f} >= {rule.trigger_when_above:.2f}",
                     rule_description=rule.description,
                     severity="high"
                 )
@@ -395,13 +395,13 @@ class ThresholdDetector:
                         )
                     
                     if triggered:
-                        direction = "выросло" if value > old_value else "упало"
+                        direction = "increased" if value > old_value else "decreased"
                         return self._create_anomaly(
                             param_key=param_key,
                             value=value,
                             timestamp=timestamp,
                             source=source,
-                            reason=f"Значение {direction} на {change_pct:.1f}% за {rule.lookback_seconds:.0f}с (было {old_value:.2f})",
+                            reason=f"Value {direction} by {change_pct:.1f}% in {rule.lookback_seconds:.0f}s (was {old_value:.2f})",
                             rule_description=rule.description,
                             severity=self._calculate_severity(change_pct, rule.min_change_percent)
                         )

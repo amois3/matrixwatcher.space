@@ -41,44 +41,44 @@ class SmartInsight:
         
         # Sensor name mapping
         sensor_names = {
-            "crypto": "₿ Криптовалюты",
-            "network": "🌐 Сеть",
-            "time_drift": "⏰ Время",
-            "news": "📰 Новости",
-            "blockchain": "⛓️ Блокчейн",
-            "weather": "🌤️ Погода",
-            "random": "🎲 Случайность"
+            "crypto": "₿ Cryptocurrency",
+            "network": "🌐 Network",
+            "time_drift": "⏰ Time",
+            "news": "📰 News",
+            "blockchain": "⛓️ Blockchain",
+            "weather": "🌤️ Weather",
+            "random": "🎲 Randomness"
         }
-        
+
         sensor_name = sensor_names.get(self.anomaly.sensor_source, self.anomaly.sensor_source)
-        
-        msg = f"{emoji} <b>АНОМАЛИЯ: {sensor_name}</b>\n\n"
-        msg += f"📊 <b>Что произошло:</b>\n{self.explanation}\n\n"
-        
+
+        msg = f"{emoji} <b>ANOMALY: {sensor_name}</b>\n\n"
+        msg += f"📊 <b>What happened:</b>\n{self.explanation}\n\n"
+
         if self.possible_causes:
-            msg += f"🤔 <b>Возможные причины:</b>\n"
+            msg += f"🤔 <b>Possible causes:</b>\n"
             for cause in self.possible_causes[:3]:
                 msg += f"• {cause}\n"
             msg += "\n"
-        
+
         if self.correlations:
-            msg += f"🔗 <b>Связанные события:</b>\n"
+            msg += f"🔗 <b>Related events:</b>\n"
             for corr in self.correlations[:3]:
                 msg += f"• {corr['description']}\n"
             msg += "\n"
-        
+
         if self.precursors:
-            msg += f"⏱️ <b>Предвестники (за 60 сек):</b>\n"
+            msg += f"⏱️ <b>Precursors (within 60 sec):</b>\n"
             for prec in self.precursors[:3]:
                 msg += f"• {prec['description']}\n"
             msg += "\n"
         elif not self.correlations:
-            msg += f"⏱️ <b>Предвестники:</b> Не обнаружено\n\n"
-        
+            msg += f"⏱️ <b>Precursors:</b> None detected\n\n"
+
         # Technical details
-        msg += f"📈 <b>Детали:</b>\n"
-        msg += f"• Параметр: <code>{self.anomaly.parameter}</code>\n"
-        msg += f"• Значение: <code>{self.anomaly.value:.2f}</code>\n"
+        msg += f"📈 <b>Details:</b>\n"
+        msg += f"• Parameter: <code>{self.anomaly.parameter}</code>\n"
+        msg += f"• Value: <code>{self.anomaly.value:.2f}</code>\n"
         msg += f"• Z-score: <code>{self.anomaly.z_score:.2f}</code>\n"
         
         return msg
@@ -178,43 +178,43 @@ class SmartAnalyzer:
         z = anomaly.z_score
         mean = anomaly.mean
         
-        direction = "выше" if z > 0 else "ниже"
+        direction = "above" if z > 0 else "below"
         change_pct = abs((value - mean) / mean * 100) if mean != 0 else 0
-        
+
         # Source-specific explanations
         if source == "crypto":
             if "price" in param.lower():
-                return f"Цена криптовалюты резко изменилась: {value:.2f} ({direction} среднего на {change_pct:.1f}%)"
+                return f"Cryptocurrency price changed sharply: {value:.2f} ({direction} average by {change_pct:.1f}%)"
             elif "volume" in param.lower():
-                return f"Объём торгов аномален: {value:.0f} ({direction} среднего на {change_pct:.1f}%)"
-        
+                return f"Trading volume anomaly: {value:.0f} ({direction} average by {change_pct:.1f}%)"
+
         elif source == "network":
             if "latency" in param.lower() or "ping" in param.lower():
-                return f"Задержка сети: {value:.1f}ms ({direction} среднего на {change_pct:.1f}%)"
+                return f"Network latency: {value:.1f}ms ({direction} average by {change_pct:.1f}%)"
             elif "packet_loss" in param.lower():
-                return f"Потеря пакетов: {value:.1f}% (аномально высокая)"
-        
+                return f"Packet loss: {value:.1f}% (anomalously high)"
+
         elif source == "time_drift":
-            return f"Рассинхронизация времени: {value:.1f}ms ({direction} нормы)"
-        
+            return f"Time desynchronization: {value:.1f}ms ({direction} normal)"
+
         elif source == "news":
-            return f"Всплеск новостей: {int(value)} заголовков (обычно {int(mean)})"
-        
+            return f"News spike: {int(value)} headlines (usually {int(mean)})"
+
         elif source == "blockchain":
             if "block_time" in param.lower():
-                return f"Время блока: {value:.1f}s (ожидалось {mean:.1f}s)"
-        
+                return f"Block time: {value:.1f}s (expected {mean:.1f}s)"
+
         elif source == "weather":
             if "temperature" in param.lower():
-                return f"Температура: {value:.1f}°C ({direction} среднего на {change_pct:.1f}%)"
+                return f"Temperature: {value:.1f}°C ({direction} average by {change_pct:.1f}%)"
             elif "pressure" in param.lower():
-                return f"Давление: {value:.1f} hPa (резкое изменение)"
-        
+                return f"Pressure: {value:.1f} hPa (sharp change)"
+
         elif source == "random":
-            return f"Генератор случайных чисел ведёт себя неслучайно (отклонение {abs(z):.1f}σ)"
-        
+            return f"Random number generator behaving non-randomly (deviation {abs(z):.1f}σ)"
+
         # Generic explanation
-        return f"{param} = {value:.2f} ({direction} среднего {mean:.2f} на {abs(z):.1f} стандартных отклонений)"
+        return f"{param} = {value:.2f} ({direction} average {mean:.2f} by {abs(z):.1f} standard deviations)"
     
     def _find_causes(self, anomaly: AnomalyEvent) -> list[str]:
         """Find possible causes for anomaly."""
@@ -226,58 +226,58 @@ class SmartAnalyzer:
         
         if source == "crypto":
             causes = [
-                "Крупная сделка на бирже",
-                "Новости о регулировании",
-                "Манипуляция рынком",
-                "Технический сбой биржи"
+                "Large exchange trade",
+                "Regulatory news",
+                "Market manipulation",
+                "Exchange technical failure"
             ]
-        
+
         elif source == "network":
             causes = [
-                "Проблемы у интернет-провайдера",
-                "DDoS атака на целевой сервер",
-                "Перегрузка сети",
-                "Проблемы маршрутизации"
+                "Internet provider issues",
+                "DDoS attack on target server",
+                "Network overload",
+                "Routing problems"
             ]
-        
+
         elif source == "time_drift":
             causes = [
-                "Проблемы с NTP сервером",
-                "Системные часы отстают/спешат",
-                "Сетевая задержка до NTP",
-                "Изменение часового пояса"
+                "NTP server issues",
+                "System clock drift",
+                "Network delay to NTP",
+                "Timezone change"
             ]
-        
+
         elif source == "news":
             causes = [
-                "Крупное событие в мире",
-                "Политический кризис",
-                "Природная катастрофа",
-                "Технологический прорыв"
+                "Major world event",
+                "Political crisis",
+                "Natural disaster",
+                "Technology breakthrough"
             ]
-        
+
         elif source == "blockchain":
             causes = [
-                "Майнер нашёл блок быстрее обычного",
-                "Изменение сложности сети",
-                "Атака 51%",
-                "Форк блокчейна"
+                "Miner found block faster than usual",
+                "Network difficulty change",
+                "51% attack",
+                "Blockchain fork"
             ]
-        
+
         elif source == "weather":
             causes = [
-                "Приближение циклона/антициклона",
-                "Резкое изменение температуры",
-                "Атмосферный фронт",
-                "Ошибка метеостанции"
+                "Approaching cyclone/anticyclone",
+                "Sharp temperature change",
+                "Atmospheric front",
+                "Weather station error"
             ]
-        
+
         elif source == "random":
             causes = [
-                "Проблема с генератором случайных чисел",
-                "Детерминированный паттерн",
-                "Квантовая аномалия (маловероятно)",
-                "Ошибка в алгоритме"
+                "Random number generator problem",
+                "Deterministic pattern",
+                "Quantum anomaly (unlikely)",
+                "Algorithm error"
             ]
         
         return causes
@@ -321,7 +321,7 @@ class SmartAnalyzer:
                 correlations.append({
                     "parameter": param_key,
                     "change_percent": change_pct,
-                    "description": f"{source}: {param_name} изменился на {change_pct:.1f}%"
+                    "description": f"{source}: {param_name} changed by {change_pct:.1f}%"
                 })
         
         # Sort by change magnitude
@@ -350,7 +350,7 @@ class SmartAnalyzer:
                 "parameter": past_anomaly["parameter"],
                 "time_before_seconds": time_before,
                 "z_score": past_anomaly["z_score"],
-                "description": f"{past_anomaly['source']}: аномалия за {int(time_before)}с до этого"
+                "description": f"{past_anomaly['source']}: anomaly {int(time_before)}s before"
             })
         
         # Sort by time (most recent first)

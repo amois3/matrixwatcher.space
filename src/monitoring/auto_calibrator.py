@@ -444,17 +444,17 @@ class AutoCalibrator:
         recommendations = len(results["recommendations"])
         auto_applied = len(results["auto_applied"])
         
-        summary = f"Проанализировано {total} порогов. "
-        
+        summary = f"Analyzed {total} thresholds. "
+
         if recommendations == 0:
-            summary += "Все пороги оптимальны, изменений не требуется."
+            summary += "All thresholds optimal, no changes required."
         else:
-            summary += f"Рекомендовано изменить {recommendations} порогов. "
-            
+            summary += f"Recommended to change {recommendations} thresholds. "
+
             if auto_applied > 0:
-                summary += f"Автоматически применено {auto_applied} изменений."
+                summary += f"Automatically applied {auto_applied} changes."
             else:
-                summary += "Изменения требуют ручного подтверждения."
+                summary += "Changes require manual confirmation."
         
         return summary
     

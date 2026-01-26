@@ -117,7 +117,7 @@ class ClusterDetector:
                 anomalies=[new_anomaly],
                 timestamp=new_anomaly.timestamp,
                 probability=1.0,  # Not a cluster
-                description="Одиночная аномалия"
+                description="Single anomaly"
             )
         
         # Multiple sources - calculate probability
@@ -131,7 +131,7 @@ class ClusterDetector:
                 anomalies=anomaly_list,
                 timestamp=new_anomaly.timestamp,
                 probability=probability,
-                description="Двойная корреляция"
+                description="Double correlation"
             )
         elif level == 3:
             return AnomalyCluster(
@@ -139,7 +139,7 @@ class ClusterDetector:
                 anomalies=anomaly_list,
                 timestamp=new_anomaly.timestamp,
                 probability=probability,
-                description="Тройной кластер"
+                description="Triple cluster"
             )
         elif level == 4:
             return AnomalyCluster(
@@ -147,7 +147,7 @@ class ClusterDetector:
                 anomalies=anomaly_list,
                 timestamp=new_anomaly.timestamp,
                 probability=probability,
-                description="Системное возмущение"
+                description="System disturbance"
             )
         elif level >= 5:
             # Level 5: EXTREME - 5+ independent sources in 30s window
@@ -157,7 +157,7 @@ class ClusterDetector:
                 anomalies=anomaly_list,
                 timestamp=new_anomaly.timestamp,
                 probability=probability,
-                description="Критическая синхронность"
+                description="Critical synchronicity"
             )
         
         return None

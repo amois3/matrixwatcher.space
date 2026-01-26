@@ -298,31 +298,31 @@ class HistoricalPatternTracker:
             "earthquake_significant": {
                 "check": lambda data: self._check_earthquake(data, min_magnitude=5.5),
                 "severity": "high",
-                "description": "Землетрясение > 5.5",
+                "description": "Earthquake > 5.5",
                 "category": "other"
             },
             "earthquake_moderate_old": {
                 "check": lambda data: self._check_earthquake(data, min_magnitude=5.0),
                 "severity": "medium",
-                "description": "Землетрясение > 5.0",
+                "description": "Earthquake > 5.0",
                 "category": "other"
             },
             "news_spike": {
                 "check": lambda data: self._check_news_spike(data, multiplier=2.0),
                 "severity": "medium",
-                "description": "Всплеск новостей > 2x",
+                "description": "News spike > 2x",
                 "category": "other"
             },
             "space_weather_storm": {
                 "check": lambda data: self._check_space_weather(data, min_kp=5),
                 "severity": "high",
-                "description": "Геомагнитная буря Kp > 5",
+                "description": "Geomagnetic storm Kp > 5",
                 "category": "other"
             },
             "quantum_anomaly": {
                 "check": lambda data: self._check_quantum_anomaly(data, threshold=0.90),
                 "severity": "medium",
-                "description": "Квантовая аномалия",
+                "description": "Quantum anomaly",
                 "category": "other"
             }
         }

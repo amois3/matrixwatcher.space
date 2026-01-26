@@ -232,16 +232,16 @@ class TelegramBot:
         """
         emoji = self._severity_emoji(z_score)
         source_emoji = self._source_emoji(source)
-        direction = "выше" if z_score > 0 else "ниже"
-        
-        text = f"""{emoji} <b>АНОМАЛИЯ ОБНАРУЖЕНА</b>
+        direction = "above" if z_score > 0 else "below"
 
-{source_emoji} <b>Источник:</b> {source}
-📊 <b>Параметр:</b> {parameter}
+        text = f"""{emoji} <b>ANOMALY DETECTED</b>
 
-📈 <b>Значение:</b> {value:.4f}
-📉 <b>Норма:</b> {mean:.4f} ± {std:.4f}
-⚡ <b>Отклонение:</b> {abs(z_score):.2f}σ {direction} нормы
+{source_emoji} <b>Source:</b> {source}
+📊 <b>Parameter:</b> {parameter}
+
+📈 <b>Value:</b> {value:.4f}
+📉 <b>Normal:</b> {mean:.4f} ± {std:.4f}
+⚡ <b>Deviation:</b> {abs(z_score):.2f}σ {direction} normal
 
 🕐 {self._format_timestamp(timestamp)}"""
 
@@ -267,41 +267,41 @@ class TelegramBot:
         """
         if correlation > 0:
             emoji = "📈"
-            direction = "положительная"
-            meaning = "растут/падают вместе"
+            direction = "positive"
+            meaning = "rise/fall together"
         else:
             emoji = "📉"
-            direction = "отрицательная"
-            meaning = "движутся в противофазе"
-        
+            direction = "negative"
+            meaning = "move in opposite phases"
+
         strength = abs(correlation)
         if strength >= 0.9:
-            strength_text = "Очень сильная"
+            strength_text = "Very strong"
             strength_emoji = "🔥"
         elif strength >= 0.7:
-            strength_text = "Сильная"
+            strength_text = "Strong"
             strength_emoji = "💪"
         elif strength >= 0.5:
-            strength_text = "Умеренная"
+            strength_text = "Moderate"
             strength_emoji = "👍"
         else:
-            strength_text = "Слабая"
+            strength_text = "Weak"
             strength_emoji = "🤔"
-        
-        text = f"""{emoji} <b>КОРРЕЛЯЦИЯ ОБНАРУЖЕНА</b>
 
-{strength_emoji} <b>Сила связи:</b> {strength_text} ({direction})
+        text = f"""{emoji} <b>CORRELATION DETECTED</b>
 
-🔗 <b>Параметры:</b>
+{strength_emoji} <b>Connection strength:</b> {strength_text} ({direction})
+
+🔗 <b>Parameters:</b>
   • {param1}
   • {param2}
 
-📊 <b>Коэффициент:</b> {correlation:.3f}
-💡 <b>Интерпретация:</b> Параметры {meaning}"""
+📊 <b>Coefficient:</b> {correlation:.3f}
+💡 <b>Interpretation:</b> Parameters {meaning}"""
 
         if p_value is not None:
-            significance = "статистически значима" if p_value < 0.05 else "может быть случайной"
-            text += f"\n📐 <b>p-value:</b> {p_value:.4f} (связь {significance})"
+            significance = "statistically significant" if p_value < 0.05 else "may be random"
+            text += f"\n📐 <b>p-value:</b> {p_value:.4f} (connection {significance})"
         
         text += f"\n\n🕐 {self._format_timestamp()}"
         
@@ -329,28 +329,28 @@ class TelegramBot:
         """
         if is_causal:
             emoji = "⚡"
-            title = "ПРИЧИННО-СЛЕДСТВЕННАЯ СВЯЗЬ"
+            title = "CAUSE-EFFECT RELATIONSHIP"
         else:
             emoji = "🔄"
-            title = "LAG-КОРРЕЛЯЦИЯ"
-        
+            title = "LAG-CORRELATION"
+
         if lag_seconds > 0:
             direction = f"{param1} → {param2}"
-            timing = f"{param1} предшествует {param2} на {abs(lag_seconds)} сек"
+            timing = f"{param1} precedes {param2} by {abs(lag_seconds)} sec"
         else:
             direction = f"{param2} → {param1}"
-            timing = f"{param2} предшествует {param1} на {abs(lag_seconds)} сек"
-        
+            timing = f"{param2} precedes {param1} by {abs(lag_seconds)} sec"
+
         text = f"""{emoji} <b>{title}</b>
 
-🔗 <b>Направление:</b> {direction}
-⏱️ <b>Задержка:</b> {abs(lag_seconds)} секунд
-📊 <b>Корреляция:</b> {correlation:.3f}
+🔗 <b>Direction:</b> {direction}
+⏱️ <b>Delay:</b> {abs(lag_seconds)} seconds
+📊 <b>Correlation:</b> {correlation:.3f}
 
-💡 <b>Интерпретация:</b>
+💡 <b>Interpretation:</b>
 {timing}
 
-🎯 Это может указывать на причинно-следственную связь!
+🎯 This may indicate a cause-effect relationship!
 
 🕐 {self._format_timestamp()}"""
 
@@ -376,22 +376,22 @@ class TelegramBot:
         """
         source_list = "\n".join(f"  • {self._source_emoji(s)} {s}" for s in sources)
         
-        text = f"""🚨 <b>КЛАСТЕР АНОМАЛИЙ</b>
+        text = f"""🚨 <b>ANOMALY CLUSTER</b>
 
-⚠️ <b>Множественные аномалии одновременно!</b>
+⚠️ <b>Multiple anomalies simultaneously!</b>
 
-📊 <b>Количество:</b> {anomaly_count} аномалий
-⏱️ <b>Временное окно:</b> {time_span_seconds:.1f} сек
-🎯 <b>Затронуто источников:</b> {len(sources)}
+📊 <b>Count:</b> {anomaly_count} anomalies
+⏱️ <b>Time window:</b> {time_span_seconds:.1f} sec
+🎯 <b>Sources affected:</b> {len(sources)}
 
-📡 <b>Источники:</b>
+📡 <b>Sources:</b>
 {source_list}
 
-💡 <b>Интерпретация:</b>
-Одновременные аномалии в разных системах могут указывать на:
-• Глобальное событие
-• Системный сбой
-• Скрытую взаимосвязь
+💡 <b>Interpretation:</b>
+Simultaneous anomalies in different systems may indicate:
+• Global event
+• System failure
+• Hidden connection
 
 🕐 {self._format_timestamp(timestamp)}"""
 
@@ -419,19 +419,19 @@ class TelegramBot:
         """
         confidence_emoji = "🎯" if confidence >= 0.7 else "🔮" if confidence >= 0.5 else "❓"
         
-        text = f"""{confidence_emoji} <b>ПРЕДВЕСТНИК ОБНАРУЖЕН</b>
+        text = f"""{confidence_emoji} <b>PRECURSOR DETECTED</b>
 
-🔮 <b>Паттерн:</b>
-Изменения в <b>{precursor_param}</b> предшествуют
-изменениям в <b>{target_param}</b>
+🔮 <b>Pattern:</b>
+Changes in <b>{precursor_param}</b> precede
+changes in <b>{target_param}</b>
 
-⏱️ <b>Опережение:</b> {lead_time_seconds} секунд
-📊 <b>Частота:</b> {frequency*100:.1f}% случаев
-🎯 <b>Уверенность:</b> {confidence*100:.1f}%
+⏱️ <b>Lead time:</b> {lead_time_seconds} seconds
+📊 <b>Frequency:</b> {frequency*100:.1f}% of cases
+🎯 <b>Confidence:</b> {confidence*100:.1f}%
 
-💡 <b>Применение:</b>
-Отслеживайте {precursor_param} для раннего
-предупреждения об изменениях в {target_param}
+💡 <b>Application:</b>
+Monitor {precursor_param} for early
+warning about changes in {target_param}
 
 🕐 {self._format_timestamp()}"""
 
@@ -455,25 +455,25 @@ class TelegramBot:
         """
         # Convert to human-readable period
         if period_seconds < 60:
-            period_text = f"{period_seconds:.1f} сек"
+            period_text = f"{period_seconds:.1f} sec"
         elif period_seconds < 3600:
-            period_text = f"{period_seconds/60:.1f} мин"
+            period_text = f"{period_seconds/60:.1f} min"
         elif period_seconds < 86400:
-            period_text = f"{period_seconds/3600:.1f} час"
+            period_text = f"{period_seconds/3600:.1f} hours"
         else:
-            period_text = f"{period_seconds/86400:.1f} дней"
-        
+            period_text = f"{period_seconds/86400:.1f} days"
+
         strength_emoji = "🔥" if strength >= 0.8 else "💪" if strength >= 0.6 else "👍"
-        
-        text = f"""🔄 <b>ПЕРИОДИЧНОСТЬ ОБНАРУЖЕНА</b>
 
-📊 <b>Параметр:</b> {parameter}
-⏱️ <b>Период:</b> {period_text}
-{strength_emoji} <b>Сила:</b> {strength*100:.1f}%
+        text = f"""🔄 <b>PERIODICITY DETECTED</b>
 
-💡 <b>Интерпретация:</b>
-Параметр демонстрирует циклическое поведение
-с периодом ~{period_text}
+📊 <b>Parameter:</b> {parameter}
+⏱️ <b>Period:</b> {period_text}
+{strength_emoji} <b>Strength:</b> {strength*100:.1f}%
+
+💡 <b>Interpretation:</b>
+Parameter shows cyclic behavior
+with period ~{period_text}
 
 🕐 {self._format_timestamp()}"""
 
@@ -486,30 +486,30 @@ class TelegramBot:
         """Send startup notification."""
         sensor_list = "\n".join(f"  • {self._source_emoji(s)} {s}" for s in sensors)
         
-        text = f"""🚀 <b>MATRIX WATCHER ЗАПУЩЕН</b>
+        text = f"""🚀 <b>MATRIX WATCHER STARTED</b>
 
-✅ <b>Активные сенсоры:</b>
+✅ <b>Active sensors:</b>
 {sensor_list}
 
-🔍 Система начала мониторинг цифровой реальности.
-Вы будете получать уведомления о:
-• 🔴 Аномалиях
-• 🔗 Корреляциях
-• ⚡ Причинно-следственных связях
-• 🚨 Кластерах аномалий
-• 🔮 Предвестниках
-• 🔄 Периодических паттернах
+🔍 System started monitoring digital reality.
+You will receive notifications about:
+• 🔴 Anomalies
+• 🔗 Correlations
+• ⚡ Cause-effect relationships
+• 🚨 Anomaly clusters
+• 🔮 Precursors
+• 🔄 Periodic patterns
 
 🕐 {self._format_timestamp()}"""
 
         return await self.send_message(text, disable_notification=False)
     
-    async def notify_shutdown(self, reason: str = "Штатное завершение") -> bool:
+    async def notify_shutdown(self, reason: str = "Normal shutdown") -> bool:
         """Send shutdown notification."""
-        text = f"""⏹️ <b>MATRIX WATCHER ОСТАНОВЛЕН</b>
+        text = f"""⏹️ <b>MATRIX WATCHER STOPPED</b>
 
-📝 <b>Причина:</b> {reason}
-📊 <b>Отправлено сообщений:</b> {self._message_count}
+📝 <b>Reason:</b> {reason}
+📊 <b>Messages sent:</b> {self._message_count}
 
 🕐 {self._format_timestamp()}"""
 
@@ -523,16 +523,16 @@ class TelegramBot:
         top_anomalies: list[dict] | None = None
     ) -> bool:
         """Send daily summary."""
-        text = f"""📋 <b>ЕЖЕДНЕВНЫЙ ОТЧЁТ</b>
+        text = f"""📋 <b>DAILY REPORT</b>
 
-📊 <b>Статистика за 24 часа:</b>
-  • 🔴 Аномалий: {anomaly_count}
-  • 🔗 Корреляций: {correlation_count}
-  • 🚨 Кластеров: {cluster_count}
+📊 <b>Statistics for 24 hours:</b>
+  • 🔴 Anomalies: {anomaly_count}
+  • 🔗 Correlations: {correlation_count}
+  • 🚨 Clusters: {cluster_count}
 """
-        
+
         if top_anomalies:
-            text += "\n🔝 <b>Топ аномалий:</b>\n"
+            text += "\n🔝 <b>Top anomalies:</b>\n"
             for i, a in enumerate(top_anomalies[:5], 1):
                 source = a.get("source", "unknown")
                 param = a.get("parameter", "unknown")

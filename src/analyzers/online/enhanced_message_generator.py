@@ -23,20 +23,20 @@ class EnhancedMessageGenerator:
     
     # Level emoji (updated to match new philosophy)
     LEVEL_EMOJI = {
-        1: "🟡",  # Локальное отклонение
-        2: "🟠",  # Синхронизация
-        3: "🔴",  # Аномальный кластер
-        4: "🟣",  # Глобальное возмущение
-        5: "⚫"   # Критическая синхронность
+        1: "🟡",  # Local deviation
+        2: "🟠",  # Synchronization
+        3: "🔴",  # Anomalous cluster
+        4: "🟣",  # Global disturbance
+        5: "⚫"   # Critical synchronicity
     }
-    
-    # Level names (Russian, honest and calibrated)
+
+    # Level names (honest and calibrated)
     LEVEL_NAMES = {
-        1: "Локальное отклонение",
-        2: "Временная синхронизация",  # 2 sources in 30s
-        3: "Множественная корреляция",  # 3 sources in 30s
-        4: "Системное возмущение",  # 4 sources in 30s
-        5: "Критическая синхронность"  # 5+ sources in 30s (extremely rare)
+        1: "Local Deviation",
+        2: "Temporal Synchronization",  # 2 sources in 30s
+        3: "Multiple Correlation",  # 3 sources in 30s
+        4: "System Disturbance",  # 4 sources in 30s
+        5: "Critical Synchronicity"  # 5+ sources in 30s (extremely rare)
     }
     
     def generate_with_index(
@@ -75,10 +75,10 @@ class EnhancedMessageGenerator:
         """Generate calm, factual header."""
         timestamp = datetime.fromtimestamp(cluster.timestamp)
         emoji = self.LEVEL_EMOJI.get(cluster.level, "🔍")
-        level_name = self.LEVEL_NAMES.get(cluster.level, "Наблюдение")
-        
+        level_name = self.LEVEL_NAMES.get(cluster.level, "Observation")
+
         msg = f"🕒 <b>{timestamp.strftime('%d %b · %H:%M')}</b>\n"
-        msg += f"Уровень: {emoji} <b>{level_name}</b>"
+        msg += f"Level: {emoji} <b>{level_name}</b>"
         
         return msg
 
@@ -86,7 +86,7 @@ class EnhancedMessageGenerator:
         """Generate factual list of observed sources."""
         sources = set(a.sensor_source for a in anomalies)
         
-        msg = "\n<b>Источники:</b>\n"
+        msg = "\n<b>Sources:</b>\n"
         
         source_names = {
             "quantum_rng": "🎲 Quantum RNG",
@@ -106,52 +106,52 @@ class EnhancedMessageGenerator:
     
     def _generate_system_comment(self, cluster: AnomalyCluster, snapshot: AnomalyIndexSnapshot) -> str:
         """Generate calm, factual system comment based on level."""
-        msg = "\n<b>Комментарий системы:</b>\n"
-        
+        msg = "\n<b>System Comment:</b>\n"
+
         if cluster.level == 1:
-            msg += "Зафиксировано кратковременное отклонение в одном из источников. "
-            msg += "Подобные флуктуации регулярно возникают и не выходят за рамки фонового шума."
-        
+            msg += "Short-term deviation recorded in one source. "
+            msg += "Such fluctuations occur regularly and stay within background noise."
+
         elif cluster.level == 2:
-            msg += "Несколько независимых источников показали отклонения в близком временном окне. "
-            msg += "Зафиксирована кратковременная синхронизация процессов."
-        
+            msg += "Several independent sources showed deviations in close time window. "
+            msg += "Short-term process synchronization recorded."
+
         elif cluster.level == 3:
-            msg += "Зафиксирован устойчивый кластер отклонений в нескольких независимых доменах. "
-            msg += "Наблюдаемое поведение выходит за рамки обычного фона."
-        
+            msg += "Stable cluster of deviations recorded across several independent domains. "
+            msg += "Observed behavior exceeds normal background."
+
         elif cluster.level == 4:
-            msg += "Обнаружены синхронные аномалии в физических, цифровых и вероятностных источниках. "
-            msg += "Состояние выходит за пределы стандартных режимов."
-        
+            msg += "Synchronous anomalies detected in physical, digital and probabilistic sources. "
+            msg += "State exceeds standard operating modes."
+
         elif cluster.level == 5:
-            msg += "Зафиксирована редкая конфигурация синхронных аномалий across multiple domains. "
-            msg += "Подобные события выделяются на фоне всей истории наблюдений."
+            msg += "Rare configuration of synchronous anomalies recorded across multiple domains. "
+            msg += "Such events stand out against entire observation history."
         
         return msg
     
     def _generate_statistical_context(self, cluster: AnomalyCluster, snapshot: AnomalyIndexSnapshot) -> str:
         """Generate statistical context (baseline comparison)."""
-        msg = "\n<b>Статистический контекст:</b>\n"
-        
+        msg = "\n<b>Statistical Context:</b>\n"
+
         # Anomaly Index
-        msg += f"• Индекс аномальности: {snapshot.index:.0f}/100\n"
-        
+        msg += f"• Anomaly Index: {snapshot.index:.0f}/100\n"
+
         # Baseline comparison
         if snapshot.baseline_ratio > 1.2:
-            msg += f"• Отклонение от фона: {snapshot.baseline_ratio:.1f}x\n"
+            msg += f"• Background deviation: {snapshot.baseline_ratio:.1f}x\n"
         else:
-            msg += f"• В пределах нормального фона\n"
-        
+            msg += f"• Within normal background\n"
+
         # Rarity indicator (honest, qualitative)
         if cluster.level == 2:
-            msg += f"• Частота: регулярно (2 источника)\n"
+            msg += f"• Frequency: regular (2 sources)\n"
         elif cluster.level == 3:
-            msg += f"• Частота: периодически (3 источника)\n"
+            msg += f"• Frequency: periodic (3 sources)\n"
         elif cluster.level == 4:
-            msg += f"• Частота: редко (4 источника)\n"
+            msg += f"• Frequency: rare (4 sources)\n"
         elif cluster.level >= 5:
-            msg += f"• Частота: очень редко (5+ источников)\n"
+            msg += f"• Frequency: very rare (5+ sources)\n"
         
         return msg
     
@@ -182,40 +182,40 @@ class EnhancedMessageGenerator:
         """Format Quantum RNG anomaly with explanation."""
         meta = anomaly.metadata or {}
         
-        msg = f"🎲 <b>Quantum RNG: {score:.0f} баллов</b>\n"
-        
+        msg = f"🎲 <b>Quantum RNG: {score:.0f} points</b>\n"
+
         # Get values
         randomness = meta.get("randomness_score", anomaly.value)
         expected = meta.get("expected", 0.95)
         source = meta.get("source", "unknown")
-        
+
         # Source explanation
         source_text = {
-            "anu_quantum": "квантовый вакуум (Австралия)",
-            "random_org_atmospheric": "атмосферный шум",
-            "local_entropy": "локальная энтропия"
+            "anu_quantum": "quantum vacuum (Australia)",
+            "random_org_atmospheric": "atmospheric noise",
+            "local_entropy": "local entropy"
         }.get(source, source)
-        
-        msg += f"Случайность: {randomness:.1%} (норма {expected:.1%})\n"
-        msg += f"Источник: {source_text}\n"
-        
+
+        msg += f"Randomness: {randomness:.1%} (normal {expected:.1%})\n"
+        msg += f"Source: {source_text}\n"
+
         # Explanation
         if randomness < 0.90:
-            msg += "→ <i>Квантовые числа показывают паттерны</i>\n"
-            msg += "→ <i>Возможный \"глитч\" в случайности</i>"
+            msg += "→ <i>Quantum numbers showing patterns</i>\n"
+            msg += "→ <i>Possible \"glitch\" in randomness</i>"
         elif randomness < 0.93:
-            msg += "→ <i>Небольшое отклонение от идеальной случайности</i>"
-        
+            msg += "→ <i>Small deviation from ideal randomness</i>"
+
         # Additional details
         if "autocorrelation" in meta:
             autocorr = meta["autocorrelation"]
             if abs(autocorr) > 0.1:
-                msg += f"\n→ <i>Числа коррелируют (r={autocorr:.2f})</i>"
-        
+                msg += f"\n→ <i>Numbers correlate (r={autocorr:.2f})</i>"
+
         if "bit_balance" in meta:
             balance = meta["bit_balance"]
             if abs(balance - 0.5) > 0.05:
-                msg += f"\n→ <i>Дисбаланс битов ({balance:.1%} единиц)</i>"
+                msg += f"\n→ <i>Bit imbalance ({balance:.1%} ones)</i>"
         
         return msg
     
@@ -223,30 +223,30 @@ class EnhancedMessageGenerator:
         """Format Crypto anomaly with explanation."""
         meta = anomaly.metadata or {}
         
-        msg = f"💰 <b>Crypto: {score:.0f} баллов</b>\n"
-        
+        msg = f"💰 <b>Crypto: {score:.0f} points</b>\n"
+
         # Get values
         symbol = meta.get("symbol", "BTC")
         prev_price = meta.get("previous_price", 0)
         new_price = meta.get("new_price", anomaly.value)
         change_pct = meta.get("change_percent", 0)
-        
+
         msg += f"{symbol}: ${prev_price:,.0f} → ${new_price:,.0f} "
-        
+
         if change_pct > 0:
             msg += f"(+{change_pct:.2f}%)\n"
         else:
             msg += f"({change_pct:.2f}%)\n"
-        
+
         # Explanation
         if abs(change_pct) > 2:
-            msg += f"→ <i>Резкий {'рост' if change_pct > 0 else 'падение'} за короткое время</i>\n"
+            msg += f"→ <i>Sharp {'rise' if change_pct > 0 else 'drop'} in short time</i>\n"
         else:
-            msg += f"→ <i>Значительное изменение цены</i>\n"
-        
+            msg += f"→ <i>Significant price change</i>\n"
+
         # Volume
         if "volume_spike" in meta and meta["volume_spike"]:
-            msg += "→ <i>Объем торгов резко вырос</i>"
+            msg += "→ <i>Trading volume spiked</i>"
         
         return msg
     
@@ -254,30 +254,30 @@ class EnhancedMessageGenerator:
         """Format Earthquake anomaly with explanation."""
         meta = anomaly.metadata or {}
         
-        msg = f"🌍 <b>Earthquake: {score:.0f} баллов</b>\n"
-        
+        msg = f"🌍 <b>Earthquake: {score:.0f} points</b>\n"
+
         magnitude = anomaly.value
         location = meta.get("location", "Unknown")
         depth = meta.get("depth_km", 0)
-        
-        msg += f"Магнитуда {magnitude} в {location}\n"
-        msg += f"Глубина: {depth} км "
-        
+
+        msg += f"Magnitude {magnitude} in {location}\n"
+        msg += f"Depth: {depth} km "
+
         # Depth explanation
         if depth < 70:
-            msg += "(мелкое, более опасное)\n"
+            msg += "(shallow, more dangerous)\n"
         else:
-            msg += "(глубокое)\n"
-        
+            msg += "(deep)\n"
+
         # Magnitude explanation
         if magnitude >= 7.0:
-            msg += "→ <i>Очень сильное землетрясение</i>\n"
-            msg += "→ <i>Может вызвать цунами</i>"
+            msg += "→ <i>Very strong earthquake</i>\n"
+            msg += "→ <i>May cause tsunami</i>"
         elif magnitude >= 6.0:
-            msg += "→ <i>Сильное землетрясение</i>\n"
-            msg += "→ <i>Возможны разрушения</i>"
+            msg += "→ <i>Strong earthquake</i>\n"
+            msg += "→ <i>Possible damage</i>"
         elif magnitude >= 5.0:
-            msg += "→ <i>Умеренное землетрясение</i>"
+            msg += "→ <i>Moderate earthquake</i>"
         
         return msg
 
@@ -286,23 +286,23 @@ class EnhancedMessageGenerator:
         """Format Space Weather anomaly."""
         meta = anomaly.metadata or {}
         
-        msg = f"☀️ <b>Space Weather: {score:.0f} баллов</b>\n"
-        
+        msg = f"☀️ <b>Space Weather: {score:.0f} points</b>\n"
+
         kp_index = meta.get("kp_index", 0)
         flare_class = meta.get("max_flare_class", "A")
-        
-        msg += f"Kp индекс: {kp_index} "
-        
+
+        msg += f"Kp index: {kp_index} "
+
         if kp_index >= 7:
-            msg += "(сильная геомагнитная буря)\n"
+            msg += "(strong geomagnetic storm)\n"
         elif kp_index >= 5:
-            msg += "(геомагнитная буря)\n"
+            msg += "(geomagnetic storm)\n"
         else:
             msg += "\n"
-        
+
         if flare_class in ["X", "M"]:
-            msg += f"Солнечная вспышка класса {flare_class}\n"
-            msg += "→ <i>Может влиять на электронику</i>"
+            msg += f"Solar flare class {flare_class}\n"
+            msg += "→ <i>May affect electronics</i>"
         
         return msg
     
@@ -310,16 +310,16 @@ class EnhancedMessageGenerator:
         """Format Weather anomaly."""
         meta = anomaly.metadata or {}
         
-        msg = f"🌤️ <b>Weather: {score:.0f} баллов</b>\n"
-        
+        msg = f"🌤️ <b>Weather: {score:.0f} points</b>\n"
+
         temp = meta.get("temperature", 0)
         change = meta.get("change_percent", 0)
-        
-        msg += f"Температура: {temp}°C "
-        
+
+        msg += f"Temperature: {temp}°C "
+
         if abs(change) > 10:
-            msg += f"({'рост' if change > 0 else 'падение'} на {abs(change):.1f}%)\n"
-            msg += "→ <i>Резкое изменение погоды</i>"
+            msg += f"({'rise' if change > 0 else 'drop'} by {abs(change):.1f}%)\n"
+            msg += "→ <i>Sharp weather change</i>"
         else:
             msg += "\n"
         
@@ -329,16 +329,16 @@ class EnhancedMessageGenerator:
         """Format News anomaly."""
         meta = anomaly.metadata or {}
         
-        msg = f"📰 <b>News: {score:.0f} баллов</b>\n"
-        
+        msg = f"📰 <b>News: {score:.0f} points</b>\n"
+
         count = meta.get("headline_count", 0)
         normal = meta.get("normal_count", 0)
-        
-        msg += f"Новостей: {count} (обычно {normal})\n"
-        
+
+        msg += f"Headlines: {count} (usually {normal})\n"
+
         if count > normal * 2:
-            msg += "→ <i>Резкий всплеск новостей</i>\n"
-            msg += "→ <i>Возможно важное событие</i>"
+            msg += "→ <i>Sharp news spike</i>\n"
+            msg += "→ <i>Possibly important event</i>"
         
         return msg
     
@@ -346,49 +346,49 @@ class EnhancedMessageGenerator:
         """Format Blockchain anomaly."""
         meta = anomaly.metadata or {}
         
-        msg = f"⛓️ <b>Blockchain: {score:.0f} баллов</b>\n"
-        
+        msg = f"⛓️ <b>Blockchain: {score:.0f} points</b>\n"
+
         network = meta.get("network", "Unknown")
         block_time = meta.get("block_time", 0)
-        
-        msg += f"{network}: время блока {block_time}с\n"
-        msg += "→ <i>Аномалия в скорости блоков</i>"
+
+        msg += f"{network}: block time {block_time}s\n"
+        msg += "→ <i>Block speed anomaly</i>"
         
         return msg
     
     def _generate_correlation_explanation(self, cluster: AnomalyCluster) -> str:
         """Generate explanation of correlation."""
-        msg = "🔗 <b>Возможная связь:</b>\n"
-        
+        msg = "🔗 <b>Possible Connection:</b>\n"
+
         sources = [a.sensor_source for a in cluster.anomalies]
         explanations = []
-        
+
         # Generate smart explanation based on combination
         if "quantum_rng" in sources and "earthquake" in sources:
-            explanations.append("Квантовые флуктуации перед геофизическим событием")
-            explanations.append("→ Возможное влияние на квантовый уровень")
-        
+            explanations.append("Quantum fluctuations before geophysical event")
+            explanations.append("→ Possible quantum-level influence")
+
         if "crypto" in sources and "earthquake" in sources:
             if explanations:
                 explanations.append("")  # Empty line
-            explanations.append("Рыночная реакция на природное событие")
-            explanations.append("→ Инвесторы реагируют на новости")
-        
+            explanations.append("Market reaction to natural event")
+            explanations.append("→ Investors reacting to news")
+
         if "quantum_rng" in sources and "crypto" in sources:
             if explanations:
                 explanations.append("")  # Empty line
-            explanations.append("Квантовая аномалия + рыночная волатильность")
-            explanations.append("→ Необъяснимая корреляция")
-        
+            explanations.append("Quantum anomaly + market volatility")
+            explanations.append("→ Unexplained correlation")
+
         if "space_weather" in sources:
             if explanations:
                 explanations.append("")  # Empty line
-            explanations.append("Солнечная активность может влиять на другие системы")
-            explanations.append("→ Геомагнитные эффекты")
-        
+            explanations.append("Solar activity may affect other systems")
+            explanations.append("→ Geomagnetic effects")
+
         if len(sources) >= 3 and not explanations:
-            explanations.append("Множественные системы показывают аномалии")
-            explanations.append("→ Возможно глобальное событие")
+            explanations.append("Multiple systems showing anomalies")
+            explanations.append("→ Possibly global event")
         
         msg += "\n".join(explanations)
         return msg
@@ -398,39 +398,39 @@ class EnhancedMessageGenerator:
         if not probabilities:
             return ""
         
-        msg = "<b>Исторически после подобных условий:</b>\n"
-        
+        msg = "<b>Historically after similar conditions:</b>\n"
+
         # Sort by probability (highest first)
         sorted_probs = sorted(
             probabilities.items(),
             key=lambda x: x[1]["probability"],
             reverse=True
         )
-        
+
         for event_type, info in sorted_probs:
             prob = info["probability"]
             avg_time = info["avg_time_hours"]
             observations = info["observations"]
             description = info["description"]
-            
+
             # Only show if probability > 5% and enough observations
             if prob > 0.05 and observations >= 5:
-                msg += f"• {description}: {prob:.0%} случаев "
-                msg += f"(среднее время: {avg_time:.1f}ч, n={observations})\n"
-        
-        msg += "\n<i>→ Только статистика на основе истории. Не прогноз.</i>"
+                msg += f"• {description}: {prob:.0%} of cases "
+                msg += f"(avg time: {avg_time:.1f}h, n={observations})\n"
+
+        msg += "\n<i>→ Statistics based on history only. Not a prediction.</i>"
         
         return msg
     
     def _generate_footer(self, cluster: AnomalyCluster) -> str:
         """Generate minimal footer with status."""
-        msg = "\n<b>Статус:</b> "
-        
+        msg = "\n<b>Status:</b> "
+
         if cluster.level == 1:
-            msg += "Наблюдение без действий"
+            msg += "Observation, no action"
         elif cluster.level == 2:
-            msg += "Повышенное внимание"
+            msg += "Increased attention"
         elif cluster.level >= 3:
-            msg += "Активное наблюдение"
-        
+            msg += "Active observation"
+
         return msg
