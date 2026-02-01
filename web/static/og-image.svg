@@ -1,0 +1,14 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0d0d12"/>
+  <svg x="350" y="165" width="500" height="300" viewBox="0 0 100 60">
+    <defs>
+      <linearGradient id="eyeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" style="stop-color:#00d4ff"/>
+        <stop offset="100%" style="stop-color:#aa66ff"/>
+      </linearGradient>
+    </defs>
+    <path d="M50 5C25 5 5 30 5 30C5 30 25 55 50 55C75 55 95 30 95 30C95 30 75 5 50 5Z" stroke="url(#eyeGradient)" stroke-width="4" fill="none"/>
+    <circle cx="50" cy="30" r="16" stroke="url(#eyeGradient)" stroke-width="4" fill="none"/>
+    <circle cx="50" cy="30" r="6" fill="url(#eyeGradient)"/>
+  </svg>
+</svg>
