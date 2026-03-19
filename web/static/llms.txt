@@ -1,0 +1,31 @@
+# Matrix Watcher
+
+> An open, real-time experiment that monitors 9 completely independent real-world data streams and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce? Live at https://matrixwatcher.space — open source, real public data, and honest about its results.
+
+## What it is
+- A measurement instrument, **not** a prediction service. It does not claim to predict crypto prices or earthquakes.
+- Uses **no AI or neural networks** — only transparent, rule-based statistics (probability = occurrences / observations), validated with shuffle tests and out-of-sample backtesting.
+- Founded 2025 by Aleksejs Moisejevs. Collecting data continuously since 12 December 2025.
+
+## The 9 monitored sources (all real public feeds)
+- **Crypto** — Bitcoin & Ethereum prices and volatility (Binance)
+- **Blockchain** — network block times and on-chain anomalies
+- **Quantum RNG** — hardware quantum randomness (ANU QRNG)
+- **Space Weather** — geomagnetic Kp index and solar wind (NOAA SWPC)
+- **Solar Activity** — F10.7 radio flux, GOES X-ray flares, proton flux (NOAA)
+- **Earthquakes** — global seismic activity, magnitude and location (USGS)
+- **Volcanoes** — weekly volcanic activity report (Smithsonian / USGS)
+- **Weather** — temperature and pressure (Open-Meteo)
+- **News** — global headline volume (public RSS)
+
+## How it works
+- Each source is polled in real time. A reading crossing its threshold becomes an anomaly, emitted once on the rising edge (a single ongoing event is not double-counted).
+- When anomalies from several independent sources fall in the same 30-second window, that is a cluster. The level (1–5) is simply how many distinct domains coincided — a temporal coincidence, never a claim of causation.
+- Apparent patterns are stress-tested to disprove them: a **shuffle test** vs time-randomized data, an **out-of-sample backtest with block bootstrap**, and **base-rate comparison** (a probability that merely matches chance is not a finding).
+
+## Key finding (as of May 2026)
+- Across 5+ months of clean, de-duplicated data: **no statistically significant cross-domain signal**. Anomalies in independent domains do not coincide more than chance predicts, and no condition reliably beats an event's base rate. This null result is reported honestly. If a genuine signal ever appears, the same strict tests will surface it credibly.
+
+## Links
+- Live dashboard: https://matrixwatcher.space
+- Source code: https://github.com/amois3/matrixwatcher.space
