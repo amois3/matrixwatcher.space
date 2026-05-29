@@ -1,5 +1,5 @@
 // Service Worker for Matrix Watcher PWA
-const CACHE_NAME = 'matrix-watcher-v10';
+const CACHE_NAME = 'matrix-watcher-v11';
 const urlsToCache = [
   '/',
   '/static/manifest.json'
