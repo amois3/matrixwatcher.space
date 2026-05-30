@@ -725,6 +725,18 @@ async def broadcast_level(level: dict):
 
 
 # Mount static files
+@app.get("/static/sw.js")
+async def service_worker():
+    """Serve the service worker with no-cache headers so PWA updates reach
+    clients promptly instead of being held in the browser cache for a day.
+    This explicit route takes precedence over the /static mount below."""
+    return FileResponse(
+        "web/static/sw.js",
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
+
+
 app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
 
