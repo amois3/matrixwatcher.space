@@ -30,7 +30,7 @@ class BlockchainSensor(BaseSensor):
     - Ethereum: block height, hash, timestamp, tx count, gas used/limit
     - Bitcoin: block height, hash, timestamp, tx count, difficulty
     
-    Calculates block_interval_sec and flags anomalous intervals (>50% deviation).
+    Calculates block_interval_sec and flags anomalous intervals (>150% deviation).
     
     Example:
         sensor = BlockchainSensor(networks=["ethereum", "bitcoin"])
@@ -339,10 +339,13 @@ class BlockchainSensor(BaseSensor):
         time_diff = block_time - last_time
         interval_per_block = time_diff / blocks_diff if blocks_diff > 0 else 0
         
-        # Check for anomaly (>50% deviation from expected)
+        # Block intervals are a Poisson process: ~50% deviation from the
+        # expected interval is NORMAL jitter (it fired ~2.4% of polls and
+        # dominated every cluster). Only a genuinely slow block — interval
+        # >2.5x expected (deviation >150%) — is a real anomaly (~0.24%).
         expected = self._expected_intervals.get(network, 60)
         deviation = abs(interval_per_block - expected) / expected if expected > 0 else 0
-        is_anomalous = deviation > 0.5
+        is_anomalous = deviation > 1.5
         
         return {
             "block_interval_sec": round(interval_per_block, 2),

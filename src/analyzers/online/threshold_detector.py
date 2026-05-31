@@ -219,10 +219,12 @@ class ThresholdDetector:
                 description="Random number generator bias"
             ),
             
-            # Quantum RNG: Detect low randomness (calibrated from data)
+            # Quantum RNG: low randomness = genuine bottom tail (~2.4% of readings).
+            # Default 0.80; an earlier auto-calibration wrongly pushed this to
+            # 0.97 (fired on 92% of readings) — see logs/calibration.
             ThresholdRule(
                 parameter_pattern="quantum_rng.randomness_score",
-                min_absolute_value=self._get_calibrated_value("quantum_rng.randomness_score.min", 0.85),
+                min_absolute_value=self._get_calibrated_value("quantum_rng.randomness_score.min", 0.80),
                 description="Quantum randomness below normal"
             ),
             
@@ -247,13 +249,10 @@ class ThresholdDetector:
                 description="Geomagnetic storm"
             ),
             
-            # Space Weather: Detect rapid Kp increase
-            ThresholdRule(
-                parameter_pattern="space_weather.kp_index",
-                min_change_percent=50.0,
-                lookback_seconds=3600.0,  # 1 hour
-                description="Sharp geomagnetic activity increase"
-            ),
+            # Space Weather: a percent-change rule on Kp was REMOVED. Kp is a
+            # 0-9 quasi-log index; a routine 1->2 wobble is a "+100% change" and
+            # was firing ~2000 spurious anomalies. The absolute Kp>=5 storm rule
+            # above is the honest geomagnetic-event detector.
             
             # Space Weather: Detect solar flares
             ThresholdRule(
