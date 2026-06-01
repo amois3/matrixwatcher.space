@@ -34,6 +34,8 @@ CACHE_TTL = 5  # seconds
 # least this margin (percentage points). Our 168-day out-of-sample backtest
 # found no condition does — so honestly, the panel stays empty until one does.
 SKILL_THRESHOLD_PP = 10.0
+MIN_OBS_TO_SHOW = 30  # need enough samples before a skill estimate is trustworthy
+SYSTEM_EPOCH = 1780254840.0  # detector rebuild 2026-05-31 19:14 UTC; older anomalies are from the retired detector and are hidden from the live feed
 
 _base_rates_cache = {"data": None, "mtime": 0.0}
 
@@ -222,6 +224,63 @@ def load_anomalies_for_date(date_str: str) -> list[dict]:
     return records
 
 
+def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
+    """Recent INDIVIDUAL anomalies — the live per-sensor activity feed, newest first.
+    Unlike load_recent_anomalies (L3+ clusters only), this returns each real
+    per-sensor detection so the dashboard shows what is actually happening."""
+    out: list[dict] = []
+    logs_path = Path("logs/anomalies")
+    if not logs_path.exists():
+        return out
+    cutoff = time.time() - hours * 3600
+    days = max(2, hours // 24 + 1)
+    for log_file in sorted(logs_path.glob("*.jsonl"), reverse=True)[:days]:
+        try:
+            with open(log_file) as f:
+                for line in f:
+                    try:
+                        d = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if "cluster" in d:
+                        continue
+                    src = d.get("sensor_source")
+                    ts = d.get("timestamp", 0)
+                    if not src or ts <= cutoff or ts < SYSTEM_EPOCH:
+                        continue
+                    if src == "crypto":
+                        try:
+                            if abs(float(d.get("value"))) < 1.0:
+                                continue  # a sub-1% hourly move is not a "sharp move"
+                        except (TypeError, ValueError):
+                            pass
+                    md = d.get("metadata") or {}
+                    detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts))
+                    out.append({
+                        "timestamp": ts, "source": src,
+                        "parameter": d.get("parameter", ""), "value": d.get("value"),
+                        "z_score": d.get("z_score"), "reason": md.get("reason", ""),
+                        "severity": md.get("severity", "medium"),
+                        "method": md.get("detection_method", ""),
+                        "detail": detail, "context": context,
+                    })
+        except Exception as e:
+            logger.error(f"activity read {log_file}: {e}")
+    out.sort(key=lambda x: x["timestamp"], reverse=True)
+    # Collapse repeats: one card per source (newest first) with a count, so the
+    # feed shows distinct activity instead of a wall of identical duplicates.
+    grouped: dict[str, dict] = {}
+    for item in out:
+        src = item["source"]
+        g = grouped.get(src)
+        if g is None:
+            grouped[src] = {**item, "count": 1}
+        else:
+            g["count"] += 1
+    result = sorted(grouped.values(), key=lambda x: x["timestamp"], reverse=True)
+    return result[:limit]
+
+
 def load_patterns() -> dict:
     """Load pattern statistics."""
     patterns_file = Path("logs/patterns/patterns.json")
@@ -312,6 +371,7 @@ def get_active_predictions(use_cache: bool = True) -> list[dict]:
         informative = [
             p for p in best_predictions
             if p.get("skill") is not None and p["skill"] >= SKILL_THRESHOLD_PP
+            and p.get("observations", p.get("condition_count", 0)) >= MIN_OBS_TO_SHOW
         ]
         informative.sort(key=lambda p: p.get("skill", 0), reverse=True)
 
@@ -392,6 +452,133 @@ def _earthquake_place_at(ts: float) -> str:
     return best
 
 
+
+_eq_detail_cache: dict = {}
+
+
+def _earthquake_detail_at(ts: float) -> str:
+    """Magnitude + place of the strongest quake near ``ts`` (raw feed): 'M4.7 · Bonin Islands, Japan region'."""
+    try:
+        ts = float(ts)
+    except (TypeError, ValueError):
+        return ""
+    if ts <= 0:
+        return ""
+    date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+    path = Path(f"logs/earthquake/{date_str}.jsonl")
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return ""
+    cached = _eq_detail_cache.get(date_str)
+    if not cached or cached[0] != mtime:
+        rows = []
+        try:
+            with open(path) as f:
+                for line in f:
+                    try:
+                        d = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    t = d.get("timestamp")
+                    eqs = d.get("earthquakes") or []
+                    if isinstance(t, (int, float)) and eqs:
+                        strongest = max(eqs, key=lambda e: e.get("magnitude") or 0)
+                        rows.append((float(t), strongest.get("magnitude"), strongest.get("place")))
+        except OSError:
+            return ""
+        rows.sort(key=lambda r: r[0])
+        _eq_detail_cache[date_str] = (mtime, rows)
+        cached = _eq_detail_cache[date_str]
+    rows = cached[1]
+    if not rows:
+        return ""
+    times = [r[0] for r in rows]
+    i = bisect.bisect_left(times, ts)
+    best, best_dt = None, 180.0
+    for j in (i - 1, i):
+        if 0 <= j < len(rows) and abs(rows[j][0] - ts) <= best_dt:
+            best_dt, best = abs(rows[j][0] - ts), rows[j]
+    if not best:
+        return ""
+    mag, place = best[1], best[2]
+    s = f"M{mag:.1f}" if isinstance(mag, (int, float)) else ""
+    if place:
+        s = (s + " · " + place) if s else place
+    return s
+
+
+_bc_detail_cache: dict = {}
+_BC_EXPECTED = {"bitcoin": 600.0, "ethereum": 12.0}
+
+
+def _blockchain_detail_at(ts: float) -> str:
+    """Which network had the irregular block and by how much: 'Bitcoin — block took 38 min (~3.8x normal)'."""
+    try:
+        ts = float(ts)
+    except (TypeError, ValueError):
+        return ""
+    if ts <= 0:
+        return ""
+    date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+    path = Path(f"logs/blockchain/{date_str}.jsonl")
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return ""
+    cached = _bc_detail_cache.get(date_str)
+    if not cached or cached[0] != mtime:
+        rows = []
+        try:
+            with open(path) as f:
+                for line in f:
+                    try:
+                        d = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    t = d.get("timestamp")
+                    nets = d.get("networks") or {}
+                    if isinstance(t, (int, float)) and isinstance(nets, dict):
+                        rows.append((float(t), nets))
+        except OSError:
+            return ""
+        rows.sort(key=lambda r: r[0])
+        _bc_detail_cache[date_str] = (mtime, rows)
+        cached = _bc_detail_cache[date_str]
+    rows = cached[1]
+    if not rows:
+        return ""
+    times = [r[0] for r in rows]
+    i = bisect.bisect_left(times, ts)
+    best, best_dt = None, 300.0
+    for j in (i - 1, i):
+        if 0 <= j < len(rows) and abs(rows[j][0] - ts) <= best_dt:
+            best_dt, best = abs(rows[j][0] - ts), rows[j][1]
+    if not best:
+        return ""
+    chosen, chosen_score = None, -1.0
+    for nm, nd in best.items():
+        if not isinstance(nd, dict):
+            continue
+        dev = nd.get("interval_deviation_percent")
+        anom = nd.get("interval_anomalous")
+        score = dev if isinstance(dev, (int, float)) else (200.0 if anom else -1.0)
+        if (anom or (isinstance(dev, (int, float)) and dev > 150)) and score > chosen_score:
+            chosen_score, chosen = score, (nm, nd)
+    if not chosen:
+        return ""
+    nm, nd = chosen
+    name = nm.title()
+    interval = nd.get("block_interval_sec")
+    if isinstance(interval, (int, float)) and interval > 0:
+        t = f"{interval / 60:.0f} min" if interval >= 120 else f"{interval:.0f}s"
+        exp = _BC_EXPECTED.get(nm)
+        if exp and interval / exp >= 1.3:
+            return f"{name} — block took {t} (~{interval / exp:.1f}x normal)"
+        return f"{name} — block interval {t}"
+    return f"{name} — irregular block timing"
+
+
 def _concise_fact(parameter: str, value, reason: str) -> str:
     """A short, concrete fact for a cluster source — the actual value, not a
     restated rule. e.g. 'M5.3', 'M1.2 flare', '0.94', 'Kp 6', '↓2.1%'."""
@@ -447,6 +634,59 @@ def _concise_fact(parameter: str, value, reason: str) -> str:
     return ""
 
 
+
+def _activity_enrich(src, parameter, value, reason, ts):
+    """Return (primary_detail, gray_context) for an activity card.
+    Primary goes on the main line; context goes on a second, grey line."""
+    detail = _concise_fact(parameter, value, reason)
+    context = ""
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        v = None
+    pl = (parameter or "").lower()
+
+    if src == "earthquake":
+        full = _earthquake_detail_at(ts)          # "M5.0 · Kermadec Islands region"
+        if full and " · " in full:
+            detail, context = full.split(" · ", 1)
+        elif full:
+            detail = full
+    elif src == "blockchain":
+        full = _blockchain_detail_at(ts)          # "Bitcoin — block took 49 min (~4.9x normal)"
+        if full:
+            if "(" in full:
+                head, ctx = full.split("(", 1)
+                detail, context = head.strip().strip("—").strip(), ctx.rstrip(") ").strip()
+            else:
+                detail = full
+    elif src == "space_weather" and v is not None:
+        detail = f"Kp {v:.0f}"
+        context = {5: "G1 — minor storm", 6: "G2 — moderate storm", 7: "G3 — strong storm",
+                   8: "G4 — severe storm", 9: "G5 — extreme storm"}.get(int(v), "geomagnetic disturbance")
+    elif src == "solar_activity":
+        if "flare" in detail:
+            context = "X-ray flare peak (last 24h)"
+        elif "F10.7" in detail:
+            context = "elevated solar radio flux"
+        elif "pfu" in detail or "proton" in detail:
+            context = "solar proton event in progress"
+    elif src == "quantum_rng":
+        context = "below its normal range (~0.92)"
+    elif src == "crypto":
+        coin = "Bitcoin" if "btc" in pl else ("Ethereum" if "eth" in pl else "")
+        if v is not None and (not detail):
+            detail = f"{'\u2191' if v >= 0 else '\u2193'}{abs(v):.1f}%"
+        context = (coin + " · over 1 hour") if coin else "over 1 hour"
+    elif src == "weather":
+        context = "New York"
+    elif src == "volcanic_activity":
+        context = "newly reported this week"
+    elif src == "news":
+        context = "headline volume"
+    return detail, context
+
+
 def format_level_event(anomaly: dict) -> dict | None:
     """Format anomaly for level display - detailed like Telegram but in English."""
     cluster = anomaly.get("cluster", {})
@@ -460,15 +700,9 @@ def format_level_event(anomaly: dict) -> dict | None:
     
     # Get sources with icons (kept in sync with the digest's DIGEST_SOURCE map)
     source_icons = {
-        "crypto": "💰",
-        "quantum_rng": "🎲",
-        "space_weather": "🛰️",
-        "solar_activity": "☀️",
-        "volcanic_activity": "🌋",
-        "weather": "🌦️",
-        "earthquake": "🌍",
-        "blockchain": "⛓️",
-        "news": "📰",
+        "crypto": "crypto", "quantum_rng": "quantum", "space_weather": "space_weather",
+        "solar_activity": "solar", "volcanic_activity": "volcanic", "weather": "weather",
+        "earthquake": "earthquake", "blockchain": "blockchain", "news": "news",
     }
     
     # Per source, show the ACTUAL fact — concrete value, not a restated rule.
@@ -494,12 +728,14 @@ def format_level_event(anomaly: dict) -> dict | None:
             source_detail[src] = detail
 
     def _fmt_source(s: str) -> str:
-        icon = source_icons.get(s, "📊")
+        iid = source_icons.get(s, "clusters")
+        icon = (f'<svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);'
+                f'vertical-align:-2px;margin-right:5px"><use href="#ic-{iid}"/></svg>')
         name = s.replace("_", " ").title()
         detail = source_detail.get(s, "")
         if detail:
-            return f"{icon} {name}<span style=\"opacity:.55\"> — {detail}</span>"
-        return f"{icon} {name}"
+            return f"{icon}{name}<span style=\"opacity:.55\"> — {detail}</span>"
+        return f"{icon}{name}"
 
     sources_formatted = [_fmt_source(s) for s in sources]
     
@@ -510,7 +746,7 @@ def format_level_event(anomaly: dict) -> dict | None:
         5: "Critical Synchronicity"
     }
 
-    level_icons = {3: "🔴", 4: "🔴🔴", 5: "🚨"}
+    level_colors = {3: "var(--neon-orange)", 4: "var(--neon-orange)", 5: "var(--neon-red)"}
 
     # Deviation = how many times above the normal background (the honest ratio
     # the anomaly index already computed). The old code used index/5, an
@@ -540,7 +776,7 @@ def format_level_event(anomaly: dict) -> dict | None:
         "id": f"level_{timestamp}",
         "level": level,
         "level_name": level_names.get(level, "Anomaly"),
-        "level_icon": level_icons.get(level, "⚠️"),
+        "level_icon": f'<svg class="mw-ic" style="width:14px;height:14px;color:{level_colors.get(level, "var(--neon-blue)")};vertical-align:-2px"><use href="#ic-clusters"/></svg>',
         "sources": sources,
         "sources_formatted": sources_formatted,
         "sources_str": " + ".join(sources),
@@ -619,6 +855,12 @@ def get_cached_levels(hours: int = 24) -> list[dict]:
 async def get_levels(hours: int = 24):
     """Get recent Level 3+ events over the last ``hours`` (default 24)."""
     return {"levels": get_cached_levels(hours)}
+
+
+@app.get("/api/activity")
+async def get_activity(hours: int = 48, limit: int = 60):
+    """Live per-sensor anomaly feed (real detections, newest first)."""
+    return {"activity": load_recent_activity(hours, limit)}
 
 
 @app.get("/api/stats")
