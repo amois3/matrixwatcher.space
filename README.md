@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🛰️ Matrix Watcher
+# <img src="web/static/icons/activity.svg" width="28" alt=""> Matrix Watcher
 
 ### A rigorously honest monitor for hidden correlations across independent real-world systems
 
@@ -8,9 +8,9 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
 [![Status](https://img.shields.io/badge/status-running%2024%2F7-00ff88?style=flat-square)](https://matrixwatcher.space)
-[![No AI](https://img.shields.io/badge/analysis-pure%20statistics-aa66ff?style=flat-square)](#-no-ai-pure-statistics)
+[![No AI](https://img.shields.io/badge/analysis-pure%20statistics-aa66ff?style=flat-square)](#no-ai-pure-statistics)
 
-**[🌐 Live dashboard → matrixwatcher.space](https://matrixwatcher.space)**
+**[Live dashboard → matrixwatcher.space](https://matrixwatcher.space)**
 
 *We watch. We measure. We tell the truth — even when the truth is "nothing here."*
 
@@ -30,35 +30,35 @@ That honesty is the point. Most "correlation" projects fool themselves (or you).
 
 ---
 
-## 📡 The 9 data sources
+## The 9 data sources
 
 Every source is a **real, public data feed** — no simulations, no fabricated numbers.
 
 | # | Source | What it tracks | Feed |
 |---|--------|----------------|------|
-| 💰 | **Crypto** | BTC/ETH price moves & volatility | Binance |
-| ⛓️ | **Blockchain** | Network block times & on-chain anomalies | public RPC |
-| 🎲 | **Quantum RNG** | Hardware quantum randomness | ANU QRNG |
-| 🛰️ | **Space Weather** | Geomagnetic Kp index, solar wind | NOAA SWPC |
-| ☀️ | **Solar Activity** | F10.7 flux, GOES X-ray flares, proton flux | NOAA |
-| 🌍 | **Earthquakes** | Global seismicity (magnitude, location) | USGS |
-| 🌋 | **Volcanoes** | Weekly volcanic activity report | Smithsonian / USGS |
-| 🌦️ | **Weather** | Temperature & pressure swings | Open-Meteo |
-| 📰 | **News** | Global headline volume | public RSS |
+| <img src="web/static/icons/crypto.svg" width="20" alt=""> | **Crypto** | BTC/ETH price moves & volatility | Binance |
+| <img src="web/static/icons/blockchain.svg" width="20" alt=""> | **Blockchain** | Network block times & on-chain anomalies | public RPC |
+| <img src="web/static/icons/quantum.svg" width="20" alt=""> | **Quantum RNG** | Hardware quantum randomness | ANU QRNG |
+| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Space Weather** | Geomagnetic Kp index, solar wind | NOAA SWPC |
+| <img src="web/static/icons/solar.svg" width="20" alt=""> | **Solar Activity** | F10.7 flux, GOES X-ray flares, proton flux | NOAA |
+| <img src="web/static/icons/earthquake.svg" width="20" alt=""> | **Earthquakes** | Global seismicity (magnitude, location) | USGS |
+| <img src="web/static/icons/volcanic.svg" width="20" alt=""> | **Volcanoes** | Weekly volcanic activity report | Smithsonian / USGS |
+| <img src="web/static/icons/weather.svg" width="20" alt=""> | **Weather** | Temperature & pressure swings | Open-Meteo |
+| <img src="web/static/icons/news.svg" width="20" alt=""> | **News** | Global headline volume | public RSS |
 
 ---
 
-## ⚙️ How it works
+## How it works
 
 ```
-9 live sensors  →  edge-triggered anomaly detection  →  30-second correlation clusters
-                →  anomaly index  →  honest skill-filtered estimates  →  live dashboard + daily digest
+9 live sensors → adaptive anomaly detection (each stream's own floating "normal")
+              → self-learning  predict → verify → score  loop  →  honest live dashboard + activity feed
 ```
 
 1. **Sensing** — each source is polled in real time and stored as raw JSONL.
-2. **Anomaly detection** — a reading crossing its threshold becomes an *anomaly*, emitted **once on the rising edge** (a single ongoing event is never double-counted).
+2. **Adaptive anomaly detection** — no fixed thresholds. A reading is flagged only when it is unusual *relative to that stream's own recent distribution* (robust statistics, floating thresholds); the bar drifts with each stream's regime. Real physical events (a quake, a geomagnetic storm, an M-class flare) are flagged at their established physical levels. Emitted **once on the rising edge** — a single ongoing event is never double-counted.
 3. **Clustering** — when anomalies from several *independent* sources land in the same 30-second window, that is a cluster. The level (1–5) is simply *how many distinct domains coincided* — a temporal coincidence, never a claim of causation.
-4. **Honest estimates** — observed frequencies are shown **only when they beat the event's base rate** (`skill = P(event│condition) − P(event)`). No edge over chance → nothing is shown.
+4. **Self-learning predict → verify → score** — for every condition the system learns `P(event│condition)`, shows a prediction **only when it beats the event's base rate** (`skill = P(event│condition) − P(event)`) with enough evidence, then **verifies** each prediction against what actually happened and keeps an honest running score. Patterns that stop working stop being shown — the loop keeps re-learning. Any domain can predict any other.
 
 | Level | Meaning |
 |-------|---------|
@@ -70,7 +70,7 @@ Every source is a **real, public data feed** — no simulations, no fabricated n
 
 ---
 
-## 🔬 How we avoid fooling ourselves
+## How we avoid fooling ourselves
 
 This is the heart of the project. Apparent patterns are stress-tested with methods built to **disprove** them:
 
@@ -83,17 +83,17 @@ The full analysis toolkit (`replay`, `shuffle_test`, `backtest`) lives in [`src/
 
 ---
 
-## 📊 Key finding (as of May 2026)
+## Honest finding (as of June 2026)
 
-Across **5+ months** of clean, de-duplicated data covering all 9 domains:
+Across months of clean, de-duplicated data covering all 9 domains:
 
-> **No statistically significant cross-domain signal.** Anomalies in independent domains do not coincide more than chance predicts, and no condition reliably beats an event's base rate.
+> **No cross-domain predictive edge has held up out of sample.** The only relationships that survive testing live *within a single domain* (storm persistence, earthquake aftershocks) — known physics, not hidden links between unrelated worlds.
 
-This null result is reported honestly. If a genuine signal ever appears, the same strict tests will surface it **credibly** — not by accident or wishful thinking.
+The rebuilt adaptive system now accumulates forward evidence continuously, so the honest verdict on cross-domain links is **"not proven — still gathering data,"** not a final "no." If a genuine signal ever appears, the same strict tests will surface it **credibly** — not by accident or wishful thinking.
 
 ---
 
-## 🚫 No AI. Pure statistics.
+## No AI. Pure statistics.
 
 Matrix Watcher intentionally uses **no artificial intelligence, neural networks, or language models** in its analysis. Every number is transparent and reproducible:
 
@@ -106,22 +106,22 @@ Validated with shuffle tests and bootstrap. No black boxes. No hallucinations. J
 
 ---
 
-## 🧱 Tech stack
+## Tech stack
 
-- **Python 3.11+** — async sensor scheduler, event bus, threshold detector
+- **Python 3.11+** — async sensor scheduler, event bus, adaptive anomaly detector
 - **FastAPI** — real-time API + PWA backend
 - **Vanilla JS PWA** — installable dashboard, offline-capable
 - **JSONL** storage — simple, append-only, auditable
 - **systemd** — 24/7 operation with auto-restart + watchdog
 
-## 📁 Project structure
+## Project structure
 
 ```
 src/
 ├── sensors/            # 9 independent data collectors
 ├── core/               # event bus, scheduler, types
 ├── analyzers/
-│   ├── online/         # threshold detector, cluster detector,
+│   ├── online/         # adaptive detector, cluster detector,
 │   │                   #   anomaly index, pattern tracker, digest
 │   └── offline/        # replay, shuffle test, backtest (the rigor)
 ├── monitoring/         # health, alerting, calibration
@@ -129,7 +129,7 @@ src/
 web/                    # FastAPI API + PWA dashboard
 ```
 
-## 🚀 Run it yourself
+## Run it yourself
 
 ```bash
 git clone https://github.com/amois3/matrixwatcher.space.git
@@ -143,7 +143,7 @@ python run_pwa.py                       # start the dashboard (http://localhost:
 
 ---
 
-## 🤝 Get involved
+## Get involved
 
 Matrix Watcher is open source because the right people make it better. It may be useful to you if you work in:
 

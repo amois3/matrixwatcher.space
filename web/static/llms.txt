@@ -19,12 +19,13 @@
 - **News** — global headline volume (public RSS)
 
 ## How it works
-- Each source is polled in real time. A reading crossing its threshold becomes an anomaly, emitted once on the rising edge (a single ongoing event is not double-counted).
+- Each source is polled in real time. Detection is **adaptive**: a reading is flagged only when it is unusual relative to that stream's own recent distribution (robust statistics, floating thresholds) — no hardcoded numbers. Genuine physical events (real earthquakes, geomagnetic storms, M-class flares) are flagged at their established physical levels.
+- **Self-learning, forward-verifying loop:** for every condition the system learns P(event | condition), shows a prediction only when it beats the event's base rate by a meaningful margin and has enough observations, then verifies each prediction against what actually happened and keeps an honest running score. If a pattern stops working it stops being shown. Every domain can predict any other.
 - When anomalies from several independent sources fall in the same 30-second window, that is a cluster. The level (1–5) is simply how many distinct domains coincided — a temporal coincidence, never a claim of causation.
 - Apparent patterns are stress-tested to disprove them: a **shuffle test** vs time-randomized data, an **out-of-sample backtest with block bootstrap**, and **base-rate comparison** (a probability that merely matches chance is not a finding).
 
-## Key finding (as of May 2026)
-- Across 5+ months of clean, de-duplicated data: **no statistically significant cross-domain signal**. Anomalies in independent domains do not coincide more than chance predicts, and no condition reliably beats an event's base rate. This null result is reported honestly. If a genuine signal ever appears, the same strict tests will surface it credibly.
+## Honest finding (as of June 2026)
+- No cross-domain predictive edge has held up out of sample. The only relationships that survive testing are **within a single domain** (storm persistence, earthquake aftershocks) — known physics, not hidden links between unrelated worlds. The rebuilt adaptive system now accumulates forward evidence continuously; the honest verdict on cross-domain links is **“not proven — still gathering data,”** not a final “no.” If a genuine signal appears, the same strict tests will surface it credibly.
 
 ## Links
 - Live dashboard: https://matrixwatcher.space
