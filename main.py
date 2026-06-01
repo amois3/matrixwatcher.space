@@ -18,6 +18,7 @@ from src.core.types import EventType, AnomalyEvent
 from src.storage import StorageManager
 from src.analyzers.online.anomaly_detector import OnlineAnomalyDetector
 from src.analyzers.online.threshold_detector import ThresholdDetector
+from src.analyzers.online.hybrid_detector import HybridDetector
 from src.analyzers.online.smart_analyzer import SmartAnalyzer
 from src.analyzers.online.cluster_detector import ClusterDetector
 from src.analyzers.online.anomaly_index import AnomalyIndexCalculator
@@ -68,7 +69,7 @@ class MatrixWatcher:
             buffer_size=self.config.storage.buffer_size
         )
         # Use threshold detector instead of z-score detector
-        self.anomaly_detector = ThresholdDetector(event_bus=self.event_bus)
+        self.anomaly_detector = HybridDetector(event_bus=self.event_bus)
         self.smart_analyzer = SmartAnalyzer(
             lookback_seconds=getattr(self.config.analysis, "precursor_lookback_seconds", 60),
             correlation_threshold=self.config.analysis.correlation_threshold,
@@ -788,7 +789,7 @@ class MatrixWatcher:
         self.scheduler.start()
         
         # Start auto-calibration check (runs once per day)
-        asyncio.create_task(self._auto_calibration_loop())
+        pass  # monthly auto-calibration retired; HybridDetector floats thresholds continuously
 
         logger.info("Matrix Watcher is running. Press Ctrl+C to stop.")
         logger.info(f"Health endpoint: http://localhost:{self.health_monitor.port}/health")

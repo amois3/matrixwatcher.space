@@ -277,7 +277,7 @@ class HistoricalPatternTracker:
     """Tracks historical patterns between conditions and events."""
     
     # Extended lookback window: 72 hours (3 days)
-    LOOKBACK_WINDOW_HOURS = 72
+    LOOKBACK_WINDOW_HOURS = 6  # 6h: rare targets become predictable (headroom)
     
     def __init__(self, storage_path: str = "logs/patterns"):
         """Initialize pattern tracker.
@@ -323,21 +323,21 @@ class HistoricalPatternTracker:
         return {
             # ============ CRYPTO (3 events — 1 representative coin, 1 horizon) ============
             "btc_pump_1h": {
-                "check": lambda data: self._check_crypto_move(data, "BTC", "pump", hours=1, threshold=2.0),
+                "check": lambda data: self._check_crypto_move(data, "BTC", "pump", hours=1, threshold=3.0),
                 "severity": "medium",
-                "description": "BTC surge > 2% in 1h",
+                "description": "BTC surge > 3% in 1h",
                 "category": "crypto",
             },
             "btc_dump_1h": {
-                "check": lambda data: self._check_crypto_move(data, "BTC", "dump", hours=1, threshold=2.0),
+                "check": lambda data: self._check_crypto_move(data, "BTC", "dump", hours=1, threshold=3.0),
                 "severity": "medium",
-                "description": "BTC drop > 2% in 1h",
+                "description": "BTC drop > 3% in 1h",
                 "category": "crypto",
             },
             "btc_volatility_high": {
-                "check": lambda data: self._check_btc_volatility(data, threshold=2.5),
+                "check": lambda data: self._check_btc_volatility(data, threshold=3.0),
                 "severity": "high",
-                "description": "BTC high volatility > 2.5%",
+                "description": "BTC high volatility > 3%",
                 "category": "crypto",
             },
 
@@ -351,9 +351,9 @@ class HistoricalPatternTracker:
 
             # ============ EARTHQUAKE (2 events) ============
             "earthquake_moderate": {
-                "check": lambda data: self._check_earthquake(data, min_magnitude=5.0),
+                "check": lambda data: self._check_earthquake(data, min_magnitude=5.5),
                 "severity": "medium",
-                "description": "Earthquake M5.0+",
+                "description": "Earthquake M5.5+",
                 "category": "earthquake",
             },
             "earthquake_strong": {
@@ -379,9 +379,9 @@ class HistoricalPatternTracker:
 
             # ============ QUANTUM ============
             "quantum_low_randomness": {
-                "check": lambda data: self._check_quantum_anomaly(data, threshold=0.90),
+                "check": lambda data: self._check_quantum_anomaly(data, threshold=0.76),
                 "severity": "medium",
-                "description": "Quantum randomness drop (score < 0.90)",
+                "description": "Quantum randomness drop (score < 0.76)",
                 "category": "quantum",
             },
 
