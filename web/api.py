@@ -248,6 +248,8 @@ def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
                     ts = d.get("timestamp", 0)
                     if not src or ts <= cutoff or ts < SYSTEM_EPOCH:
                         continue
+                    if src == "wikimedia_edits":
+                        continue  # renamed to wikipedia_edits 2026-06-03; hide stale entries
                     if src == "crypto":
                         try:
                             if abs(float(d.get("value"))) < 1.0:
@@ -579,6 +581,65 @@ def _blockchain_detail_at(ts: float) -> str:
     return f"{name} — irregular block timing"
 
 
+_raw_record_cache: dict = {}
+
+
+def _raw_record_at(source: str, ts: float, max_dt: float = 900.0):
+    """Raw feed record nearest ``ts`` (within ``max_dt`` s) for a source, or None.
+    Used to put a concrete WHERE/what on weather & volcanic activity cards."""
+    try:
+        ts = float(ts)
+    except (TypeError, ValueError):
+        return None
+    if ts <= 0:
+        return None
+    date_str = datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+    path = Path(f"logs/{source}/{date_str}.jsonl")
+    try:
+        mtime = path.stat().st_mtime
+    except OSError:
+        return None
+    key = (source, date_str)
+    cached = _raw_record_cache.get(key)
+    if not cached or cached[0] != mtime:
+        rows = []
+        try:
+            with open(path) as f:
+                for line in f:
+                    try:
+                        d = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    t = d.get("timestamp")
+                    if isinstance(t, (int, float)):
+                        rows.append((float(t), d))
+        except OSError:
+            return None
+        rows.sort(key=lambda r: r[0])
+        _raw_record_cache[key] = (mtime, rows)
+        cached = _raw_record_cache[key]
+    rows = cached[1]
+    if not rows:
+        return None
+    times = [r[0] for r in rows]
+    i = bisect.bisect_left(times, ts)
+    best, best_dt = None, max_dt
+    for j in (i - 1, i):
+        if 0 <= j < len(rows):
+            dt = abs(rows[j][0] - ts)
+            if dt <= best_dt:
+                best_dt, best = dt, rows[j][1]
+    return best
+
+
+def _robust_delta(reason: str):
+    """Parse 'X is N robust-σ (above|below) its 7d median M' -> (direction, median)."""
+    m = re.search(r"robust-σ (above|below) its [\d.]+d median ([\-\d.]+)", reason or "")
+    if not m:
+        return None, None
+    return m.group(1), float(m.group(2))
+
+
 def _concise_fact(parameter: str, value, reason: str) -> str:
     """A short, concrete fact for a cluster source — the actual value, not a
     restated rule. e.g. 'M5.3', 'M1.2 flare', '0.94', 'Kp 6', '↓2.1%'."""
@@ -597,10 +658,15 @@ def _concise_fact(parameter: str, value, reason: str) -> str:
 
     def delta_from_reason(unit: str) -> str:
         m = re.search(r"(increased|decreased) by ([\d.]+)", reason)
-        if not m:
-            return ""
-        sign = "+" if m.group(1) == "increased" else "−"
-        return f"{sign}{float(m.group(2)):.1f}{unit}"
+        if m:
+            sign = "+" if m.group(1) == "increased" else "−"
+            return f"{sign}{float(m.group(2)):.1f}{unit}"
+        # adaptive robust format: "X is N robust-σ (above|below) its 7d median M"
+        m = re.search(r"robust-σ (above|below) its [\d.]+d median ([\-\d.]+)", reason or "")
+        if m and v is not None:
+            sign = "+" if m.group(1) == "above" else "−"
+            return f"{sign}{abs(v - float(m.group(2))):.1f}{unit}"
+        return ""
 
     if v is not None:
         if p == "earthquake.max_magnitude":
@@ -622,6 +688,18 @@ def _concise_fact(parameter: str, value, reason: str) -> str:
             return f"F10.7 = {v:.0f}"
         if p.startswith("volcanic_activity"):
             return f"{int(v)} new this week"
+        if p == "solar_wind.speed":
+            return f"{v:.0f} km/s"
+        if p == "solar_wind.bz_gsm":
+            return f"Bz {v:+.1f} nT"
+        if p == "solar_wind.bz_south":
+            return f"Bz −{v:.0f} nT (south)"
+        if p == "solar_wind.density":
+            return f"{v:.1f} p/cm³"
+        if p == "solar_wind.bt":
+            return f"Bt {v:.1f} nT"
+        if p == "wikipedia_edits.edits_per_sec":
+            return f"{v:.1f} edits/s"
 
     if p.endswith(".price") or "volume" in p or p == "news.headline_count":
         return pct_from_reason()
@@ -672,16 +750,61 @@ def _activity_enrich(src, parameter, value, reason, ts):
         elif "pfu" in detail or "proton" in detail:
             context = "solar proton event in progress"
     elif src == "quantum_rng":
-        context = "below its normal range (~0.92)"
+        direction, median = _robust_delta(reason)
+        if direction:
+            context = f"{direction} its normal range (~{median:.2f})"
+        else:
+            context = "outside its normal range (~0.92)"
     elif src == "crypto":
         coin = "Bitcoin" if "btc" in pl else ("Ethereum" if "eth" in pl else "")
         if v is not None and (not detail):
             detail = f"{'\u2191' if v >= 0 else '\u2193'}{abs(v):.1f}%"
-        context = (coin + " · over 1 hour") if coin else "over 1 hour"
+        rec = _raw_record_at("crypto", ts)
+        d24_key = "btcusdt.price_change_24h_percent" if "btc" in pl else "ethusdt.price_change_24h_percent"
+        d24 = (rec or {}).get(d24_key)
+        pieces = ([coin] if coin else []) + ["over 1 hour"]
+        if d24 is not None:
+            pieces.append("+" + f"{abs(d24):.1f}% over 24h" if d24 >= 0 else "\u2212" + f"{abs(d24):.1f}% over 24h")
+        context = " · ".join(pieces)
     elif src == "weather":
-        context = "New York"
+        direction, median = _robust_delta(reason)
+        rec = _raw_record_at("weather", ts)
+        context = (rec or {}).get("location") or "New York"
+        if v is not None and median is not None and direction:
+            delta = abs(v - median)
+            if "pressure" in pl:
+                detail = f"{v:.0f} hPa · {delta:.0f} hPa {direction} normal"
+            else:
+                detail = f"{v:.1f} °C · {delta:.1f}° {direction} normal"
+        elif v is not None:
+            detail = f"{v:.0f} hPa" if "pressure" in pl else f"{v:.1f} °C"
     elif src == "volcanic_activity":
-        context = "newly reported this week"
+        rec = _raw_record_at("volcanic_activity", ts)
+        names = (rec or {}).get("volcanoes") or []
+        active = (rec or {}).get("active_count")
+        if names:
+            shown = ", ".join(names[:3])
+            more = len(names) - 3
+            tail = f" +{more} more" if more > 0 else ""
+            context = (f"{active} active worldwide — " if active else "") + shown + tail
+        else:
+            context = "newly reported this week"
+    elif src == "solar_wind":
+        if "bz_south" in pl or "bz_gsm" in pl:
+            context = "southward IMF — geomagnetic-storm driver"
+        elif "speed" in pl:
+            context = "solar-wind speed (DSCOVR)"
+        elif "density" in pl:
+            context = "solar-wind proton density"
+        else:
+            context = "interplanetary magnetic field"
+    elif src == "wikipedia_edits":
+        direction, median = _robust_delta(reason)
+        if v is not None and median is not None:
+            detail = f"{v:.0f}/s · usually ~{median:.0f}/s"
+        elif v is not None:
+            detail = f"{v:.0f} edits/s"
+        context = "human edits across Wikipedia"
     elif src == "news":
         context = "headline volume"
     return detail, context

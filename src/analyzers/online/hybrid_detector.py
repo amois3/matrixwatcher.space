@@ -30,6 +30,8 @@ FEATURE_SPEC: dict[str, dict[str, str]] = {
     "weather":        {"temperature_celsius": "level", "pressure_hpa": "level"},
     "quantum_rng":    {"randomness_score": "level"},
     "solar_activity": {"f107_flux": "level"},
+    "solar_wind":     {"speed": "level", "density": "level", "bt": "level", "bz_gsm": "level"},
+    "wikipedia_edits":{"edits_per_sec": "level"},
 }
 
 # Threshold rules to KEEP (named physical events). Everything else in the
@@ -44,6 +46,7 @@ NAMED_EVENTS: set[str] = {
     "New volcanic eruption reported",
     "New volcanic unrest reported",
     "Blockchain block-time anomaly",
+    "Geoeffective solar wind (southward IMF)",
 }
 
 

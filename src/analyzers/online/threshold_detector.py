@@ -248,6 +248,16 @@ class ThresholdDetector:
                 trigger_when_above=5.0,
                 description="Geomagnetic storm"
             ),
+
+            # Solar Wind: strongly southward IMF (Bz <= -10 nT, exposed as
+            # bz_south = max(0, -Bz)) is the classic geomagnetic-storm driver,
+            # typically preceding a Kp spike by 1-6 hours. Real physics, not a
+            # tuned threshold -- and a genuine forward-prediction precursor.
+            ThresholdRule(
+                parameter_pattern="solar_wind.bz_south",
+                trigger_when_above=10.0,
+                description="Geoeffective solar wind (southward IMF)"
+            ),
             
             # Space Weather: a percent-change rule on Kp was REMOVED. Kp is a
             # 0-9 quasi-log index; a routine 1->2 wobble is a "+100% change" and

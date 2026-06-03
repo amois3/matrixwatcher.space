@@ -37,6 +37,9 @@ from src.sensors import (
 from src.sensors.earthquake_sensor import EarthquakeSensor
 from src.sensors.space_weather_sensor import SpaceWeatherSensor
 from src.sensors.solar_activity_sensor import SolarActivitySensor
+from src.sensors.solar_wind_sensor import SolarWindSensor
+from src.sensors.earth_tides_sensor import EarthTidesSensor
+from src.sensors.wikipedia_edits_sensor import WikipediaEditsSensor
 from src.sensors.volcanic_activity_sensor import VolcanicActivitySensor
 from src.sensors.quantum_rng_sensor import QuantumRNGSensor
 from src.monitoring import HealthMonitor, AlertingSystem
@@ -669,6 +672,96 @@ class MatrixWatcher:
             self.scheduler.register_task(
                 "solar_activity",
                 lambda f=collect_solar: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        sensor_cfg = self.config.sensors.get("solar_wind")
+        if sensor_cfg and sensor_cfg.enabled:
+            solar_wind_sensor = SolarWindSensor(event_bus=self.event_bus)
+            self._sensors["solar_wind"] = solar_wind_sensor
+            self.health_monitor.register_sensor("solar_wind")
+
+            async def collect_solar_wind(s=solar_wind_sensor):
+                try:
+                    reading = await s.safe_collect()
+                    if reading:
+                        self.storage.write_record(
+                            "solar_wind",
+                            {"timestamp": reading.timestamp, "source": "solar_wind", **reading.data},
+                        )
+                        self.health_monitor.record_success("solar_wind")
+                    else:
+                        self.health_monitor.record_failure("solar_wind", "Collection returned None")
+                except Exception as e:
+                    self.health_monitor.record_failure("solar_wind", str(e))
+
+            self.scheduler.register_task(
+                "solar_wind",
+                lambda f=collect_solar_wind: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        # Earth Tides — solid-earth gravity tide, computed LOCALLY (no network).
+        # Logged as a phase covariate only: deliberately NOT in the detector
+        # FEATURE_SPEC / NAMED_EVENTS, so it produces no anomalies.
+        sensor_cfg = self.config.sensors.get("earth_tides")
+        if sensor_cfg and sensor_cfg.enabled:
+            tides_params = sensor_cfg.custom_params or {}
+            from src.sensors.base import SensorConfig as _SC
+            tides_sensor = EarthTidesSensor(
+                config=_SC(custom_params=tides_params), event_bus=self.event_bus
+            )
+            self._sensors["earth_tides"] = tides_sensor
+            self.health_monitor.register_sensor("earth_tides")
+
+            async def collect_earth_tides(s=tides_sensor):
+                try:
+                    reading = await s.safe_collect()
+                    if reading:
+                        self.storage.write_record(
+                            "earth_tides",
+                            {"timestamp": reading.timestamp, "source": "earth_tides", **reading.data},
+                        )
+                        self.health_monitor.record_success("earth_tides")
+                    else:
+                        self.health_monitor.record_failure("earth_tides", "Collection returned None")
+                except Exception as e:
+                    self.health_monitor.record_failure("earth_tides", str(e))
+
+            self.scheduler.register_task(
+                "earth_tides",
+                lambda f=collect_earth_tides: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        # Wikipedia Edits — global human (non-bot) Wikipedia edit rate, sampled from the
+        # EventStreams SSE feed. Adaptive-only (in FEATURE_SPEC, no named event).
+        sensor_cfg = self.config.sensors.get("wikipedia_edits")
+        if sensor_cfg and sensor_cfg.enabled:
+            from src.sensors.base import SensorConfig as _SCW
+            wiki_sensor = WikipediaEditsSensor(
+                config=_SCW(custom_params=(sensor_cfg.custom_params or {})), event_bus=self.event_bus
+            )
+            self._sensors["wikipedia_edits"] = wiki_sensor
+            self.health_monitor.register_sensor("wikipedia_edits")
+
+            async def collect_wikipedia(s=wiki_sensor):
+                try:
+                    reading = await s.safe_collect()
+                    if reading:
+                        self.storage.write_record(
+                            "wikipedia_edits",
+                            {"timestamp": reading.timestamp, "source": "wikipedia_edits", **reading.data},
+                        )
+                        self.health_monitor.record_success("wikipedia_edits")
+                    else:
+                        self.health_monitor.record_failure("wikipedia_edits", "Collection returned None")
+                except Exception as e:
+                    self.health_monitor.record_failure("wikipedia_edits", str(e))
+
+            self.scheduler.register_task(
+                "wikipedia_edits",
+                lambda f=collect_wikipedia: asyncio.run(f()),
                 interval=sensor_cfg.interval_seconds,
             )
 
