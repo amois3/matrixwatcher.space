@@ -407,9 +407,10 @@ class HistoricalPatternTracker:
             "matched_events": []  # Will be filled when events occur
         })
 
-        # Update condition count for BOTH base and temporal patterns
+        # Update condition count for the base pattern only.
+        # (Time-of-day/weekend split removed: it multiplied hypotheses for no
+        #  current benefit; time-of-day can be tested later via offline replay.)
         condition_key = condition.to_key()
-        temporal_key = condition.to_temporal_key()
 
         for event_type in self._event_definitions.keys():
             # Base pattern (always tracked)
@@ -421,16 +422,7 @@ class HistoricalPatternTracker:
             self._patterns[condition_key][event_type].condition_count += 1
             self._patterns[condition_key][event_type].update_probability()
 
-            # Temporal pattern (more specific)
-            if event_type not in self._patterns[temporal_key]:
-                self._patterns[temporal_key][event_type] = Pattern(
-                    condition_key=temporal_key,
-                    event_type=event_type
-                )
-            self._patterns[temporal_key][event_type].condition_count += 1
-            self._patterns[temporal_key][event_type].update_probability()
-
-        logger.debug(f"Recorded condition: {condition_key} + {temporal_key}")
+        logger.debug(f"Recorded condition: {condition_key}")
     
     def check_events(self, sensor_data: dict[str, Any], current_time: float | None = None) -> list[Event]:
         """Check if any tracked events occurred.
@@ -489,7 +481,6 @@ class HistoricalPatternTracker:
             # Only match if event happened after condition (within window)
             if 0 < time_diff < lookback_window:
                 condition_key = condition.to_key()
-                temporal_key = condition.to_temporal_key()
 
                 # HONEST: Skip if this condition was already matched with this event type
                 # Each condition counts only ONCE per event type
@@ -497,7 +488,7 @@ class HistoricalPatternTracker:
                     continue
 
                 # Update BOTH base and temporal patterns
-                for pattern_key in [condition_key, temporal_key]:
+                for pattern_key in [condition_key]:
                     if event.event_type in self._patterns[pattern_key]:
                         pattern = self._patterns[pattern_key][event.event_type]
 
@@ -529,15 +520,15 @@ class HistoricalPatternTracker:
                 item["matched_events"].append(event.event_type)
 
                 logger.debug(
-                    f"Pattern matched: {condition_key} ({temporal_key}) → {event.event_type}"
+                    f"Pattern matched: {condition_key} → {event.event_type}"
                 )
     
     def get_probabilities(self, condition: Condition, min_observations: int = 5,
                            category_filter: str | None = None) -> dict[str, dict]:
         """Get probabilistic estimates for a condition.
 
-        Uses temporal patterns when they have enough observations (50+),
-        otherwise falls back to base patterns.
+        Uses the base pattern per condition. The time-of-day/weekend split
+        was removed to avoid multiple-comparison inflation.
 
         Args:
             condition: The current condition
@@ -548,14 +539,10 @@ class HistoricalPatternTracker:
             Dictionary of event_type → probability info
         """
         condition_key = condition.to_key()
-        temporal_key = condition.to_temporal_key()
         results = {}
 
         if condition_key not in self._patterns:
             return results
-
-        # Minimum observations needed for temporal pattern to be used
-        TEMPORAL_MIN_OBS = 50
 
         for event_type, base_pattern in self._patterns[condition_key].items():
             # Filter by category if specified
@@ -574,16 +561,8 @@ class HistoricalPatternTracker:
             if category_filter and event_category != category_filter:
                 continue
 
-            # Check if temporal pattern exists and has enough data
-            temporal_pattern = None
-            use_temporal = False
-            if temporal_key in self._patterns and event_type in self._patterns[temporal_key]:
-                temporal_pattern = self._patterns[temporal_key][event_type]
-                if temporal_pattern.condition_count >= TEMPORAL_MIN_OBS:
-                    use_temporal = True
-
-            # Choose which pattern to use
-            pattern = temporal_pattern if use_temporal else base_pattern
+            # Base pattern only (time-of-day split removed)
+            pattern = base_pattern
 
             # Only return if we have enough observations
             if pattern.condition_count >= min_observations:
