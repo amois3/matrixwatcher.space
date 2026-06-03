@@ -20,7 +20,7 @@
 
 ## What is Matrix Watcher?
 
-Matrix Watcher watches **9 completely independent real-world data streams** at once — from Bitcoin to earthquakes to hardware quantum noise — and asks a single, honest question:
+Matrix Watcher watches **12 completely independent real-world data streams** at once — from Bitcoin to earthquakes to hardware quantum noise to the solid-earth tide — and asks a single, honest question:
 
 > **Do anomalies in unrelated domains line up more often than pure chance would produce?**
 
@@ -30,7 +30,7 @@ That honesty is the point. Most "correlation" projects fool themselves (or you).
 
 ---
 
-## The 9 data sources
+## The 12 data sources
 
 Every source is a **real, public data feed** — no simulations, no fabricated numbers.
 
@@ -39,19 +39,22 @@ Every source is a **real, public data feed** — no simulations, no fabricated n
 | <img src="web/static/icons/crypto.svg" width="20" alt=""> | **Crypto** | BTC/ETH price moves & volatility | Binance |
 | <img src="web/static/icons/blockchain.svg" width="20" alt=""> | **Blockchain** | Network block times & on-chain anomalies | public RPC |
 | <img src="web/static/icons/quantum.svg" width="20" alt=""> | **Quantum RNG** | Hardware quantum randomness | ANU QRNG |
-| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Space Weather** | Geomagnetic Kp index, solar wind | NOAA SWPC |
+| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Space Weather** | Geomagnetic Kp index | NOAA SWPC |
+| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Solar Wind** | Real-time speed, density & IMF Bz (storm precursor) | NOAA DSCOVR |
 | <img src="web/static/icons/solar.svg" width="20" alt=""> | **Solar Activity** | F10.7 flux, GOES X-ray flares, proton flux | NOAA |
 | <img src="web/static/icons/earthquake.svg" width="20" alt=""> | **Earthquakes** | Global seismicity (magnitude, location) | USGS |
 | <img src="web/static/icons/volcanic.svg" width="20" alt=""> | **Volcanoes** | Weekly volcanic activity report | Smithsonian / USGS |
 | <img src="web/static/icons/weather.svg" width="20" alt=""> | **Weather** | Temperature & pressure swings | Open-Meteo |
 | <img src="web/static/icons/news.svg" width="20" alt=""> | **News** | Global headline volume | public RSS |
+| <img src="web/static/icons/news.svg" width="20" alt=""> | **Wikipedia** | Global human edit rate (info-field pulse) | Wikimedia EventStreams |
+| <img src="web/static/icons/clusters.svg" width="20" alt=""> | **Earth Tides** | Solid-earth gravitational tide (Sun & Moon) — local phase reference | computed locally |
 
 ---
 
 ## How it works
 
 ```
-9 live sensors → adaptive anomaly detection (each stream's own floating "normal")
+12 live sensors → adaptive anomaly detection (each stream's own floating "normal")
               → self-learning  predict → verify → score  loop  →  honest live dashboard + activity feed
 ```
 
@@ -118,7 +121,7 @@ Validated with shuffle tests and bootstrap. No black boxes. No hallucinations. J
 
 ```
 src/
-├── sensors/            # 9 independent data collectors
+├── sensors/            # 12 independent data collectors
 ├── core/               # event bus, scheduler, types
 ├── analyzers/
 │   ├── online/         # adaptive detector, cluster detector,

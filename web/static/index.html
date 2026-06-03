@@ -18,7 +18,7 @@
     
     <!-- SEO Meta Tags -->
     <title>Matrix Watcher — Cross-Domain Anomaly Monitor &amp; Open Experiment</title>
-    <meta name="description" content="Matrix Watcher is a self-learning, adaptive monitor of 9 independent real-world data streams — crypto, earthquakes, space weather, solar flares, quantum randomness, volcanoes and more. It learns each stream’s normal, detects anomalies, and rigorously tests whether they line up more than chance. Live, open, and honest about its results.">
+    <meta name="description" content="Matrix Watcher is a self-learning, adaptive monitor of 12 independent real-world data streams — crypto, earthquakes, space weather, solar flares, quantum randomness, volcanoes and more. It learns each stream’s normal, detects anomalies, and rigorously tests whether they line up more than chance. Live, open, and honest about its results.">
     <meta name="keywords" content="anomaly detection, cross-domain correlation, quantum randomness monitor, geomagnetic activity, earthquake monitoring, space weather dashboard, open data experiment, statistical null result, real-time monitoring, ANU QRNG, NOAA space weather, USGS earthquakes">
     <meta name="author" content="Aleksejs Moisejevs">
     <meta name="last-modified" content="2026-05-29">
@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="9 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant cross-domain signal — and we say so.">
+    <meta property="og:description" content="12 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant cross-domain signal — and we say so.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -59,7 +59,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta name="twitter:description" content="9 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant signal — and we say so.">
+    <meta name="twitter:description" content="12 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant signal — and we say so.">
     <meta name="twitter:image" content="https://matrixwatcher.space/static/og-image.png">
     
     <!-- PWA -->
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors 9 independent real-world data streams and tests, honestly, whether their anomalies correlate beyond chance.",
+                "description": "An open experiment that monitors 12 independent real-world data streams and tests, honestly, whether their anomalies correlate beyond chance.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring 9 independent data domains (crypto, blockchain, earthquakes, space weather, solar activity, volcanoes, quantum randomness, weather, news) and testing for cross-domain anomaly correlations.",
+                "description": "Real-time dashboard monitoring 12 independent data domains (crypto, blockchain, earthquakes, space weather, solar wind, solar activity, volcanoes, quantum randomness, weather, news, Wikipedia edits, solid-earth tides) and testing for cross-domain anomaly correlations.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-06-01",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Real-time monitoring of 9 independent data sources",
+                    "Real-time monitoring of 12 independent data sources",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Shuffle test and out-of-sample backtest against chance",
@@ -127,7 +127,7 @@
                 "@type": "Dataset",
                 "@id": "https://matrixwatcher.space/#dataset",
                 "name": "Matrix Watcher cross-domain anomaly observations",
-                "description": "Continuous real-time readings and detected anomalies across 9 independent domains — cryptocurrency prices, blockchain block times, global earthquakes, geomagnetic/space weather, solar X-ray and proton flux, volcanic activity, hardware quantum randomness, weather, and news volume — collected since December 2025 to study whether anomalies in unrelated domains coincide beyond chance.",
+                "description": "Continuous real-time readings and detected anomalies across 12 independent domains — cryptocurrency prices, blockchain block times, global earthquakes, geomagnetic/space weather, real-time solar wind (speed/density/IMF Bz), solar X-ray and proton flux, volcanic activity, hardware quantum randomness, weather, news volume, global Wikipedia edit rate, and the locally-computed solid-earth gravitational tide — collected since December 2025 to study whether anomalies in unrelated domains coincide beyond chance.",
                 "creator": { "@id": "https://matrixwatcher.space/#org" },
                 "temporalCoverage": "2025-12-12/..",
                 "isAccessibleForFree": true,
@@ -142,7 +142,7 @@
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open, real-time experiment that monitors 9 completely independent real-world data streams — cryptocurrency, blockchain, earthquakes, space weather, solar activity, volcanoes, hardware quantum randomness, weather and news — and rigorously tests whether anomalies in these unrelated domains line up more often than pure chance would produce." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open, real-time experiment that monitors 12 completely independent real-world data streams — cryptocurrency, blockchain, earthquakes, space weather, solar wind, solar activity, volcanoes, hardware quantum randomness, weather, news, Wikipedia edits and the solid-earth tide — and rigorously tests whether anomalies in these unrelated domains line up more often than pure chance would produce." }
                     },
                     {
                         "@type": "Question",
@@ -471,6 +471,15 @@
             gap: 1px;
             background: var(--border);
             min-height: calc(100vh - 75px);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 80px;
+        }
+
+        /* Give the two bottom panels (Predictions, Anomaly Clusters) a taller,
+           less flat footprint so they look intentional and the closing frame
+           line sits comfortably below their centered empty states. */
+        .container > section.panel:nth-last-child(-n+2) {
+            min-height: 440px;
         }
 
         /* The first panel (Daily Digest) spans both columns so the 3-panel
@@ -1419,18 +1428,21 @@
     <noscript>
         <div style="padding:24px;max-width:760px;margin:0 auto;font-family:monospace;line-height:1.6;">
             <h1>Matrix Watcher — Cross-Domain Anomaly Monitor</h1>
-            <p>Matrix Watcher is an open, real-time experiment. It monitors <strong>9 completely independent real-world data streams</strong> and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce?</p>
-            <h2>The 9 monitored sources (all real public data)</h2>
+            <p>Matrix Watcher is an open, real-time experiment. It monitors <strong>12 completely independent real-world data streams</strong> and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce?</p>
+            <h2>The 12 monitored sources (all real public data)</h2>
             <ul>
                 <li>Crypto — Bitcoin &amp; Ethereum prices and volatility (Binance)</li>
                 <li>Blockchain — network block times and on-chain anomalies</li>
                 <li>Quantum RNG — hardware quantum randomness (ANU QRNG)</li>
-                <li>Space Weather — geomagnetic Kp index &amp; solar wind (NOAA SWPC)</li>
+                <li>Space Weather — geomagnetic Kp index (NOAA SWPC)</li>
+                <li>Solar Wind — real-time speed, density &amp; IMF Bz, the storm precursor (NOAA DSCOVR)</li>
                 <li>Solar Activity — F10.7 flux, GOES X-ray flares, proton flux (NOAA)</li>
                 <li>Earthquakes — global seismic activity (USGS)</li>
                 <li>Volcanoes — weekly volcanic activity report (Smithsonian/USGS)</li>
                 <li>Weather — temperature &amp; pressure (Open-Meteo)</li>
                 <li>News — global headline volume (public RSS)</li>
+                <li>Wikipedia — global human edit rate, an objective info-field pulse (Wikimedia EventStreams)</li>
+                <li>Earth Tides — solid-earth gravitational tide from Sun &amp; Moon, computed locally (phase reference)</li>
             </ul>
             <h2>What we've found</h2>
             <p>Across more than five months of clean data, rigorous testing — shuffle tests, out-of-sample backtesting with block bootstrap, and base-rate comparison — finds <strong>no statistically significant cross-domain signal</strong>. We report this null result honestly. Matrix Watcher is a measurement instrument, not a prediction service: it uses no AI or neural networks, only transparent statistics.</p>
@@ -1550,22 +1562,25 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches nine completely independent slices of reality at once — from Bitcoin to earthquakes to quantum noise — and asks one honest question: <strong>do anomalies in unrelated domains line up more often than pure chance would produce?</strong> We measure it rigorously and report the answer truthfully, even when the answer is "no". We watch the patterns; we never invent meaning for them.</p>
+                <p>Matrix Watcher watches twelve completely independent slices of reality at once — from Bitcoin to earthquakes to quantum noise — and asks one honest question: <strong>do anomalies in unrelated domains line up more often than pure chance would produce?</strong> We measure it rigorously and report the answer truthfully, even when the answer is "no". We watch the patterns; we never invent meaning for them.</p>
             </div>
 
             <div class="modal-section">
                 <h3>Data Sources</h3>
-                <p>Nine independent sensors, every one fed by <strong>real public data</strong> — no simulations, no fabricated numbers:</p>
+                <p>Twelve independent sensors, every one fed by <strong>real public data</strong> — no simulations, no fabricated numbers:</p>
                 <div class="sensor-grid">
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-crypto"/></svg>Crypto</strong><br>Bitcoin & Ethereum price moves and volatility (Binance)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-blockchain"/></svg>Blockchain</strong><br>Network block times and on-chain anomalies</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-quantum"/></svg>Quantum RNG</strong><br>Hardware quantum randomness (ANU QRNG)</div>
-                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Space Weather</strong><br>Geomagnetic Kp index & solar wind (NOAA SWPC)</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Space Weather</strong><br>Geomagnetic Kp index (NOAA SWPC)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-solar"/></svg>Solar Activity</strong><br>F10.7 flux, GOES X-ray flares, proton flux (NOAA)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-earthquake"/></svg>Earthquakes</strong><br>Global seismic activity, magnitude & depth (USGS)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-volcanic"/></svg>Volcanoes</strong><br>Weekly volcanic activity report (Smithsonian/USGS)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-weather"/></svg>Weather</strong><br>Temperature & pressure swings (Open-Meteo, New York)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>News</strong><br>Global headline volume from public RSS feeds</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Solar Wind</strong><br>Real-time speed, density & IMF Bz — the precursor that drives geomagnetic storms (NOAA DSCOVR)</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>Wikipedia</strong><br>Global human edit rate — an objective pulse of the information field (Wikimedia EventStreams)</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-clusters"/></svg>Earth Tides</strong><br>Solid-earth gravitational tide from the Sun & Moon, computed locally — a phase reference, immune to any network outage</div>
                 </div>
             </div>
 
@@ -1834,24 +1849,38 @@
             panel.innerHTML = `<div style="padding:20px 22px;">${narrativeBlock}${tiles}</div>`;
         }
 
+        // Live counter: calendar days since the first observation (2025-12-12 UTC).
+        // Recomputed on every render, so it ticks over to a new number each day.
+        function daysWatching() {
+            const START = Date.UTC(2025, 11, 12);
+            return Math.max(1, Math.floor((Date.now() - START) / 86400000));
+        }
+
+        // Single source of truth for the Predictions empty state (live counter),
+        // used both when there are zero predictions and when some exist but none
+        // qualify as a card — so the message (and toggle back) is always identical.
+        function predictionsEmptyHTML() {
+            return `
+                    <div class="empty-state" style="padding:0 28px;text-align:center;">
+                        <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-predictions"/></svg></div>
+                        <div style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.65;">
+                            <span style="color:var(--neon-purple);font-weight:600;">Day ${daysWatching()} of watching</span> — and still nothing beats pure chance.
+                            We track thousands of condition→event patterns, and so far not one predicts
+                            better than the event already does on its own. That's not a letdown, it's the
+                            whole point: you get a confident zero instead of a coin-flip in a lab coat.
+                            The day a pattern genuinely pulls ahead, it shows up right here first.
+                        </div>
+                    </div>
+                `;
+        }
+
         function renderPredictions(predictions) {
             const panel = document.getElementById('predictionsPanel');
             const count = document.getElementById('predictionsCount');
 
             if (predictions.length === 0) {
                 count.textContent = '0';
-                panel.innerHTML = `
-                    <div class="empty-state" style="padding:0 28px;text-align:center;">
-                        <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-predictions"/></svg></div>
-                        <div style="font-size:15px;color:var(--text-secondary);max-width:440px;line-height:1.65;">
-                            No predictive edge right now. We track many
-                            condition→event patterns, but none currently does
-                            better than what the event already does on its own.
-                            We'd rather show nothing than dress up a base rate
-                            as a forecast.
-                        </div>
-                    </div>
-                `;
+                panel.innerHTML = predictionsEmptyHTML();
                 return;
             }
 
@@ -1912,12 +1941,7 @@
                 html += createExternalCard('<svg class="mw-ic" style="width:18px;height:18px;color:#ffee00;vertical-align:-3px;margin-right:6px"><use href="#ic-solar"/></svg>Solar Activity', 'solar', solarPreds, '#ffee00');
             }
 
-            panel.innerHTML = html || `
-                <div class="empty-state">
-                    <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-predictions"/></svg></div>
-                    <div>No significant predictions</div>
-                </div>
-            `;
+            panel.innerHTML = html || predictionsEmptyHTML();
         }
 
         function createAssetCard(title, assetId, predictions, accentColor) {
@@ -2217,9 +2241,15 @@
             
             if (levels.length === 0) {
                 panel.innerHTML = `
-                    <div class="empty-state">
+                    <div class="empty-state" style="text-align:center;">
                         <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-clusters"/></svg></div>
-                        <div>No anomalies in selected period</div>
+                        <div style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.65;">
+                            <span style="color:var(--neon-orange);font-weight:600;">Day ${daysWatching()}</span>, and not a single cross-domain link has held up.
+                            Sensors do wander out of range together now and then — coincidence, until
+                            proven otherwise — but across ${daysWatching()} days of data, none has
+                            replicated as a real correlation. Quiet in this window, too.
+                            If that ever changes, you'll see it here first — and we'll say so plainly.
+                        </div>
                     </div>
                 `;
                 return;
@@ -2379,11 +2409,15 @@
         // ---- Recent Activity: real anomalies, in plain language ----
         const ACT_ICON = { crypto:"crypto", blockchain:"blockchain", weather:"weather",
             news:"news", earthquake:"earthquake", space_weather:"space_weather",
-            quantum_rng:"quantum", solar_activity:"solar", volcanic_activity:"volcanic" };
+            quantum_rng:"quantum", solar_activity:"solar", volcanic_activity:"volcanic",
+            solar_wind:"space_weather", wikipedia_edits:"news", wikimedia_edits:"news",
+            earth_tides:"clusters" };
         const ACT_NAME = { crypto:"Crypto markets", blockchain:"Blockchain", weather:"Weather",
             news:"World news", earthquake:"Earthquake", space_weather:"Space weather",
             quantum_rng:"Quantum randomness", solar_activity:"Solar activity",
-            volcanic_activity:"Volcano" };
+            volcanic_activity:"Volcano", solar_wind:"Solar wind",
+            wikipedia_edits:"Wikipedia edits", wikimedia_edits:"Wikipedia edits",
+            earth_tides:"Earth tides" };
         function actHuman(x) {
             var d = (x.detail || "").trim(), p = x.parameter || "";
             switch (x.source) {
@@ -2396,7 +2430,10 @@
                 case "blockchain": return d || "Irregular block timing on the network";
                 case "volcanic_activity": return d ? "New volcanic activity — " + d : "New volcanic activity reported";
                 case "news": return "Unusual news volume " + d;
-                default: return d || x.reason || "Unusual reading";
+                case "solar_wind": return d ? "Solar wind \u2014 " + d : "Solar wind shift";
+                case "wikipedia_edits":
+                case "wikimedia_edits": return d ? "Wikipedia editing surge \u2014 " + d : "Wikipedia editing surge";
+                default: return d || "Unusual reading";
             }
         }
 
@@ -2419,7 +2456,7 @@
             }
             const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
             panel.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:10px;padding:14px 16px;">' + items.map(function(x){
-                return '<div class="card" style="flex:1 1 240px;min-width:240px;margin-bottom:0;cursor:default;padding:13px 15px;display:flex;gap:11px;align-items:flex-start;">' +
+                return '<div class="card act-card" style="flex:1 1 240px;min-width:240px;margin-bottom:0;cursor:default;padding:13px 15px;display:flex;gap:11px;align-items:flex-start;">' +
                     '<span style="line-height:1;"><svg class="mw-ic" style="width:22px;height:22px;color:' + actDot(x.severity) + '"><use href="#ic-' + (ACT_ICON[x.source]||"clusters") + '"/></svg></span>' +
                     '<div style="flex:1;min-width:0;">' +
                     '<div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">' +
@@ -2430,7 +2467,36 @@
                     '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + (x.count > 1 ? x.count + '\u00d7 \u00b7 latest ' : '') + actAgo(x.timestamp) + '</div>' +
                     '</div></div>';
             }).join("") + "</div>";
+            adjustActivityLayout();
         }
+
+        // When the last Recent Activity card lands alone on its row it
+        // stretches full-width; center its content instead of left-aligning.
+        function adjustActivityLayout() {
+            const panel = document.getElementById('activityPanel');
+            if (!panel) return;
+            const cards = panel.querySelectorAll('.act-card');
+            cards.forEach(function(c){
+                c.style.justifyContent = '';
+                const cd = c.querySelector(':scope > div');
+                if (cd) { cd.style.flex=''; cd.style.textAlign=''; cd.style.maxWidth='';
+                    const hdr = cd.querySelector(':scope > div'); if (hdr) hdr.style.justifyContent=''; }
+            });
+            if (!cards.length) return;
+            const last = cards[cards.length - 1];
+            const alone = cards.length === 1 || last.offsetTop > cards[cards.length - 2].offsetTop;
+            if (!alone) return;
+            last.style.justifyContent = 'center';
+            const cd = last.querySelector(':scope > div');
+            if (cd) {
+                cd.style.flex = '0 1 auto';
+                cd.style.textAlign = 'center';
+                cd.style.maxWidth = '90%';
+                const hdr = cd.querySelector(':scope > div');
+                if (hdr) hdr.style.justifyContent = 'center';
+            }
+        }
+        window.addEventListener('resize', adjustActivityLayout);
 
         // Initial fetch
         fetchData();

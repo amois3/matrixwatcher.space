@@ -1,22 +1,25 @@
 # Matrix Watcher
 
-> An open, real-time experiment that monitors 9 completely independent real-world data streams and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce? Live at https://matrixwatcher.space — open source, real public data, and honest about its results.
+> An open, real-time experiment that monitors 12 completely independent real-world data streams and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce? Live at https://matrixwatcher.space — open source, real public data, and honest about its results.
 
 ## What it is
 - A measurement instrument, **not** a prediction service. It does not claim to predict crypto prices or earthquakes.
 - Uses **no AI or neural networks** — only transparent, rule-based statistics (probability = occurrences / observations), validated with shuffle tests and out-of-sample backtesting.
 - Founded 2025 by Aleksejs Moisejevs. Collecting data continuously since 12 December 2025.
 
-## The 9 monitored sources (all real public feeds)
+## The 12 monitored sources (all real public feeds)
 - **Crypto** — Bitcoin & Ethereum prices and volatility (Binance)
 - **Blockchain** — network block times and on-chain anomalies
 - **Quantum RNG** — hardware quantum randomness (ANU QRNG)
-- **Space Weather** — geomagnetic Kp index and solar wind (NOAA SWPC)
+- **Space Weather** — geomagnetic Kp index (NOAA SWPC)
+- **Solar Wind** — real-time solar-wind speed, density and IMF Bz; the physical precursor that drives geomagnetic storms (NOAA DSCOVR)
 - **Solar Activity** — F10.7 radio flux, GOES X-ray flares, proton flux (NOAA)
 - **Earthquakes** — global seismic activity, magnitude and location (USGS)
 - **Volcanoes** — weekly volcanic activity report (Smithsonian / USGS)
 - **Weather** — temperature and pressure (Open-Meteo)
 - **News** — global headline volume (public RSS)
+- **Wikipedia** — global human edit rate, an objective pulse of the information field (Wikimedia EventStreams, Wikipedia-only, bots filtered)
+- **Earth Tides** — solid-earth gravitational tide from the Sun and Moon, computed locally from ephemerides; used as a phase reference (a covariate, not an anomaly stream), and immune to any network outage
 
 ## How it works
 - Each source is polled in real time. Detection is **adaptive**: a reading is flagged only when it is unusual relative to that stream's own recent distribution (robust statistics, floating thresholds) — no hardcoded numbers. Genuine physical events (real earthquakes, geomagnetic storms, M-class flares) are flagged at their established physical levels.
