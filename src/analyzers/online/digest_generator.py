@@ -34,6 +34,9 @@ SOURCE_LABEL = {
     "quantum_rng": "quantum randomness",
     "solar_activity": "solar activity",
     "volcanic_activity": "volcanic activity",
+    "solar_wind": "the solar wind",
+    "wikipedia_edits": "Wikipedia edits",
+    "earth_tides": "earth tides",
 }
 
 
@@ -59,6 +62,7 @@ def build_digest(
     clusters: list[dict[str, Any]],
     predictions: list[dict[str, Any]],
     generated_at: float | None = None,
+    single_source_activity: dict[str, int] | None = None,
 ) -> dict[str, Any]:
     """Build an honest daily digest from raw cluster records and predictions.
 
@@ -97,7 +101,17 @@ def build_digest(
         if c["cluster"]["level"] == highest_level and not highest_level_sources:
             highest_level_sources = _cluster_sources(c)
 
-    most_active_source = source_activity.most_common(1)[0][0] if source_activity else None
+    # 'Most active' and 'Activity level' should reflect the whole day, not only
+    # the rare cross-domain clusters: fold in the solo (single-source) anomalies
+    # so these tiles actually move day to day.
+    combined_activity: Counter[str] = Counter(source_activity)
+    for _src, _cnt in (single_source_activity or {}).items():
+        combined_activity[_src] += _cnt
+    if combined_activity:
+        most_active_source, most_active_count = combined_activity.most_common(1)[0]
+    else:
+        most_active_source, most_active_count = None, 0
+    anomalies_today = sum((single_source_activity or {}).values())
 
     # Best standing prediction (highest probability, then most observations)
     top_prediction = None
@@ -115,6 +129,14 @@ def build_digest(
             "avg_time_hours": top.get("avg_time_hours"),
         }
 
+    # A single 'tone' for the day, used to colour the digest accent bar.
+    if real:
+        day_tone = "critical" if (highest_level >= 4 or peak_status in ("high", "critical")) else "notable"
+    elif single_source_activity:
+        day_tone = "active"
+    else:
+        day_tone = "calm"
+
     digest = {
         "date": date_str,
         "generated_at": generated_at,
@@ -124,17 +146,81 @@ def build_digest(
         "highest_level_name": LEVEL_NAME.get(highest_level),
         "highest_level_sources": highest_level_sources,
         "most_active_source": most_active_source,
+        "most_active_count": most_active_count,
+        "anomalies_today": anomalies_today,
         "source_activity": dict(source_activity),
         "peak_index": round(peak_index, 1),
         "peak_status": peak_status,
+        "day_tone": day_tone,
         "predictions_count": len(predictions),
         "top_prediction": top_prediction,
         "narrative": _narrative(
             date_str, real, by_level, highest_level, highest_level_sources,
             most_active_source, source_activity, top_prediction,
+            single_source_activity,
         ),
     }
     return digest
+
+
+# ---------------------------------------------------------------------------
+# Narrative variant pools. The digest tile is the most-visible thing on the
+# page, so it doubles as how we "talk" to visitors: many phrasings per kind of
+# day, picked deterministically by date so the wording is stable within a day
+# but rarely repeats day to day. Honest first, with a light, human touch.
+# ---------------------------------------------------------------------------
+
+_CALM = [
+    "A genuinely calm day \u2014 every source we watch stayed within its normal range, and nothing lined up across different domains.",
+    "Quiet on every front. Crypto, earthquakes, the Sun, Earth's magnetic field \u2014 all of them kept to their lane today, with no coincidences across domains.",
+    "Nothing to report \u2014 and that counts as a finding too. Every source held steady, and no unrelated domains moved together.",
+    "A slow day for the cosmos. All our sources kept to their usual range, and nothing unusual lined up across different worlds.",
+    "Calm waters today. Each source stayed within its normal range, and none of them coincided with another.",
+    "All quiet. Not a single source strayed far from normal, and nothing synced up across domains \u2014 the universe kept things tidy.",
+    "Smooth sailing. Every source behaved, and no unrelated domains lined up \u2014 exactly the kind of 'nothing' we're happy to report honestly.",
+    "Boring, in the best way. No source left its comfort zone, and nothing coincided across domains today.",
+]
+
+_SOLO_MANY = [
+    "No cross-domain coincidences today \u2014 that's the headline. A few sources stepped out of their usual range on their own ({ex}), but each moved alone. We only take notice when three or more unrelated sources stir at once.",
+    "Busy, but not suspicious. Several sources had a wobble of their own today ({ex}), yet nothing lined up across different domains \u2014 the coincidences we hunt for need at least three unrelated sources moving together.",
+    "A bit of solo action: {ex} each drifted out of range on their own, but the domains never synced up. So far, just the universe doing its own thing in separate corners.",
+    "Some sources stretched their legs today ({ex}) \u2014 each on its own schedule. Nothing coincided across domains, which is exactly the bar we watch for: three or more unrelated sources moving in the same half-minute.",
+    "Plenty happening on their own ({ex}), nothing happening together. Each source wandered solo; no cross-domain coincidence today.",
+    "The day had its solo moments ({ex}), but they never overlapped. No unrelated domains lined up, so nothing here we'd call a coincidence \u2014 yet.",
+    "A few sources spoke up today ({ex}) \u2014 just never in chorus. They each moved alone, with no cross-domain coincidence to report.",
+]
+
+_SOLO_ONE = [
+    "Mostly quiet today. One source briefly stepped out of its usual range on its own ({ex}) \u2014 but it moved alone, with nothing lining up across domains.",
+    "Just one source stirred today ({ex}), and it kept to itself. No unrelated domains coincided, so nothing here we'd flag yet.",
+    "A single wobble today, from {ex}. On its own, though \u2014 no cross-domain coincidence to report.",
+    "One source went off-script today ({ex}); everyone else stayed put. Nothing lined up across domains.",
+]
+
+_CLUSTER_LEADS = [
+    "We watched every source through the day. On {n} brief {occasion}, three or more unrelated sources showed unusual readings within the same half-minute",
+    "Today got interesting on {n} {occasion}: three or more unrelated sources flickered out of range within the same half-minute",
+    "Worth a note \u2014 on {n} {occasion} today, several unrelated sources stirred together within the same half-minute",
+    "A few things rhymed today. On {n} {occasion}, three or more unrelated sources moved at once within the same half-minute",
+]
+
+_CLUSTER_TAILS = [
+    " Coincidences like these also happen by chance, so we record them honestly without claiming any connection.",
+    " Coincidences happen \u2014 with enough sources, some overlap is expected \u2014 so we log them plainly and claim nothing.",
+    " We note these without reading meaning into them: unrelated things do sometimes move at once.",
+    " Tempting as it is to connect the dots, chance alone produces overlaps like this \u2014 so we just record it.",
+]
+
+
+def _pick(options: list[str], seed: str) -> str:
+    """Deterministically pick one option from a pool, keyed by a seed (the date),
+    so the wording is stable for a given day but varies across days."""
+    import hashlib
+    if not options:
+        return ""
+    idx = int(hashlib.sha1(seed.encode("utf-8")).hexdigest(), 16) % len(options)
+    return options[idx]
 
 
 def _narrative(
@@ -146,46 +232,42 @@ def _narrative(
     most_active_source: str | None,
     source_activity: Counter,
     top_prediction: dict | None,
+    single_source_activity: dict[str, int] | None = None,
 ) -> str:
     """Compose a plain-language narrative a non-technical visitor can read.
 
-    No jargon ("L3", "cluster", "synchronicity"), no leading date, no scary
-    percentages — just an honest, calm description of the day in human words.
+    No jargon, no leading date, no scary percentages \u2014 just an honest, human
+    description of the day, drawn from a pool of phrasings so it stays fresh.
     """
     if not real:
-        return (
-            "A calm day. Every source we watch — from crypto markets to "
-            "earthquakes, space weather and quantum randomness — stayed within "
-            "its normal range, and nothing unusual lined up across different "
-            "domains."
-        )
+        solo = single_source_activity or {}
+        if solo:
+            top = sorted(solo.items(), key=lambda kv: kv[1], reverse=True)
+            names = [_label(src) for src, _ in top[:3]]
+            if len(names) > 1:
+                examples = ", ".join(names[:-1]) + " and " + names[-1]
+            else:
+                examples = names[0]
+            pool = _SOLO_ONE if len(solo) == 1 else _SOLO_MANY
+            return _pick(pool, date_str).format(ex=examples)
+        return _pick(_CALM, date_str)
 
     n = len(real)
     occasion = "occasion" if n == 1 else "occasions"
-
-    lead = (
-        f"We watched every source through the day. On {n} brief {occasion}, "
-        f"three or more unrelated sources showed unusual readings within the "
-        f"same half-minute"
-    )
+    lead = _pick(_CLUSTER_LEADS, date_str).format(n=n, occasion=occasion)
     if most_active_source:
-        lead += f" — most often involving {_label(most_active_source)}"
+        lead += f" \u2014 most often involving {_label(most_active_source)}"
     lead += "."
 
-    # If the strongest moment pulled in even more sources, name them plainly.
     if highest_level >= 4 and highest_level_sources:
-        names = [_label(s) for s in highest_level_sources]
+        names = [_label(src) for src in highest_level_sources]
         if len(names) > 1:
             joined = ", ".join(names[:-1]) + " and " + names[-1]
         else:
             joined = names[0]
         lead += f" The strongest of these brought together {joined}."
 
-    tail = (
-        " Coincidences like these also happen by chance, so we record them "
-        "honestly without claiming any connection."
-    )
-    return lead + tail
+    return lead + _pick(_CLUSTER_TAILS, date_str)
 
 
 def date_str_utc(ts: float | None = None) -> str:

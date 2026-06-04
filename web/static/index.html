@@ -1791,11 +1791,15 @@
 
             const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
-            // The narrative — large, calm, human paragraph (Inter).
+            // The narrative — large, calm, human paragraph (Inter), with a
+            // colour accent along the top edge signalling the day's tone.
+            const TONE = { calm:'#4caf80', active:'#4d9fc4',
+                           notable:'#cf8a45', critical:'#c85a72' };
+            const toneColor = TONE[d.day_tone] || TONE.calm;
             const narrativeBlock = `
-                <div class="card" style="cursor:default;margin-bottom:14px;padding:18px 20px;">
+                <div class="card" style="cursor:default;margin-bottom:14px;padding:18px 20px;border-top:3px solid ${toneColor};">
                     <p style="font-family:'Inter',sans-serif;font-size:16px;line-height:1.7;
-                              margin:0;color:var(--text-primary);text-align:center;">
+                              margin:0;color:#d8dde8;text-align:center;">
                         ${escape(d.narrative || '—')}
                     </p>
                 </div>`;
@@ -1832,17 +1836,27 @@
                     ${sub ? `<div style="font-size:12px;color:var(--text-muted);margin-top:5px;">${sub}</div>` : ''}
                 </div>`;
 
+            // Activity level + most-active now reflect the whole day's flagged
+            // readings (solo anomalies included), so they actually move daily.
+            const anomToday = d.anomalies_today ?? 0;
+            const actWord = anomToday === 0 ? 'Quiet' : anomToday < 20 ? 'Light'
+                          : anomToday < 45 ? 'Normal' : anomToday < 80 ? 'Busy' : 'High';
+            const actColor = anomToday >= 80 ? '#c85a72' : anomToday >= 45 ? '#cf8a45'
+                          : anomToday === 0 ? 'var(--text-secondary)' : '#d8dde8';
+            const activeCount = d.most_active_count ?? 0;
             const tiles = `
                 <div style="display:flex;flex-wrap:wrap;gap:12px;">
                     ${tile('clusters', 'Moments in sync', clustersTotal,
                            clustersTotal === 1 ? 'time today' : 'times today',
                            clustersTotal > 0 ? 'var(--neon-blue)' : 'var(--text-secondary)',
                            'How many times today 3 or more independent sources showed unusual readings within the same 30 seconds.')}
-                    ${tile('activity', 'Activity level', statusWord, `${peak} / 100`, statusColor,
-                           'Overall deviation from the normal background across all sources, scored 0–100. “Normal” means a typical day.')}
-                    ${tile((activeIcon || 'clusters'), 'Most active', activeName, mostActive ? 'today' : '',
+                    ${tile('activity', 'Activity level', actWord,
+                           `${anomToday} ${anomToday === 1 ? 'reading' : 'readings'} flagged`, actColor,
+                           'How many individual readings were flagged as unusual across all sources today — solo wobbles included, not just cross-domain moments.')}
+                    ${tile((activeIcon || 'clusters'), 'Most active', activeName,
+                           mostActive ? `${activeCount} ${activeCount === 1 ? 'reading' : 'readings'} lately` : '',
                            'var(--text-primary)',
-                           'The source that appeared most often in those synchronized moments today.')}
+                           'The source with the most unusual readings in the live feed (last 3 days), ranked by its real activity — nothing suppressed.')}
                     ${tile('predictions', 'Predictive signals', predCount,
                            predCount > 0 ? 'beating chance' : 'none beat chance',
                            predCount > 0 ? 'var(--neon-green)' : 'var(--text-secondary)',

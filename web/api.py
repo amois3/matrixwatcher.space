@@ -1014,6 +1014,36 @@ async def get_stats():
     }
 
 
+def load_single_anomaly_sources(date_str: str) -> dict:
+    """Per-source count of SOLO (non-cluster) anomalies for a UTC date.
+
+    The digest narrative needs to know whether individual sensors stepped out
+    of range on their own, even on days with no cross-domain (L3+) clusters --
+    otherwise it would wrongly claim "every source stayed within its normal
+    range" on a day that was actually busy with independent anomalies.
+    """
+    from collections import Counter
+    log_file = Path("logs/anomalies") / f"{date_str}.jsonl"
+    if not log_file.exists():
+        return {}
+    counts: Counter = Counter()
+    try:
+        with open(log_file) as f:
+            for line in f:
+                try:
+                    d = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if "cluster" in d:
+                    continue
+                src = d.get("sensor_source")
+                if src and src != "wikimedia_edits":  # skip only the dead renamed key
+                    counts[src] += 1
+    except OSError:
+        return {}
+    return dict(counts)
+
+
 @app.get("/api/digest")
 async def get_digest(date: str | None = None):
     """Daily digest: an honest narrative summary of a day's observations.
@@ -1025,7 +1055,19 @@ async def get_digest(date: str | None = None):
     clusters = load_anomalies_for_date(date_str)
     # Predictions are only meaningful for "today"; omit for historical dates.
     predictions = get_active_predictions() if date_str == date_str_utc() else []
-    return build_digest(date_str, clusters, predictions)
+    single_sources = load_single_anomaly_sources(date_str)
+    digest = build_digest(date_str, clusters, predictions,
+                          single_source_activity=single_sources)
+    # 'Most active' mirrors the Recent Activity feed (same window the dashboard
+    # shows), by real activity with nothing suppressed — now that blockchain is
+    # counted correctly it no longer drowns out the rest.
+    if date_str == date_str_utc():
+        recent = load_recent_activity(hours=72)
+        if recent:
+            top = max(recent, key=lambda r: r.get("count", 0) or 0)
+            digest["most_active_source"] = top["source"]
+            digest["most_active_count"] = top.get("count", 0) or 0
+    return digest
 
 
 @app.get("/api/all")
