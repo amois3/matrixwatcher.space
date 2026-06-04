@@ -90,23 +90,26 @@ class SolarWindSensor(BaseSensor):
         if speed is None and bz is None and bt is None:
             raise RuntimeError("solar_wind: both NOAA SWPC endpoints failed")
 
-        # Derived non-negative "southward component": bz_south = max(0, -bz).
-        # The threshold detector only triggers on values ABOVE a level, so we
-        # expose the geoeffective magnitude directly (bz_south >= 10 nT == strong
-        # southward IMF, the classic storm driver).
-        bz_south = max(0.0, -bz) if bz is not None else 0.0
+        # IMPORTANT: a missing value in the feed must NOT be stored as 0.0 --
+        # the adaptive detector would read that as a real plunge to zero and
+        # fire a false anomaly (Bt in particular is never physically 0). So we
+        # omit any field the feed did not provide; a genuine 0.00 (e.g. Bz
+        # crossing zero) still comes through as a real reading.
+        data: dict = {"fetched_at_utc": datetime.now(tz=timezone.utc).isoformat()}
+        if speed is not None:
+            data["speed"] = float(speed)
+        if density is not None:
+            data["density"] = float(density)
+        if bz is not None:
+            data["bz_gsm"] = float(bz)
+            # Derived non-negative "southward component": bz_south = max(0, -bz).
+            # The threshold detector only triggers ABOVE a level, so we expose the
+            # geoeffective magnitude directly (>= 10 nT == strong southward IMF).
+            data["bz_south"] = max(0.0, -float(bz))
+        if bt is not None:
+            data["bt"] = float(bt)
 
-        return SensorReading.create(
-            source="solar_wind",
-            data={
-                "speed": float(speed) if speed is not None else 0.0,
-                "density": float(density) if density is not None else 0.0,
-                "bz_gsm": float(bz) if bz is not None else 0.0,
-                "bt": float(bt) if bt is not None else 0.0,
-                "bz_south": float(bz_south),
-                "fetched_at_utc": datetime.now(tz=timezone.utc).isoformat(),
-            },
-        )
+        return SensorReading.create(source="solar_wind", data=data)
 
     def get_schema(self) -> dict[str, type]:
         return {

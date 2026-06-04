@@ -129,23 +129,31 @@ class SolarActivitySensor(BaseSensor):
         # solar event flag (NOAA's own threshold: >= 10 pfu at >=10 MeV is a "proton event")
         is_proton_event = bool(proton_10mev is not None and proton_10mev >= 10.0)
 
-        return SensorReading.create(
-            source="solar_activity",
-            data={
-                # Numeric parameters — these are the ones the threshold detector
-                # iterates. Each must be a finite float for a rule to bite.
-                "f107_flux": float(f107_flux) if f107_flux is not None else 0.0,
-                "f107_change_pct": float(f107_change_pct) if f107_change_pct is not None else 0.0,
-                "xray_peak_long_flux": float(xray_peak) if xray_peak is not None else 0.0,
-                "xray_peak_long_log": float(xray_log) if xray_log is not None else 0.0,
-                "proton_flux_10mev": float(proton_10mev) if proton_10mev is not None else 0.0,
-                "proton_flux_100mev": float(proton_100mev) if proton_100mev is not None else 0.0,
-                # qualitative tags (strings — not parameter-matched, but useful in storage)
-                "flare_class": flare_class,
-                "proton_event_in_progress": is_proton_event,
-                "fetched_at_utc": datetime.now(tz=timezone.utc).isoformat(),
-            },
-        )
+        # A missing feed value is OMITTED, never written as 0.0: f107_flux feeds
+        # the adaptive detector, so a fabricated 0.0 (vs the real ~150) would fire
+        # a false "crash to zero" anomaly. When a feed is present its parser always
+        # returns a real positive number; None means the feed was missing/empty, so
+        # omitting the field is the honest representation (the rule just skips that
+        # cycle). String tags stay (flare_class is "none" when quiet).
+        data: dict = {
+            "flare_class": flare_class,
+            "proton_event_in_progress": is_proton_event,
+            "fetched_at_utc": datetime.now(tz=timezone.utc).isoformat(),
+        }
+        if f107_flux is not None:
+            data["f107_flux"] = float(f107_flux)
+        if f107_change_pct is not None:
+            data["f107_change_pct"] = float(f107_change_pct)
+        if xray_peak is not None:
+            data["xray_peak_long_flux"] = float(xray_peak)
+            if xray_log is not None:
+                data["xray_peak_long_log"] = float(xray_log)
+        if proton_10mev is not None:
+            data["proton_flux_10mev"] = float(proton_10mev)
+        if proton_100mev is not None:
+            data["proton_flux_100mev"] = float(proton_100mev)
+
+        return SensorReading.create(source="solar_activity", data=data)
 
     def get_schema(self) -> dict[str, type]:
         return {
