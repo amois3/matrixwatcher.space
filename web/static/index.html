@@ -1768,6 +1768,9 @@
             quantum_rng:       ['quantum', 'Quantum noise'],
             solar_activity:    ['solar', 'Solar activity'],
             volcanic_activity: ['volcanic', 'Volcanoes'],
+            solar_wind:        ['space_weather', 'Solar wind'],
+            wikipedia_edits:   ['news', 'Wikipedia edits'],
+            earth_tides:       ['clusters', 'Earth tides'],
         };
 
         function renderDigest(d) {
@@ -2422,17 +2425,25 @@
             var d = (x.detail || "").trim(), p = x.parameter || "";
             switch (x.source) {
                 case "earthquake": return d ? "Earthquake — " + d : "Earthquake detected";
-                case "space_weather": return "Geomagnetic disturbance — " + (d || "elevated Kp");
-                case "solar_activity": return d ? "Solar activity — " + d : "Elevated solar activity";
-                case "quantum_rng": return "Quantum randomness dropped to " + (d.replace(" randomness", "") || "an unusual low");
+                case "space_weather": return "Earth\u2019s magnetic field is being disturbed";
+                case "solar_activity":
+                    if (p.indexOf("proton") >= 0) return "A solar radiation storm is underway";
+                    if (p.indexOf("f107") >= 0) return "The Sun is more active than usual";
+                    return "A solar flare just erupted on the Sun";
+                case "quantum_rng": return "A quantum random-number generator drifted from normal";
                 case "weather": return (p.indexOf("pressure") >= 0 ? "Pressure shift " : "Temperature shift ") + d;
                 case "crypto": return "Sharp price move " + (d || "vs recent volatility");
                 case "blockchain": return d || "Irregular block timing on the network";
                 case "volcanic_activity": return d ? "New volcanic activity — " + d : "New volcanic activity reported";
+                case "solar_wind":
+                    if (p.indexOf("bz") >= 0) return "Solar wind turned storm-friendly";
+                    if (p.indexOf("speed") >= 0) return "The solar wind sped up";
+                    if (p.indexOf("density") >= 0) return "The solar wind grew denser";
+                    return "The solar wind shifted";
                 case "news": return "Unusual news volume " + d;
                 case "solar_wind": return d ? "Solar wind \u2014 " + d : "Solar wind shift";
                 case "wikipedia_edits":
-                case "wikimedia_edits": return d ? "Wikipedia editing surge \u2014 " + d : "Wikipedia editing surge";
+                case "wikimedia_edits": return d ? "Wikipedia editing " + d : "Wikipedia editing activity";
                 default: return d || "Unusual reading";
             }
         }

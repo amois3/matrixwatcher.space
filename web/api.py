@@ -740,21 +740,25 @@ def _activity_enrich(src, parameter, value, reason, ts):
                 detail = full
     elif src == "space_weather" and v is not None:
         detail = f"Kp {v:.0f}"
-        context = {5: "G1 — minor storm", 6: "G2 — moderate storm", 7: "G3 — strong storm",
-                   8: "G4 — severe storm", 9: "G5 — extreme storm"}.get(int(v), "geomagnetic disturbance")
+        gname = {5: "minor", 6: "moderate", 7: "strong", 8: "severe", 9: "extreme"}.get(int(v), "")
+        gcode = {5: "G1", 6: "G2", 7: "G3", 8: "G4", 9: "G5"}.get(int(v), "")
+        lead = f"{gname.capitalize()} geomagnetic storm" if gname else "Geomagnetic disturbance"
+        tag = f" ({gcode})" if gcode else ""
+        context = f"{lead}{tag} · Kp {v:.0f} — can brighten polar auroras and disturb satellites"
     elif src == "solar_activity":
         if "flare" in detail:
-            context = "X-ray flare peak (last 24h)"
+            context = f"{detail} · a burst of X-rays from the Sun — can disrupt radio and GPS"
         elif "F10.7" in detail:
-            context = "elevated solar radio flux"
+            context = "the Sun's radio output is running high"
         elif "pfu" in detail or "proton" in detail:
-            context = "solar proton event in progress"
+            context = f"{detail} · high-energy particles from the Sun — a radiation storm"
     elif src == "quantum_rng":
         direction, median = _robust_delta(reason)
-        if direction:
-            context = f"{direction} its normal range (~{median:.2f})"
+        dirword = "high" if direction == "above" else "low"
+        if direction and v is not None and median is not None:
+            context = f"a generator that makes random numbers from quantum physics read unusually {dirword} ({v:.2f} vs ~{median:.2f})"
         else:
-            context = "outside its normal range (~0.92)"
+            context = "a quantum random-number generator read outside its normal range (~0.92)"
     elif src == "crypto":
         coin = "Bitcoin" if "btc" in pl else ("Ethereum" if "eth" in pl else "")
         if v is not None and (not detail):
@@ -791,17 +795,18 @@ def _activity_enrich(src, parameter, value, reason, ts):
             context = "newly reported this week"
     elif src == "solar_wind":
         if "bz_south" in pl or "bz_gsm" in pl:
-            context = "southward IMF — geomagnetic-storm driver"
-        elif "speed" in pl:
-            context = "solar-wind speed (DSCOVR)"
-        elif "density" in pl:
-            context = "solar-wind proton density"
+            context = "the Sun's magnetic field tilted south — the setup that triggers geomagnetic storms"
+        elif "speed" in pl and v is not None:
+            context = f"{v:.0f} km/s — a fast stream of particles blowing from the Sun"
+        elif "density" in pl and v is not None:
+            context = f"{v:.1f} particles/cm³ — a denser gust of solar wind"
         else:
-            context = "interplanetary magnetic field"
+            context = "a shift in the stream of particles flowing from the Sun"
     elif src == "wikipedia_edits":
         direction, median = _robust_delta(reason)
         if v is not None and median is not None:
-            detail = f"{v:.0f}/s · usually ~{median:.0f}/s"
+            verb = "surged to" if direction == "above" else "dropped to"
+            detail = f"{verb} {v:.0f}/s (usually ~{median:.0f}/s)"
         elif v is not None:
             detail = f"{v:.0f} edits/s"
         context = "human edits across Wikipedia"
