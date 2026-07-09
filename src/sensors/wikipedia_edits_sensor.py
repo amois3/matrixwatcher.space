@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 _STREAM_URL = "https://stream.wikimedia.org/v2/stream/recentchange"
 _HEADERS = {
-    "User-Agent": "MatrixWatcher/1.0 (https://matrixwatcher.space; anomaly research) edit-rate-sensor",
+    "User-Agent": "MatrixWatcher/1.0 (+https://matrixwatcher.space; contact: amois3@users.noreply.github.com)",
     "Accept": "text/event-stream",
 }
 

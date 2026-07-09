@@ -132,6 +132,10 @@ class HealthMonitor:
         health.last_success = time.time()
         health.consecutive_failures = 0
         health.total_successes += 1
+        if health.disabled:
+            health.disabled = False
+            health.disabled_reason = None
+            logger.info(f"Sensor {sensor_name} re-enabled after a successful run")
     
     def record_failure(self, sensor_name: str, error: str | None = None) -> None:
         """Record sensor failure.

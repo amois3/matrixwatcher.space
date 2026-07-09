@@ -60,8 +60,7 @@ def _parse_product(rows: list[list], field: str) -> float | None:
 class SolarWindSensor(BaseSensor):
     """Real-time solar-wind plasma (speed/density) and IMF (Bz/Bt) from NOAA SWPC."""
 
-    PLASMA_URL = "https://services.swpc.noaa.gov/products/solar-wind/plasma-5-minute.json"
-    MAG_URL = "https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json"
+    URL = "https://services.swpc.noaa.gov/products/geospace/propagated-solar-wind-1-hour.json"
 
     def __init__(self, config: SensorConfig | None = None, event_bus: EventBus | None = None):
         super().__init__("solar_wind", config, event_bus)
@@ -79,16 +78,15 @@ class SolarWindSensor(BaseSensor):
 
     async def collect(self) -> SensorReading:
         async with aiohttp.ClientSession() as session:
-            plasma = await self._fetch(session, self.PLASMA_URL) or []
-            mag = await self._fetch(session, self.MAG_URL) or []
+            rows = await self._fetch(session, self.URL) or []
 
-        speed = _parse_product(plasma, "speed")          # km/s
-        density = _parse_product(plasma, "density")      # protons/cm^3
-        bz = _parse_product(mag, "bz_gsm")               # nT (negative = southward = geoeffective)
-        bt = _parse_product(mag, "bt")                   # nT (total field magnitude)
+        speed = _parse_product(rows, "speed")          # km/s
+        density = _parse_product(rows, "density")      # protons/cm^3
+        bz = _parse_product(rows, "bz")                # nT (negative = southward = geoeffective)
+        bt = _parse_product(rows, "bt")                # nT (total field magnitude)
 
         if speed is None and bz is None and bt is None:
-            raise RuntimeError("solar_wind: both NOAA SWPC endpoints failed")
+            raise RuntimeError("solar_wind: NOAA geospace endpoint returned no usable rows")
 
         # IMPORTANT: a missing value in the feed must NOT be stored as 0.0 --
         # the adaptive detector would read that as a real plunge to zero and
