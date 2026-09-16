@@ -88,11 +88,17 @@ The full analysis toolkit (`replay`, `shuffle_test`, `backtest`) lives in [`src/
 
 ## Honest finding (as of June 2026)
 
-Across months of clean, de-duplicated data covering all 9 domains:
+Across months of clean, de-duplicated data covering the nine domains running
+at the time — solar wind, Wikipedia edit rate and the solid-earth tide were
+added after this result, and have not been part of a published finding yet:
 
 > **No cross-domain predictive edge has held up out of sample.** The only relationships that survive testing live *within a single domain* (storm persistence, earthquake aftershocks) — known physics, not hidden links between unrelated worlds.
 
 The rebuilt adaptive system now accumulates forward evidence continuously, so the honest verdict on cross-domain links is **"not proven — still gathering data,"** not a final "no." If a genuine signal ever appears, the same strict tests will surface it **credibly** — not by accident or wishful thinking.
+
+Counted on the live instance on 16 September 2026: 140 tracked patterns in 27
+groups, and no prediction currently clearing its own base rate — which is what
+"still gathering data" looks like from the outside.
 
 ---
 
