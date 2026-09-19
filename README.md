@@ -174,3 +174,7 @@ If this resonates — for collaboration, research, or a serious conversation —
 <div align="center">
 <sub>Built to watch honestly. <a href="https://matrixwatcher.space">matrixwatcher.space</a></sub>
 </div>
+
+---
+
+The rest of this work, and how it is built: [moisejevs.com](https://moisejevs.com)
