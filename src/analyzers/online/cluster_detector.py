@@ -45,6 +45,7 @@ SOURCE_DOMAINS = {
     "news": "human_activity", "wikipedia_edits": "human_activity",
     "crypto": "markets", "blockchain": "blockchain",
     "weather": "atmosphere", "quantum_rng": "quantum",
+    "fireball": "astronomy",
     "system": "local_system", "network": "local_system",
     "random": "local_system", "time_drift": "local_system",
 }

@@ -357,9 +357,16 @@ class Scheduler:
             with task._lock:
                 task._running = False
                 task.state = TaskState.PENDING
-                # small per-tick jitter so same-interval tasks keep drifting apart
+                # Keep the configured interval between *starts*. Scheduling
+                # after completion silently stretches every sensor cadence by
+                # request latency (especially long Wikipedia SSE samples).
+                # A slow task may run again shortly after completion, but it
+                # can never overlap with itself.
                 _jitter = min(task.interval * 0.05, 3.0)
-                task._next_run = time.time() + task.interval + random.uniform(-_jitter, _jitter)
+                task._next_run = max(
+                    time.time() + 0.1,
+                    scheduled_time + task.interval + random.uniform(-_jitter, _jitter),
+                )
                 task.stats.next_run = task._next_run
     
     def is_running(self) -> bool:

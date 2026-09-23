@@ -18,7 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.analyzers.online.digest_generator import build_digest, date_str_utc
-from src.monitoring.coverage import get_coverage
+from src.monitoring.coverage import get_coverage, _latest_reading
 from src.analyzers.online.cluster_detector import source_domain
 
 logging.basicConfig(level=logging.INFO)
@@ -987,6 +987,42 @@ async def evidence():
         return report
     except (OSError, json.JSONDecodeError):
         return {"status": "unavailable"}
+
+
+@app.get("/api/research/quality")
+async def research_quality():
+    """Last scheduled sampling audit, with cache metadata kept server-side."""
+    try:
+        report = json.loads(Path("logs/research/quality.json").read_text())
+        report.pop("files", None)
+        if time.time() - report.get("generated_at", 0) > 172800:
+            return {"status": "stale", "generated_at": report.get("generated_at")}
+        return report
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unavailable"}
+
+
+@app.get("/api/research/lags")
+async def research_lags():
+    """Fixed-family exploratory lag comparisons; no predictive claims."""
+    try:
+        report = json.loads(Path("logs/research/lags.json").read_text())
+        if time.time() - report.get("generated_at", 0) > 172800:
+            return {"status": "stale", "generated_at": report.get("generated_at")}
+        return report
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unavailable"}
+
+
+@app.get("/api/context/fireballs")
+async def context_fireballs():
+    """Delayed NASA catalogue entries; publication lag is deliberately visible."""
+    record = _latest_reading(Path("logs"), "fireball", time.time())
+    if not record:
+        return {"status": "unavailable", "events": []}
+    return {"status": "context_only", "retrieved_at": record.get("timestamp"),
+            "events": (record.get("events") or [])[:5],
+            "source_url": "https://ssd-api.jpl.nasa.gov/doc/fireball.html"}
 
 
 @app.get("/api/predictions")
