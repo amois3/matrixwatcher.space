@@ -18,9 +18,9 @@ from typing import Any
 MIN_CLUSTER_LEVEL = 3
 
 LEVEL_NAME = {
-    3: "Multiple Correlation",
-    4: "Strong Correlation",
-    5: "Critical Synchronicity",
+    3: "Three-domain coincidence",
+    4: "Four-domain coincidence",
+    5: "Five-domain coincidence",
 }
 
 # Plain-language names for sources, used in the human-readable narrative.

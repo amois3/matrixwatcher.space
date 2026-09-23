@@ -8,11 +8,10 @@ magnetosphere and produces a geomagnetic storm 1-6 hours later. Unlike the
 where our forward predict-verify loop can plausibly earn *real* skill on an
 intra-domain target (solar_wind -> geomagnetic_storm), rather than a coincidence.
 
-Endpoints (real-time, no API key, plain HTTPS — verified reachable from the box):
-  - https://services.swpc.noaa.gov/products/solar-wind/plasma-5-minute.json
-  - https://services.swpc.noaa.gov/products/solar-wind/mag-5-minute.json
-Both are arrays-of-arrays with a header row first and chronological rows after
-(last row = most recent).
+Endpoint: NOAA's propagated-solar-wind-1-hour product. Its ``time_tag`` is
+the upstream measurement time; ``propagated_time_tag`` is the estimated
+arrival time near Earth. Keep both as provenance, never invent a zero for a
+missing field.
 
 NB: cosmic-ray neutron-monitor data (NMDB / Oulu / IZMIRAN) was surveyed again
 and remains unreachable from this host (TLS to those EU servers does not connect),
@@ -35,26 +34,18 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_product(rows: list[list], field: str) -> float | None:
-    """Latest numeric value of `field` from a SWPC product array (header row first)."""
+    """Value from the latest row only; never carry an older value forward."""
     if not rows or len(rows) < 2:
         return None
     header = rows[0]
     if field not in header:
         return None
     idx = header.index(field)
-    # rows[1:] are chronological; walk from the end for the newest non-null value
-    for row in reversed(rows[1:]):
-        try:
-            val = row[idx]
-        except (IndexError, TypeError):
-            continue
-        if val is None or val == "":
-            continue
-        try:
-            return float(val)
-        except (TypeError, ValueError):
-            continue
-    return None
+    try:
+        val = rows[-1][idx]
+        return float(val) if val is not None and val != "" else None
+    except (IndexError, TypeError, ValueError):
+        return None
 
 
 class SolarWindSensor(BaseSensor):
@@ -80,6 +71,16 @@ class SolarWindSensor(BaseSensor):
         async with aiohttp.ClientSession() as session:
             rows = await self._fetch(session, self.URL) or []
 
+        try:
+            header = rows[0]
+            latest = rows[-1]
+            measured_at = datetime.fromisoformat(str(latest[header.index("time_tag")]).replace("Z", "+00:00"))
+            arrival_tag = latest[header.index("propagated_time_tag")]
+        except (IndexError, ValueError, TypeError) as exc:
+            raise RuntimeError("solar_wind: missing source observation time") from exc
+        if (datetime.now(timezone.utc) - measured_at).total_seconds() > 7200:
+            raise RuntimeError("solar_wind: NOAA measurement is more than two hours old")
+
         speed = _parse_product(rows, "speed")          # km/s
         density = _parse_product(rows, "density")      # protons/cm^3
         bz = _parse_product(rows, "bz")                # nT (negative = southward = geoeffective)
@@ -93,7 +94,11 @@ class SolarWindSensor(BaseSensor):
         # fire a false anomaly (Bt in particular is never physically 0). So we
         # omit any field the feed did not provide; a genuine 0.00 (e.g. Bz
         # crossing zero) still comes through as a real reading.
-        data: dict = {"fetched_at_utc": datetime.now(tz=timezone.utc).isoformat()}
+        data: dict = {
+            "fetched_at_utc": datetime.now(tz=timezone.utc).isoformat(),
+            "observed_at_utc": measured_at.isoformat(),
+            "propagated_arrival_utc": arrival_tag,
+        }
         if speed is not None:
             data["speed"] = float(speed)
         if density is not None:
@@ -106,6 +111,10 @@ class SolarWindSensor(BaseSensor):
             data["bz_south"] = max(0.0, -float(bz))
         if bt is not None:
             data["bt"] = float(bt)
+
+        missing = [name for name, value in (("speed", speed), ("density", density),
+                   ("bz_gsm", bz), ("bt", bt)) if value is None]
+        data["quality"] = {"complete": not missing, "missing_fields": missing}
 
         return SensorReading.create(source="solar_wind", data=data)
 

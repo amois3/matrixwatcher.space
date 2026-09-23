@@ -1,0 +1,16 @@
+[Unit]
+Description=Matrix Watcher PWA watchdog
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/amois/matrix-watcher
+ExecStart=/home/amois/matrix-watcher-python.sh pwa_watchdog.py
+StandardOutput=journal
+StandardError=journal
+Restart=always
+RestartSec=60
+
+[Install]
+WantedBy=default.target

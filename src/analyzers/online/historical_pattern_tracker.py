@@ -118,7 +118,7 @@ class Pattern:
     # Calibration
     predicted_probability: float = 0.0  # What we said
     actual_probability: float = 0.0  # What actually happened
-    brier_score: float = 0.0  # Calibration metric (lower is better)
+    brier_score: float | None = None  # reserved for scored, prospective forecasts
     
     # Geographic data (for future clustering)
     event_locations: list[tuple[float, float]] = field(default_factory=list)  # [(lat, lon), ...]
@@ -140,10 +140,8 @@ class Pattern:
             self.actual_probability = 0.0
     
     def update_brier_score(self):
-        """Update Brier score for calibration."""
-        if self.condition_count > 0:
-            # Brier score = mean squared error of probability predictions
-            self.brier_score = (self.predicted_probability - self.actual_probability) ** 2
+        """A retrospective aggregate cannot supply a proper forecast Brier score."""
+        self.brier_score = None
 
 
 # --- Geographic region resolution (offline reverse-geocoding) ---
@@ -387,9 +385,9 @@ class HistoricalPatternTracker:
 
             # ============ NEWS ============
             "news_spike": {
-                "check": lambda data: self._check_news_spike(data, multiplier=2.0),
+                "check": self._check_news_spike,
                 "severity": "medium",
-                "description": "News volume spike > 2x",
+                "description": "At least eight newly seen headlines with three live feeds",
                 "category": "news",
             },
         }
@@ -605,12 +603,6 @@ class HistoricalPatternTracker:
                     # This allows the system to compare "what we said" vs "what happened"
                     pattern.predicted_probability = pattern.actual_probability
 
-                    # Add temporal info if using temporal pattern
-                    if use_temporal:
-                        result["temporal_pattern"] = True
-                        result["time_bucket"] = condition.get_time_bucket()
-                        result["is_weekend"] = condition.is_weekend
-
                     # Add region info for earthquake events
                     if 'earthquake' in event_type and pattern.event_locations:
                         region = get_most_frequent_region(pattern.event_locations)
@@ -622,26 +614,17 @@ class HistoricalPatternTracker:
         return results
     
     def get_calibration_stats(self) -> dict[str, Any]:
-        """Get calibration statistics for all patterns."""
-        total_patterns = 0
-        total_brier = 0.0
-        well_calibrated = 0
-        
-        for condition_patterns in self._patterns.values():
-            for pattern in condition_patterns.values():
-                if pattern.condition_count >= 5:
-                    total_patterns += 1
-                    pattern.update_brier_score()
-                    total_brier += pattern.brier_score
-                    
-                    # Well calibrated if Brier score < 0.1
-                    if pattern.brier_score < 0.1:
-                        well_calibrated += 1
-        
+        """Report what is actually measurable without a prospective ledger."""
+        total_patterns = sum(
+            pattern.condition_count >= 5
+            for condition_patterns in self._patterns.values()
+            for pattern in condition_patterns.values()
+        )
         return {
             "total_patterns": total_patterns,
-            "avg_brier_score": total_brier / total_patterns if total_patterns > 0 else 0.0,
-            "well_calibrated_percent": (well_calibrated / total_patterns * 100) if total_patterns > 0 else 0.0
+            "avg_brier_score": None,
+            "well_calibrated_percent": None,
+            "calibration_status": "unavailable_without_prospective_outcomes",
         }
     
     def _save_patterns(self):
@@ -824,19 +807,16 @@ class HistoricalPatternTracker:
             logger.debug(f"Error checking earthquake: {e}")
             return False
     
-    def _check_news_spike(self, data: dict, multiplier: float) -> bool:
-        """Check if news spike occurred."""
+    def _check_news_spike(self, data: dict) -> bool:
+        """Check an observable publication burst after the initial baseline."""
         try:
             source = data.get('source', '')
             if source != 'news':
                 return False
             
             new_items = data.get('new_items_count', 0)
-            # Spike if more than 50 new items (2x of typical 25)
-            baseline = 25
-            
-            if new_items >= baseline * multiplier:
-                logger.debug(f"News spike detected: {new_items} >= {baseline * multiplier}")
+            if data.get("feeds_successful", 0) >= 3 and new_items >= 8:
+                logger.debug("News publication burst detected: %s new items", new_items)
                 return True
             
             return False

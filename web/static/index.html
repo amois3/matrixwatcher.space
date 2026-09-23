@@ -18,7 +18,7 @@
     
     <!-- SEO Meta Tags -->
     <title>Matrix Watcher — Cross-Domain Anomaly Monitor &amp; Open Experiment</title>
-    <meta name="description" content="Matrix Watcher is a self-learning, adaptive monitor of 12 independent real-world data streams — crypto, earthquakes, space weather, solar flares, quantum randomness, volcanoes and more. It learns each stream’s normal, detects anomalies, and rigorously tests whether they line up more than chance. Live, open, and honest about its results.">
+    <meta name="description" content="Matrix Watcher observes 12 real-world data streams and checks their freshness, completeness and anomaly timing. Related feeds are grouped by domain; candidate patterns require independent validation.">
     <meta name="keywords" content="anomaly detection, cross-domain correlation, quantum randomness monitor, geomagnetic activity, earthquake monitoring, space weather dashboard, open data experiment, statistical null result, real-time monitoring, ANU QRNG, NOAA space weather, USGS earthquakes">
     <meta name="author" content="Aleksejs Moisejevs">
     <meta name="last-modified" content="2026-05-29">
@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="12 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant cross-domain signal — and we say so.">
+    <meta property="og:description" content="A live, open experiment monitoring 12 data streams, their coverage and possible cross-domain coincidences.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -59,7 +59,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta name="twitter:description" content="12 independent real-world data streams, watched in real time, honestly tested for hidden correlations. So far: no significant signal — and we say so.">
+    <meta name="twitter:description" content="A live experiment with transparent data coverage and cautious cross-domain analysis.">
     <meta name="twitter:image" content="https://matrixwatcher.space/static/og-image.png">
     
     <!-- PWA -->
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors 12 independent real-world data streams and tests, honestly, whether their anomalies correlate beyond chance.",
+                "description": "An open experiment that monitors 12 data streams and audits the quality of its own observations.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring 12 independent data domains (crypto, blockchain, earthquakes, space weather, solar wind, solar activity, volcanoes, quantum randomness, weather, news, Wikipedia edits, solid-earth tides) and testing for cross-domain anomaly correlations.",
+                "description": "Real-time dashboard monitoring 12 data streams across related physical and social domains, with sensor coverage checks and cross-domain anomaly analysis.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-06-01",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Real-time monitoring of 12 independent data sources",
+                    "Monitoring of 12 data streams with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Shuffle test and out-of-sample backtest against chance",
@@ -127,7 +127,7 @@
                 "@type": "Dataset",
                 "@id": "https://matrixwatcher.space/#dataset",
                 "name": "Matrix Watcher cross-domain anomaly observations",
-                "description": "Continuous real-time readings and detected anomalies across 12 independent domains — cryptocurrency prices, blockchain block times, global earthquakes, geomagnetic/space weather, real-time solar wind (speed/density/IMF Bz), solar X-ray and proton flux, volcanic activity, hardware quantum randomness, weather, news volume, global Wikipedia edit rate, and the locally-computed solid-earth gravitational tide — collected since December 2025 to study whether anomalies in unrelated domains coincide beyond chance.",
+                "description": "Readings from 12 monitored streams including markets, geophysics, heliophysics, weather, news and quantum randomness. Related streams are not counted as independent domains.",
                 "creator": { "@id": "https://matrixwatcher.space/#org" },
                 "temporalCoverage": "2025-12-12/..",
                 "isAccessibleForFree": true,
@@ -142,17 +142,17 @@
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open, real-time experiment that monitors 12 completely independent real-world data streams — cryptocurrency, blockchain, earthquakes, space weather, solar wind, solar activity, volcanoes, hardware quantum randomness, weather, news, Wikipedia edits and the solid-earth tide — and rigorously tests whether anomalies in these unrelated domains line up more often than pure chance would produce." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring 12 data streams. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
                     },
                     {
                         "@type": "Question",
                         "name": "Has Matrix Watcher found any hidden correlation between these domains?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "No. Across more than five months of clean, de-duplicated data, rigorous testing (shuffle tests, out-of-sample backtesting with block bootstrap, and base-rate comparison) finds no statistically significant cross-domain signal. Matrix Watcher reports this null result honestly rather than overstating coincidences." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "No independently validated cross-domain discovery is available. Earlier analysis had gaps in cluster persistence and sensor coverage; the monitoring pipeline now exposes those gaps for inspection." }
                     },
                     {
                         "@type": "Question",
                         "name": "Does Matrix Watcher predict cryptocurrency prices or earthquakes?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "No. It does not claim to predict prices or earthquakes. It only reports observed frequencies, and shows a prediction only when it measurably beats the event's base rate. Currently none does, so no predictions are shown. It is a measurement instrument, not a forecasting service." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "No reliable forecast has been validated on future observations. Retrospective patterns are exploratory and are not displayed as predictions." }
                     },
                     {
                         "@type": "Question",
@@ -1406,6 +1406,24 @@
             }
         }
 .mw-ic{display:inline-block;width:1.05em;height:1.05em;vertical-align:-0.16em;color:inherit;flex:none}
+        .coverage-panel { grid-column: 1 / -1; }
+        .coverage-intro { color: var(--text-secondary); font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+        .coverage-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+        @media (max-width: 900px) { .coverage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 520px) { .coverage-grid { grid-template-columns: 1fr; } }
+        .coverage-card { padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); min-width: 0; }
+        .coverage-card strong { display: block; color: var(--text-primary); font-size: 13px; margin-bottom: 6px; }
+        .coverage-card small { display: block; color: var(--text-secondary); line-height: 1.4; overflow-wrap: anywhere; }
+        .coverage-state { display: inline-block; padding: 2px 7px; margin-bottom: 6px; border-radius: 4px; font: 600 10px 'JetBrains Mono', monospace; letter-spacing: .05em; text-transform: uppercase; }
+        .coverage-state.ok { color: var(--neon-green); background: rgba(0,255,136,.09); }
+        .coverage-state.partial, .coverage-state.stale { color: var(--neon-orange); background: rgba(255,170,0,.09); }
+        .coverage-state.missing, .coverage-state.degraded { color: var(--neon-red); background: rgba(255,68,68,.09); }
+        .coverage-state.disabled { color: var(--text-muted); background: var(--bg-primary); }
+        .evidence-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .evidence-card { padding: 16px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
+        .evidence-card strong { display: block; color: var(--neon-blue); font: 600 16px 'JetBrains Mono', monospace; margin-bottom: 8px; }
+        .evidence-card span { display: block; color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
+        @media (max-width: 650px) { .evidence-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body style="background:#0d0d12;color:#fff;">
@@ -1428,7 +1446,7 @@
     <noscript>
         <div style="padding:24px;max-width:760px;margin:0 auto;font-family:monospace;line-height:1.6;">
             <h1>Matrix Watcher — Cross-Domain Anomaly Monitor</h1>
-            <p>Matrix Watcher is an open, real-time experiment. It monitors <strong>12 completely independent real-world data streams</strong> and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce?</p>
+        <p>Matrix Watcher is an open experiment monitoring <strong>12 real-world data streams</strong>. Some streams measure the same physical process, so we group them by domain when examining coincidences.</p>
             <h2>The 12 monitored sources (all real public data)</h2>
             <ul>
                 <li>Crypto — Bitcoin &amp; Ethereum prices and volatility (Binance)</li>
@@ -1445,7 +1463,7 @@
                 <li>Earth Tides — solid-earth gravitational tide from Sun &amp; Moon, computed locally (phase reference)</li>
             </ul>
             <h2>What we've found</h2>
-            <p>Across more than five months of clean data, rigorous testing — shuffle tests, out-of-sample backtesting with block bootstrap, and base-rate comparison — finds <strong>no statistically significant cross-domain signal</strong>. We report this null result honestly. Matrix Watcher is a measurement instrument, not a prediction service: it uses no AI or neural networks, only transparent statistics.</p>
+        <p>No cross-domain discovery has been independently validated. Earlier collection and analysis had coverage gaps, so historical absence of a signal is inconclusive. The live coverage panel shows where observations are fresh, partial or missing.</p>
             <p>Open source: <a href="https://github.com/amois3/matrixwatcher.space">github.com/amois3/matrixwatcher.space</a></p>
         </div>
     </noscript>
@@ -1507,6 +1525,31 @@
             </div>
         </section>
 
+        <section class="panel coverage-panel" aria-labelledby="coverageTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◉</span>
+                <span class="panel-title" id="coverageTitle">Observation Coverage</span>
+                <span class="panel-count" id="coverageCount">—</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">Fresh data and complete data are different. This panel checks the last stored reading from every source and the processing pipeline. Earth tides are recorded as context only.</p>
+                <div id="pipelineCoverage" class="coverage-intro" role="status">Checking processing pipeline…</div>
+                <div id="coverageGrid" class="coverage-grid" aria-live="polite">Checking sensors…</div>
+            </div>
+        </section>
+
+        <section class="panel coverage-panel" aria-labelledby="evidenceTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◎</span>
+                <span class="panel-title" id="evidenceTitle">Evidence Lab</span>
+                <span class="panel-count">Exploratory</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">Three fixed windows test different timescales. Each count is a distinct episode across at least three domains. The control shifts whole domain histories by complete days within each month. These historical comparisons are exploratory; even a small p-value would require confirmation on future data.</p>
+                <div id="evidenceGrid" class="evidence-grid" aria-live="polite">Waiting for the first analysis run…</div>
+            </div>
+        </section>
+
         <!-- Recent Activity Panel (full-width: keeps the 2-col flow intact) -->
         <section class="panel" style="grid-column: 1 / -1;">
             <div class="panel-header">
@@ -1526,13 +1569,13 @@
         <section class="panel">
             <div class="panel-header">
                 <span class="panel-icon"><svg class="mw-ic" style="color:var(--neon-purple)"><use href="#ic-predictions"/></svg></span>
-                <span class="panel-title">Predictions</span>
+                <span class="panel-title">Validated Signals</span>
                 <span class="panel-count" id="predictionsCount">0</span>
             </div>
             <div class="panel-content" id="predictionsPanel">
                 <div class="empty-state">
                     <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-predictions"/></svg></div>
-                    <div>Collecting data...</div>
+                    <div>No pattern has passed prospective validation yet.</div>
                 </div>
             </div>
         </section>
@@ -1562,12 +1605,12 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches twelve completely independent slices of reality at once — from Bitcoin to earthquakes to quantum noise — and asks one honest question: <strong>do anomalies in unrelated domains line up more often than pure chance would produce?</strong> We measure it rigorously and report the answer truthfully, even when the answer is "no". We watch the patterns; we never invent meaning for them.</p>
+                <p>Matrix Watcher watches twelve streams — from Bitcoin to earthquakes to quantum noise — and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
             </div>
 
             <div class="modal-section">
                 <h3>Data Sources</h3>
-                <p>Twelve independent sensors, every one fed by <strong>real public data</strong> — no simulations, no fabricated numbers:</p>
+                <p>Twelve streams drawn from public data or local calculations. Their quality and freshness are shown in the coverage panel:</p>
                 <div class="sensor-grid">
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-crypto"/></svg>Crypto</strong><br>Bitcoin & Ethereum price moves and volatility (Binance)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-blockchain"/></svg>Blockchain</strong><br>Network block times and on-chain anomalies</div>
@@ -1586,41 +1629,39 @@
 
             <div class="modal-section">
                 <h3>How an anomaly is detected</h3>
-                <p>There are <strong>no fixed thresholds</strong>. Each sensor learns its own normal continuously — a reading is flagged only when it is unusual <em>relative to that stream's own recent behaviour</em> (robust statistics over a rolling window). The bar <strong>floats with the regime</strong>: a calm market and a volatile one are judged on their own terms, a quiet Sun and an active Sun likewise. Genuine physical events — a real earthquake, a geomagnetic storm, an M-class flare — are also flagged at their established physical levels.</p>
+                <p>Continuous measurements use rolling robust statistics where appropriate. Named events such as significant earthquakes and geomagnetic storms use explicit physical thresholds. News bursts use a fixed count of newly seen headlines. An unavailable feed is a coverage problem, never a normal reading.</p>
             </div>
 
             <div class="modal-section">
                 <h3>Coincidences across domains</h3>
-                <p>When anomalies from several <strong>independent</strong> sensors land in the same 30-second window, we record it as a cluster — a <strong>temporal coincidence, never a claim of causation</strong>. The level counts how many distinct domains coincided (3+ is displayed; 4 and 5 are progressively rarer). In practice these are <strong>rare</strong> — independent domains almost never spike together — and the whole point is to test, honestly, whether they happen <em>more often than chance</em>. So far, they do not.</p>
+                <p>When anomalies fall in the same 30-second window, we record the observed domains. The level counts distinct domains, rather than the number of feeds. A cluster is a temporal coincidence, not evidence of causation or statistical significance. With the current polling intervals, a short window can miss slower relationships.</p>
             </div>
 
             <div class="modal-section">
-                <h3>A self-learning prediction loop</h3>
-                <p>The system learns forward. For every condition it records how often an event follows, builds the observed probability <code>P(event | condition)</code>, and weighs it against the event's <strong>base rate</strong> — how often it happens anyway:</p>
+                <h3>From patterns to tested signals</h3>
+                <p>The system records candidate condition → event frequencies. These are retrospective descriptions and may reflect repeated states, changing base rates or chance. A candidate is only eligible for the public signal panel after a separate future-data evaluation:</p>
                 <ul>
-                    <li><code>skill = P(event | condition) − P(event)</code></li>
-                    <li>A prediction is shown <strong>only</strong> when skill is meaningfully positive and backed by enough observations</li>
-                    <li>Every prediction is then <strong>verified</strong> against what actually happened — the system keeps an honest running score and never hides a miss</li>
-                    <li>If a pattern stops beating chance it stops being shown; the system keeps re-learning as new data arrives</li>
-                    <li>Every domain can be both a predictor and a target — not just crypto</li>
-                    <li>No edge over chance → nothing is shown (an empty panel is honest)</li>
+                    <li>Freeze the event definition, horizon and candidate before evaluating future data</li>
+                    <li>Count independent event episodes and compare against a current, matched base rate</li>
+                    <li>Report misses, uncertainty and calibration; account for the number of candidates tried</li>
+                    <li>Until those checks pass, no forecast is displayed</li>
                 </ul>
             </div>
 
             <div class="modal-section">
                 <h3>How We Avoid Fooling Ourselves</h3>
-                <p>It is easy to mistake noise for a signal. We guard against it with methods that try hard to <em>disprove</em> any apparent pattern:</p>
+                <p>We preserve raw observations, audit sensor coverage, and use replay and time-shuffle analyses to challenge candidate relationships. Historical exploratory tests do not establish a discovery.</p>
                 <ul>
                     <li><strong>Edge-triggering:</strong> one ongoing event counts once, not once per poll</li>
                     <li><strong>Shuffle test:</strong> compare real clusters against time-randomized data</li>
-                    <li><strong>Out-of-sample backtest + block bootstrap:</strong> is any skill statistically real?</li>
-                    <li><strong>Base-rate comparison:</strong> a high probability that just matches chance is not a finding</li>
+                    <li><strong>Future-data validation:</strong> required before a candidate becomes a public signal</li>
+                    <li><strong>Matched base rate:</strong> a frequent event alone is not a finding</li>
                 </ul>
             </div>
 
             <div class="modal-section">
                 <h3>What We've Found So Far</h3>
-                <p>No cross-domain predictive edge has held up out of sample. The only relationships that survive testing live <strong>within a single domain</strong> — a storm tends to persist, earthquakes cluster as aftershocks — which is known physics, not a hidden link between unrelated worlds. The adaptive system now gathers forward evidence continuously, so the honest verdict on cross-domain links is <strong>“not proven — still gathering data,”</strong> not a final “no.” If a genuine signal ever appears, the same strict tests will surface it credibly rather than by accident.</p>
+                <p>No cross-domain predictive edge has been independently verified. A recent audit found historical coverage gaps and a processing error; the absence of previous findings cannot settle the question. The repaired system reports observation coverage and keeps unvalidated candidates off the signal panel.</p>
             </div>
 
             <div class="modal-section">
@@ -1628,7 +1669,7 @@
                 <p>Matrix Watcher intentionally does <strong>not</strong> use artificial intelligence, neural networks, or language models. All predictions are based on pure statistical observation:</p>
                 <ul>
                     <li><code>probability = occurrences / observations</code></li>
-                    <li>Brier score calibration for accuracy validation</li>
+                    <li>Prospective forecast scoring is required before reporting calibration</li>
                     <li>No hallucinations. No speculation. Just data.</li>
                 </ul>
             </div>
@@ -1730,13 +1771,81 @@
             }
         }
 
+        async function fetchCoverage() {
+            const grid = document.getElementById('coverageGrid');
+            try {
+                const response = await fetch('/api/coverage');
+                if (!response.ok) throw new Error('Coverage unavailable');
+                const data = await response.json();
+                grid.replaceChildren();
+                const entries = Object.entries(data.sensors || {});
+                const healthy = entries.filter(([, sensor]) => sensor.status === 'ok').length;
+                document.getElementById('coverageCount').textContent = `${healthy}/${entries.length} sources · pipeline ${data.pipeline?.status || 'unknown'}`;
+                for (const [name, sensor] of entries) {
+                    const card = document.createElement('div');
+                    card.className = 'coverage-card';
+                    const state = document.createElement('span');
+                    state.className = `coverage-state ${sensor.status}`;
+                    state.textContent = sensor.status;
+                    const title = document.createElement('strong');
+                    title.textContent = name.replaceAll('_', ' ');
+                    const detail = document.createElement('small');
+                    const age = sensor.age_seconds == null ? 'no recent reading' : `${Math.round(sensor.age_seconds / 60)} min ago`;
+                    detail.textContent = `${sensor.domain} · ${sensor.mode === 'covariate' ? 'context only' : 'anomaly detection'} · ${age}`;
+                    card.append(state, title, detail);
+                    if (sensor.issues?.length) {
+                        const issue = document.createElement('small');
+                        issue.textContent = sensor.issues.join('; ');
+                        card.append(issue);
+                    }
+                    grid.append(card);
+                }
+                const pipeline = data.pipeline || {};
+                document.getElementById('pipelineCoverage').textContent = pipeline.status === 'missing'
+                    ? 'Processing telemetry unavailable. Sensor freshness alone does not confirm that analysis is running.'
+                    : `Processing: ${pipeline.status || 'unknown'} · ${pipeline.events_processed ?? 0} readings · ${pipeline.anomalies_detected ?? 0} anomalies · ${pipeline.clusters_persisted ?? 0} cluster records · ${pipeline.errors ?? 0} errors`;
+            } catch (error) {
+                grid.textContent = 'Coverage check unavailable. The page being reachable does not confirm that sensors are working.';
+                document.getElementById('pipelineCoverage').textContent = 'Processing status unknown';
+                document.getElementById('coverageCount').textContent = 'unknown';
+            }
+        }
+
+        async function fetchEvidence() {
+            const grid = document.getElementById('evidenceGrid');
+            try {
+                const response = await fetch('/api/evidence');
+                if (!response.ok) throw new Error('Evidence unavailable');
+                const data = await response.json();
+                if (data.status !== 'exploratory_not_validated') {
+                    grid.textContent = 'The evidence analysis has not produced a current report. No statistical conclusion is available.';
+                    return;
+                }
+                grid.replaceChildren();
+                for (const item of data.windows || []) {
+                    const card = document.createElement('div');
+                    card.className = 'evidence-card';
+                    const title = document.createElement('strong');
+                    title.textContent = item.seconds < 60 ? `${item.seconds} seconds` : `${item.seconds / 60} minutes`;
+                    const count = document.createElement('span');
+                    count.textContent = `${item.observed_episodes} observed episodes · ${item.null_mean_episodes} expected under shifted timing`;
+                    const p = document.createElement('span');
+                    p.textContent = `Exploratory adjusted p: ${item.p_holm}`;
+                    card.append(title, count, p);
+                    grid.append(card);
+                }
+            } catch (_) {
+                grid.textContent = 'Evidence analysis unavailable.';
+            }
+        }
+
         function updateStatus(connected) {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
 
             if (connected) {
                 dot.classList.remove('disconnected');
-                text.textContent = 'LIVE';
+                text.textContent = 'SITE ONLINE';
             } else {
                 dot.classList.add('disconnected');
                 text.textContent = 'OFFLINE';
@@ -1849,7 +1958,7 @@
                     ${tile('clusters', 'Moments in sync', clustersTotal,
                            clustersTotal === 1 ? 'time today' : 'times today',
                            clustersTotal > 0 ? 'var(--neon-blue)' : 'var(--text-secondary)',
-                           'How many times today 3 or more independent sources showed unusual readings within the same 30 seconds.')}
+                           'How many times today 3 or more distinct domains showed unusual readings within the same 30 seconds.')}
                     ${tile('activity', 'Activity level', actWord,
                            `${anomToday} ${anomToday === 1 ? 'reading' : 'readings'} flagged`, actColor,
                            'How many individual readings were flagged as unusual across all sources today — solo wobbles included, not just cross-domain moments.')}
@@ -1857,10 +1966,10 @@
                            mostActive ? `${activeCount} ${activeCount === 1 ? 'reading' : 'readings'} lately` : '',
                            'var(--text-primary)',
                            'The source with the most unusual readings in the live feed (last 3 days), ranked by its real activity — nothing suppressed.')}
-                    ${tile('predictions', 'Predictive signals', predCount,
-                           predCount > 0 ? 'beating chance' : 'none beat chance',
+                    ${tile('predictions', 'Validated signals', predCount,
+                           predCount > 0 ? 'validated on future data' : 'none validated yet',
                            predCount > 0 ? 'var(--neon-green)' : 'var(--text-secondary)',
-                           'Patterns that currently do better than the event base rate. Zero right now — see the Predictions panel below.')}
+                           'Candidate patterns require future-data validation before appearing here.')}
                 </div>`;
 
             panel.innerHTML = `<div style="padding:20px 22px;">${narrativeBlock}${tiles}</div>`;
@@ -1881,11 +1990,10 @@
                     <div class="empty-state" style="padding:0 28px;text-align:center;">
                         <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-predictions"/></svg></div>
                         <div style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.65;">
-                            <span style="color:var(--neon-purple);font-weight:600;">Day ${daysWatching()} of watching</span> — and still nothing beats pure chance.
-                            We track thousands of condition→event patterns, and so far not one predicts
-                            better than the event already does on its own. That's not a letdown, it's the
-                            whole point: you get a confident zero instead of a coin-flip in a lab coat.
-                            The day a pattern genuinely pulls ahead, it shows up right here first.
+                            <span style="color:var(--neon-purple);font-weight:600;">Day ${daysWatching()} of watching.</span>
+                            No candidate has been validated on future data. Historical counts are
+                            exploratory, and gaps in earlier observations limit what they can prove.
+                            The coverage panel above shows whether today's measurements are complete.
                         </div>
                     </div>
                 `;
@@ -2261,11 +2369,9 @@
                     <div class="empty-state" style="text-align:center;">
                         <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-clusters"/></svg></div>
                         <div style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.65;">
-                            <span style="color:var(--neon-orange);font-weight:600;">Day ${daysWatching()}</span>, and not a single cross-domain link has held up.
-                            Sensors do wander out of range together now and then — coincidence, until
-                            proven otherwise — but across ${daysWatching()} days of data, none has
-                            replicated as a real correlation. Quiet in this window, too.
-                            If that ever changes, you'll see it here first — and we'll say so plainly.
+                            No three-domain coincidence is recorded in this selected time window.
+                            The 30-second rule has limited power when sources are polled minutes apart;
+                            an empty panel is not evidence that no slower relationship exists.
                         </div>
                     </div>
                 `;
@@ -2527,11 +2633,15 @@
         fetchData();
         fetchDigest();
         fetchActivity();
+        fetchCoverage();
+        fetchEvidence();
 
         // Poll every 10 seconds for live data; digest changes slowly (every minute is enough)
         setInterval(fetchData, 10000);
         setInterval(fetchDigest, 60000);
         setInterval(fetchActivity, 15000);
+        setInterval(fetchCoverage, 60000);
+        setInterval(fetchEvidence, 3600000);
 
         // PWA - Service Worker
         if ('serviceWorker' in navigator) {

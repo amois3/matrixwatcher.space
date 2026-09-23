@@ -17,6 +17,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.analyzers.online.digest_generator import build_digest, date_str_utc
+from src.monitoring.coverage import get_coverage
+from src.analyzers.online.cluster_detector import source_domain
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -142,6 +144,11 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def _domain_level(record: dict) -> int:
+    sources = {item.get("sensor_source") for item in record.get("cluster", {}).get("anomalies", [])}
+    return min(5, len({source_domain(source) for source in sources if source}))
+
+
 def load_recent_anomalies(hours: int = 24) -> list[dict]:
     """Load recent anomalies from logs (only level >= 3, deduplicated by minute)."""
     anomalies = []
@@ -163,10 +170,11 @@ def load_recent_anomalies(hours: int = 24) -> list[dict]:
                 for line in f:
                     try:
                         data = json.loads(line.strip())
-                        level = data.get("cluster", {}).get("level", 0)
+                        level = _domain_level(data)
                         ts = data.get("timestamp", 0)
                         
                         if level >= 3 and ts > cutoff:
+                            data["cluster"]["level"] = level
                             # Create dedup key: minute + level + sorted sources
                             minute = int(ts // 60)
                             sources = sorted(set(
@@ -206,9 +214,10 @@ def load_anomalies_for_date(date_str: str) -> list[dict]:
                     data = json.loads(line.strip())
                 except json.JSONDecodeError:
                     continue
-                level = data.get("cluster", {}).get("level", 0)
+                level = _domain_level(data)
                 if level < 3:
                     continue
+                data["cluster"]["level"] = level
                 ts = data.get("timestamp", 0)
                 minute = int(ts // 60)
                 sources = sorted(set(
@@ -374,6 +383,7 @@ def get_active_predictions(use_cache: bool = True) -> list[dict]:
             p for p in best_predictions
             if p.get("skill") is not None and p["skill"] >= SKILL_THRESHOLD_PP
             and p.get("observations", p.get("condition_count", 0)) >= MIN_OBS_TO_SHOW
+            and p.get("validated_on_holdout") is True
         ]
         informative.sort(key=lambda p: p.get("skill", 0), reverse=True)
 
@@ -820,7 +830,7 @@ def format_level_event(anomaly: dict) -> dict | None:
     cluster = anomaly.get("cluster", {})
     index_data = anomaly.get("index", {})
     
-    level = cluster.get("level", 0)
+    level = _domain_level(anomaly)
     if level < 3:  # Only show Level 3+ (significant correlations)
         return None
     
@@ -868,11 +878,7 @@ def format_level_event(anomaly: dict) -> dict | None:
     sources_formatted = [_fmt_source(s) for s in sources]
     
     # Level descriptions (must match digest_generator.LEVEL_NAME exactly)
-    level_names = {
-        3: "Multiple Correlation",
-        4: "Strong Correlation",
-        5: "Critical Synchronicity"
-    }
+    level_names = {3: "Three-domain coincidence", 4: "Four-domain coincidence", 5: "Five-domain coincidence"}
 
     level_colors = {3: "var(--neon-orange)", 4: "var(--neon-orange)", 5: "var(--neon-red)"}
 
@@ -895,9 +901,9 @@ def format_level_event(anomaly: dict) -> dict | None:
     
     # System comment based on level
     comments = {
-        3: "Stable cluster of deviations detected across multiple independent domains. Observed behavior exceeds normal background.",
-        4: "Strong correlation pattern emerging. Multiple sensors showing synchronized anomalous readings.",
-        5: "Critical anomaly state. Unprecedented correlation across monitoring systems. Maximum observation priority."
+        3: "Three domains showed unusual observations within the configured window. Statistical significance is untested.",
+        4: "Four domains coincided within the configured window. Statistical significance is untested.",
+        5: "Five or more domains coincided. This is an observation, not evidence of causation.",
     }
     
     return {
@@ -915,7 +921,8 @@ def format_level_event(anomaly: dict) -> dict | None:
         "time_str": time_str,
         "date_str": date_str,
         "comment": comments.get(level, "Anomaly detected."),
-        "source_count": len(sources)
+        "source_count": len(sources),
+        "domain_count": level,
     }
 
 
@@ -947,6 +954,24 @@ async def llms_txt():
 async def health():
     """Health check."""
     return {"status": "ok", "timestamp": time.time()}
+
+
+@app.get("/api/coverage")
+async def coverage():
+    """Collector freshness, completeness and actual processing health."""
+    return get_coverage()
+
+
+@app.get("/api/evidence")
+async def evidence():
+    """Read the last scheduled, explicitly exploratory multi-window analysis."""
+    try:
+        report = json.loads(Path("logs/evidence/current.json").read_text())
+        if time.time() - report.get("generated_at", 0) > 172800:
+            return {"status": "stale", "generated_at": report.get("generated_at")}
+        return report
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unavailable"}
 
 
 @app.get("/api/predictions")

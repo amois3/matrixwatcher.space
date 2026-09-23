@@ -47,6 +47,7 @@ NAMED_EVENTS: set[str] = {
     "New volcanic unrest reported",
     "Blockchain block-time anomaly",
     "Geoeffective solar wind (southward IMF)",
+    "News publication burst",
 }
 
 
@@ -65,6 +66,8 @@ class HybridDetector:
         self.threshold._index_rules()
 
     def process(self, event: Event) -> list[AnomalyEvent]:
+        if event.source == "news" and event.payload.get("feeds_successful", 0) < 3:
+            return []
         return self.adaptive.process(event) + self.threshold.process(event)
 
     def get_anomaly_count(self) -> int:

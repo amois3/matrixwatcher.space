@@ -28,6 +28,7 @@ config.local.json
 
 # ── Runtime data & datasets (NEVER COMMIT) ───────────────
 logs/
+logs
 *.log
 *.jsonl
 web/events/*.jsonl
@@ -45,8 +46,6 @@ calibration/
 *~
 
 # ── Tests & local helper scripts (kept out of the package) ─
-tests/
-test_*.py
 .pytest_cache/
 .hypothesis/
 setup_*.sh
