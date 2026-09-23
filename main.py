@@ -44,6 +44,7 @@ from src.sensors.earth_tides_sensor import EarthTidesSensor
 from src.sensors.wikipedia_edits_sensor import WikipediaEditsSensor
 from src.sensors.volcanic_activity_sensor import VolcanicActivitySensor
 from src.sensors.fireball_sensor import FireballSensor
+from src.sensors.ripe_atlas_sensor import RipeAtlasSensor
 from src.sensors.quantum_rng_sensor import QuantumRNGSensor
 from src.monitoring import HealthMonitor, AlertingSystem
 from src.monitoring.auto_calibrator import get_auto_calibrator
@@ -820,6 +821,27 @@ class MatrixWatcher:
 
             self.scheduler.register_task(
                 "fireball", lambda f=collect_fireballs: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        # RIPE Atlas: fixed regional public probes, context only. A common
+        # anycast target cannot be counted as independent anomaly evidence.
+        sensor_cfg = self.config.sensors.get("ripe_atlas")
+        if sensor_cfg and sensor_cfg.enabled:
+            ripe_sensor = RipeAtlasSensor()
+            self._sensors["ripe_atlas"] = ripe_sensor
+            self.health_monitor.register_sensor("ripe_atlas")
+
+            async def collect_ripe(s=ripe_sensor):
+                reading = await s.safe_collect()
+                if reading:
+                    self.storage.write_record("ripe_atlas", {"timestamp": reading.timestamp, "source": "ripe_atlas", **reading.data})
+                    self._record_sensor_reading("ripe_atlas", reading)
+                else:
+                    self.health_monitor.record_failure("ripe_atlas", "Collection returned None")
+
+            self.scheduler.register_task(
+                "ripe_atlas", lambda f=collect_ripe: asyncio.run(f()),
                 interval=sensor_cfg.interval_seconds,
             )
 

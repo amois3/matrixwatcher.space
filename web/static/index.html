@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="A live, open experiment monitoring 12 data streams, their coverage and possible cross-domain coincidences.">
+    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and two context feeds, with transparent coverage and cross-domain controls.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors 12 data streams and audits the quality of its own observations.",
+                "description": "An open experiment that monitors twelve core streams and two context feeds and audits the quality of its own observations.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring 12 data streams across related physical and social domains, with sensor coverage checks and cross-domain anomaly analysis.",
+                "description": "Real-time dashboard monitoring twelve core streams and two context feeds, with coverage checks and cross-domain anomaly analysis.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-09-23",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Monitoring of 12 data streams with per-source coverage checks",
+                    "Monitoring of twelve core streams and two context feeds with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Exploratory multi-window timing controls with adjusted p-values",
@@ -142,7 +142,7 @@
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring 12 data streams. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and two context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
                     },
                     {
                         "@type": "Question",
@@ -1572,6 +1572,7 @@
                     <div class="research-box"><h3>Observation Atlas · last 30 complete UTC days</h3><div id="qualityAtlas" role="status">Calculating observation opportunity…</div></div>
                     <div class="research-box"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
                     <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
+                    <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
                 </div>
             </div>
         </section>
@@ -1631,7 +1632,7 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches twelve streams — from Bitcoin to earthquakes to quantum noise — and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
+                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to quantum noise — plus two context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
             </div>
 
             <div class="modal-section">
@@ -1869,6 +1870,7 @@
             const quality = document.getElementById('qualityAtlas');
             const lags = document.getElementById('lagLab');
             const sky = document.getElementById('fireballContext');
+            const network = document.getElementById('networkContext');
             try {
                 const response = await fetch('/api/research/quality');
                 if (!response.ok) throw new Error('quality HTTP');
@@ -1946,6 +1948,26 @@
                 const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'NASA source and methodology ↗';
                 sky.append(link);
             } catch (_) { sky.textContent = 'NASA catalogue context unavailable.'; }
+            try {
+                const response = await fetch('/api/context/network');
+                if (!response.ok) throw new Error('RIPE HTTP');
+                const data = await response.json();
+                if (data.status !== 'context_only') throw new Error('no RIPE data');
+                network.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = `${data.fresh_probes}/${data.expected_probes} fresh probes pinging K-root. The shared anycast target can affect several regions at once; these are network context, not independent anomaly votes.`;
+                network.append(intro);
+                for (const [name, region] of Object.entries(data.regions || {})) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong'); title.textContent = name;
+                    const detail = document.createElement('small');
+                    const loss = region.probes?.filter(probe => probe.status === 'ok' && probe.packet_loss > 0).length || 0;
+                    detail.textContent = `${region.fresh_probes}/${region.expected_probes} fresh · median ${region.median_latency_ms == null ? 'unavailable' : `${region.median_latency_ms} ms`} · ${loss} probes with packet loss`;
+                    row.append(title, detail); network.append(row);
+                }
+                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'RIPE measurement method ↗';
+                network.append(link);
+            } catch (_) { network.textContent = 'RIPE Atlas context unavailable.'; }
         }
 
         function updateStatus(connected) {

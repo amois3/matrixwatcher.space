@@ -143,6 +143,12 @@
       "priority": "low",
       "custom_params": {}
     },
+    "ripe_atlas": {
+      "enabled": true,
+      "interval_seconds": 300,
+      "priority": "low",
+      "custom_params": {}
+    },
     "earth_tides": {
       "enabled": true,
       "interval_seconds": 300,
