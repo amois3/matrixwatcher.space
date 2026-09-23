@@ -47,6 +47,7 @@ from src.sensors.volcanic_activity_sensor import VolcanicActivitySensor
 from src.sensors.fireball_sensor import FireballSensor
 from src.sensors.ripe_atlas_sensor import RipeAtlasSensor
 from src.sensors.weather_grid_sensor import WeatherGridSensor
+from src.sensors.remote_stations_sensor import RemoteStationsSensor
 from src.sensors.quantum_rng_sensor import QuantumRNGSensor
 from src.monitoring import HealthMonitor, AlertingSystem
 from src.monitoring.auto_calibrator import get_auto_calibrator
@@ -871,6 +872,27 @@ class MatrixWatcher:
 
             self.scheduler.register_task(
                 "weather_grid", lambda f=collect_weather_grid: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        # Public observations from physical NWS stations. Repeated polls of a
+        # latest report remain context, never independent anomaly votes.
+        sensor_cfg = self.config.sensors.get("remote_stations")
+        if sensor_cfg and sensor_cfg.enabled:
+            station_sensor = RemoteStationsSensor()
+            self._sensors["remote_stations"] = station_sensor
+            self.health_monitor.register_sensor("remote_stations")
+
+            async def collect_remote_stations(s=station_sensor):
+                reading = await s.safe_collect()
+                if reading:
+                    self.storage.write_record("remote_stations", {"timestamp": reading.timestamp, "source": "remote_stations", **reading.data})
+                    self._record_sensor_reading("remote_stations", reading)
+                else:
+                    self.health_monitor.record_failure("remote_stations", "Collection returned None")
+
+            self.scheduler.register_task(
+                "remote_stations", lambda f=collect_remote_stations: asyncio.run(f()),
                 interval=sensor_cfg.interval_seconds,
             )
 

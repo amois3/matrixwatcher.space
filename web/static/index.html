@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and three context feeds, with transparent coverage and cross-domain controls.">
+    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and four context feeds, with transparent coverage and cross-domain controls.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors twelve core streams and three context feeds and audits the quality of its own observations.",
+                "description": "An open experiment that monitors twelve core streams and four context feeds and audits the quality of its own observations.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring twelve core streams and three context feeds, with coverage checks and cross-domain anomaly analysis.",
+                "description": "Real-time dashboard monitoring twelve core streams and four context feeds, with coverage checks and cross-domain anomaly analysis.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-09-23",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Monitoring of twelve core streams and three context feeds with per-source coverage checks",
+                    "Monitoring of twelve core streams and four context feeds with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Exploratory multi-window timing controls with adjusted p-values",
@@ -142,7 +142,7 @@
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and three context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and four context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
                     },
                     {
                         "@type": "Question",
@@ -1574,6 +1574,7 @@
                     <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
                     <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
                     <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
+                    <div class="research-box"><h3>Remote Stations · physical observations</h3><div id="stationContext" role="status">Loading NWS reports…</div></div>
                     <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
                 </div>
             </div>
@@ -1634,7 +1635,7 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to ANU quantum samples when available — plus three context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
+                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to ANU quantum samples when available — plus four context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
             </div>
 
             <div class="modal-section">
@@ -1874,6 +1875,7 @@
             const sky = document.getElementById('fireballContext');
             const network = document.getElementById('networkContext');
             const weatherGrid = document.getElementById('weatherGridContext');
+            const stations = document.getElementById('stationContext');
             const forecastAudit = document.getElementById('forecastAudit');
             try {
                 const response = await fetch('/api/research/quality');
@@ -2008,6 +2010,27 @@
                 const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open-Meteo method ↗';
                 weatherGrid.append(link);
             } catch (_) { weatherGrid.textContent = 'Weather grid context unavailable.'; }
+            try {
+                const response = await fetch('/api/context/stations');
+                if (!response.ok) throw new Error('station HTTP');
+                const data = await response.json();
+                if (data.status !== 'context_only') throw new Error('no station data');
+                stations.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = `${data.fresh_stations}/${data.expected_stations} fresh reports from physical NWS stations. Reports can arrive late; repeated polling is one observation until a new report appears. Same atmospheric domain and upstream API; context only.`;
+                stations.append(intro);
+                for (const station of data.stations || []) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong'); title.textContent = `${station.label} (${station.id})`;
+                    const detail = document.createElement('small');
+                    detail.textContent = station.status === 'ok'
+                        ? `${station.temperature_celsius} °C · ${station.barometric_pressure_hpa} hPa barometric · ${station.humidity_percent}% RH · observed ${new Date(station.observed_at * 1000).toISOString().slice(11, 16)} UTC · report age ${Math.round(station.reporting_lag_seconds / 60)} min`
+                        : `Report missing or stale${station.issues?.length ? ` (${station.issues.join(', ')})` : ''}`;
+                    row.append(title, detail); stations.append(row);
+                }
+                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'NWS API documentation ↗';
+                stations.append(link);
+            } catch (_) { stations.textContent = 'Remote station context unavailable.'; }
             try {
                 const response = await fetch('/api/research/forecast-audit');
                 if (!response.ok) throw new Error('forecast audit HTTP');

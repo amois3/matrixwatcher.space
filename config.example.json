@@ -155,6 +155,12 @@
       "priority": "low",
       "custom_params": {}
     },
+    "remote_stations": {
+      "enabled": true,
+      "interval_seconds": 600,
+      "priority": "low",
+      "custom_params": {}
+    },
     "earth_tides": {
       "enabled": true,
       "interval_seconds": 300,

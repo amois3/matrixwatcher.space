@@ -17,6 +17,7 @@ SENSOR_MODES = {
     "quantum_rng": "anomaly", "wikipedia_edits": "anomaly",
     "volcanic_activity": "anomaly", "earth_tides": "covariate",
     "fireball": "context", "ripe_atlas": "context", "weather_grid": "context",
+    "remote_stations": "context",
 }
 
 
