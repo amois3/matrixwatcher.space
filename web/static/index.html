@@ -1574,7 +1574,7 @@
                     <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
                     <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
                     <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
-                    <div class="research-box"><h3>Remote Stations · physical observations</h3><div id="stationContext" role="status">Loading NWS reports…</div></div>
+                    <div class="research-box"><h3>Global Stations · six regions</h3><div id="stationContext" role="status">Loading airport METAR reports…</div></div>
                     <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
                 </div>
             </div>
@@ -2017,18 +2017,18 @@
                 if (data.status !== 'context_only') throw new Error('no station data');
                 stations.replaceChildren();
                 const intro = document.createElement('p');
-                intro.textContent = `${data.fresh_stations}/${data.expected_stations} fresh reports from physical NWS stations. Reports can arrive late; repeated polling is one observation until a new report appears. Same atmospheric domain and upstream API; context only.`;
+                intro.textContent = `${data.fresh_stations}/${data.expected_stations} fresh airport reports across six world regions. METARs are physical observations that can arrive late. Repeated polls are not new observations; all stations share one atmospheric domain and API. Context only.`;
                 stations.append(intro);
                 for (const station of data.stations || []) {
                     const row = document.createElement('div'); row.className = 'research-row';
-                    const title = document.createElement('strong'); title.textContent = `${station.label} (${station.id})`;
+                    const title = document.createElement('strong'); title.textContent = `${station.label} (${station.id}) · ${station.region}`;
                     const detail = document.createElement('small');
                     detail.textContent = station.status === 'ok'
-                        ? `${station.temperature_celsius} °C · ${station.barometric_pressure_hpa} hPa barometric · ${station.humidity_percent}% RH · observed ${new Date(station.observed_at * 1000).toISOString().slice(11, 16)} UTC · report age ${Math.round(station.reporting_lag_seconds / 60)} min`
+                        ? `${station.temperature_celsius} °C · ${station.altimeter_hpa} hPa altimeter${station.dewpoint_celsius == null ? '' : ` · dewpoint ${station.dewpoint_celsius} °C`} · observed ${new Date(station.observed_at * 1000).toISOString().slice(11, 16)} UTC · report age ${Math.round(station.reporting_lag_seconds / 60)} min`
                         : `Report missing or stale${station.issues?.length ? ` (${station.issues.join(', ')})` : ''}`;
                     row.append(title, detail); stations.append(row);
                 }
-                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'NWS API documentation ↗';
+                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'AWC METAR method ↗';
                 stations.append(link);
             } catch (_) { stations.textContent = 'Remote station context unavailable.'; }
             try {

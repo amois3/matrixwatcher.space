@@ -1067,10 +1067,12 @@ async def context_weather_grid():
 
 @app.get("/api/context/stations")
 async def context_stations():
-    """Physical NWS reports with observation time and source delay visible."""
+    """Global METAR reports with observation time and source delay visible."""
     now = time.time()
     record = _latest_reading(Path("logs"), "remote_stations", now)
     if not record:
+        return {"status": "unavailable", "stations": []}
+    if record.get("data_kind") != "global_metar_observation":
         return {"status": "unavailable", "stations": []}
     from src.sensors.remote_stations_sensor import MAX_OBSERVATION_AGE_SECONDS
 
@@ -1087,7 +1089,7 @@ async def context_stations():
                         and -120 <= now - observed_at <= MAX_OBSERVATION_AGE_SECONDS)
         if station.get("status") != "ok" or not collector_fresh or not source_fresh:
             station["status"] = "missing"
-            for field in ("temperature_celsius", "barometric_pressure_hpa", "humidity_percent"):
+            for field in ("temperature_celsius", "dewpoint_celsius", "altimeter_hpa"):
                 station[field] = None
             missing.append(station.get("id", "unknown"))
         elif source_fresh:
@@ -1099,8 +1101,8 @@ async def context_stations():
             "fresh_stations": len(stations) - len(missing),
             "expected_stations": record.get("expected_stations", 0),
             "quality": {"complete": not missing,
-                        "missing_fields": [f"{station}: missing or stale observation" for station in missing]},
-            "source_url": "https://www.weather.gov/documentation/services-web-api"}
+                        "missing_fields": [f"{station}: missing or stale METAR" for station in missing]},
+            "source_url": "https://aviationweather.gov/data/api/"}
 
 
 @app.get("/api/research/forecast-audit")

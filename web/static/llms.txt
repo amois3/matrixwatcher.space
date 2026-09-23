@@ -4,7 +4,7 @@
 
 ## Sources and limits
 - Twelve core streams span markets, blockchain, heliophysics, geophysics, human activity, modelled weather and ANU quantum randomness when ANU is available. Several streams share a physical domain or upstream provider; they are not twelve independent experiments.
-- Four context feeds add NASA fireballs, paired RIPE Atlas K-root/F-root pings, a six-city Open-Meteo weather-model grid and three remote physical NWS station observations. Context feeds do not trigger anomaly clusters. The six grid values are model estimates. Station reports have source timestamps and can arrive late; all three share one atmosphere domain and upstream API.
+- Four context feeds add NASA fireballs, paired RIPE Atlas K-root/F-root pings, a six-city Open-Meteo weather-model grid and six global airport METAR observations from the Aviation Weather Center. Context feeds do not trigger anomaly clusters. The grid values are model estimates. Station reports have source timestamps and can arrive late; all six share one atmosphere domain and upstream API.
 - Wikimedia editing is measured through EventStreams with bounded history replay; gaps longer than the replay limit are marked incomplete. A sensor reporting a record does not prove that the observation was complete.
 - Historical data include known collection and processing gaps. Earlier coincidences are exploratory, not proof of a hidden mechanism.
 
@@ -12,7 +12,7 @@
 - The public Evidence Lab compares fixed 30-second, 5-minute and 15-minute episode windows with a timing control. The Lag Lab explores twelve predefined directed comparisons and labels known physical or human-response links.
 - A frozen 120-day future-data screen runs from 24 September 2026 to 22 January 2027 UTC. It does not publish interim p-values.
 - A separate append-only forecast diary issues five historical candidate probabilities before outcomes, scores binary results only when target coverage is adequate, and compares Brier scores with a frozen matched timing baseline. These are exploratory scores; no rule is automatically promoted to a validated signal.
-- A paired RIPE network reference is collected over a fixed 14-day window. Public NWS station reports are displayed as observational context with explicit freshness, without local equipment.
+- A paired RIPE network reference is collected over a fixed 14-day window. Public global METAR reports are displayed as observational context with explicit freshness, without local equipment.
 
 ## Links
 - Dashboard: https://matrixwatcher.space
