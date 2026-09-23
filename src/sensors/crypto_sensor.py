@@ -88,6 +88,9 @@ class CryptoSensor(BaseSensor):
                     pairs_data.append(pair_data)
                     if pair_data.get("significant_change"):
                         any_significant_change = True
+
+        if not pairs_data:
+            raise RuntimeError("No cryptocurrency pairs returned usable prices")
         
         # Reset backoff on success
         if pairs_data:
@@ -100,6 +103,10 @@ class CryptoSensor(BaseSensor):
             "pairs_count": len(pairs_data),
             "any_significant_change": any_significant_change,
             "rate_limited": False
+        }
+        data["quality"] = {
+            "complete": len(pairs_data) == len(self.pairs),
+            "missing_pairs": sorted(set(self.pairs) - {p["symbol"] for p in pairs_data}),
         }
         
         # Add flat fields for each pair (for anomaly detection)

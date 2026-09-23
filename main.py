@@ -5,7 +5,9 @@ System for discovering hidden patterns and anomalies in digital reality.
 """
 
 import asyncio
+import json
 import logging
+import os
 import signal
 import sys
 import time
@@ -49,12 +51,10 @@ from src.monitoring.auto_calibrator import get_auto_calibrator
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("matrix_watcher.log")
-    ]
+    handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
+logging.getLogger("src.core.scheduler").setLevel(logging.WARNING)
 
 
 class MatrixWatcher:
@@ -71,8 +71,10 @@ class MatrixWatcher:
             compression=self.config.storage.compression,
             buffer_size=self.config.storage.buffer_size
         )
-        # Use threshold detector instead of z-score detector
-        self.anomaly_detector = HybridDetector(event_bus=self.event_bus)
+        self.anomaly_detector = HybridDetector(
+            event_bus=self.event_bus,
+            anomaly_log_dir=Path(self.config.storage.base_path) / "anomalies",
+        )
         self.smart_analyzer = SmartAnalyzer(
             lookback_seconds=getattr(self.config.analysis, "precursor_lookback_seconds", 60),
             correlation_threshold=self.config.analysis.correlation_threshold,
@@ -94,7 +96,7 @@ class MatrixWatcher:
         self.auto_calibrator = get_auto_calibrator(auto_apply=False)
         
         self.health_monitor = HealthMonitor(
-            port=8080,
+            port=int(os.environ.get("MATRIX_WATCHER_HEALTH_PORT", "8080")),
             failure_threshold=3,
             on_sensor_disabled=self._on_sensor_disabled
         )
@@ -103,6 +105,13 @@ class MatrixWatcher:
         self._running = False
         self._sensors = {}
         self._loop = None
+        self._pipeline_stats = {
+            "started_at": time.time(), "events_processed": 0,
+            "anomalies_detected": 0, "clusters_persisted": 0,
+            "errors": 0, "last_error": None, "last_error_at": None,
+            "last_event_at": None,
+        }
+        self._last_pipeline_status_write = 0.0
         
         # Anomaly tracking for clusters
         self._recent_anomalies: list[dict] = []
@@ -111,6 +120,14 @@ class MatrixWatcher:
     def _on_sensor_disabled(self, sensor_name: str):
         """Handle sensor being disabled — log only (no external notifications)."""
         logger.warning(f"Sensor {sensor_name} was disabled due to failures")
+
+    def _record_sensor_reading(self, name: str, reading):
+        quality = reading.data.get("quality") or {}
+        if quality.get("complete") is False:
+            missing = quality.get("missing_pairs") or quality.get("failed_feeds") or quality.get("missing_fields") or []
+            self.health_monitor.record_degraded(name, f"Partial reading: {', '.join(map(str, missing))}")
+        else:
+            self.health_monitor.record_success(name)
     
     def _save_patterns(self):
         """Save pattern tracker data periodically."""
@@ -122,8 +139,7 @@ class MatrixWatcher:
             if stats["total_patterns"] > 0:
                 logger.info(
                     f"Pattern Tracker: {stats['total_patterns']} patterns, "
-                    f"Brier score: {stats['avg_brier_score']:.3f}, "
-                    f"Well calibrated: {stats['well_calibrated_percent']:.0f}%"
+                    "calibration unavailable until forecasts are scored against outcomes"
                 )
         except Exception as e:
             logger.error(f"Error saving patterns: {e}")
@@ -376,7 +392,22 @@ class MatrixWatcher:
             import traceback
             logger.error(traceback.format_exc())
     
-    async def _handle_anomaly(self, anomaly: AnomalyEvent):
+    def _write_pipeline_status(self, force: bool = False):
+        """Publish processing health atomically for the website and watchdog."""
+        now = time.time()
+        if not force and now - self._last_pipeline_status_write < 60:
+            return
+        try:
+            path = Path("logs/pipeline_status.json")
+            path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = path.with_suffix(".tmp")
+            temporary.write_text(json.dumps({**self._pipeline_stats, "updated_at": now}))
+            temporary.replace(path)
+            self._last_pipeline_status_write = now
+        except OSError:
+            logger.exception("Could not publish pipeline status")
+
+    def _handle_anomaly(self, anomaly: AnomalyEvent):
         """Run cluster / pattern / prediction analysis for an anomaly.
 
         Always runs — independent of any external notifier. The PWA reads the
@@ -403,22 +434,16 @@ class MatrixWatcher:
             anomaly_index=index_snapshot.index,
             baseline_ratio=index_snapshot.baseline_ratio,
         )
-        self.pattern_tracker.record_condition(condition)
-
-        # Probabilistic estimates for all public event categories
-        probabilities = self.pattern_tracker.get_probabilities(condition, category_filter=None)
-
-        # Persist predictions for the PWA (single source of truth)
-        if probabilities:
-            self._save_predictions_to_file(condition, probabilities)
-
-        # Save detailed cluster log with index and probabilities
+        # Persist the measurement before optional pattern analysis. A failure in
+        # the latter must never erase evidence of a detected coincidence.
         self.storage.write_anomaly({
             "source": "anomalies",
             "cluster": {
                 "level": cluster.level,
                 "timestamp": cluster.timestamp,
                 "probability": cluster.probability,
+                "domains": list(cluster.domains),
+                "source_count": cluster.source_count,
                 "anomalies": [a.to_dict() for a in cluster.anomalies]
             },
             "index": {
@@ -427,9 +452,52 @@ class MatrixWatcher:
                 "baseline_ratio": index_snapshot.baseline_ratio,
                 "breakdown": index_snapshot.breakdown
             },
-            "probabilities": probabilities,
+            "probabilities": {},
             "timestamp": time.time()
         })
+        self._pipeline_stats["clusters_persisted"] += 1
+        self.pattern_tracker.record_condition(condition)
+        probabilities = self.pattern_tracker.get_probabilities(condition, category_filter=None)
+        if probabilities:
+            self._save_predictions_to_file(condition, probabilities)
+
+    def _process_data_event(self, event):
+        """Handle all observations on one event loop, in arrival order."""
+        self._pipeline_stats["events_processed"] += 1
+        self._pipeline_stats["last_event_at"] = time.time()
+        if event.source == "quantum_rng" and event.payload.get("source") != "anu_quantum":
+            # Legacy fallback samples are atmospheric/local entropy, not ANU
+            # quantum measurements. Never train or correlate on them.
+            self._write_pipeline_status()
+            return
+        try:
+            self.smart_analyzer.record_event(event)
+            payload = getattr(event, "payload", None)
+            if payload:
+                self.pattern_tracker.check_events(payload)
+        except Exception as exc:
+            self._record_pipeline_error("event analysis", event, exc)
+        try:
+            anomalies = self.anomaly_detector.process(event)
+        except Exception as exc:
+            self._record_pipeline_error("anomaly detection", event, exc)
+            anomalies = []
+        for anomaly in anomalies:
+            try:
+                self._pipeline_stats["anomalies_detected"] += 1
+                self.storage.write_anomaly(anomaly.to_dict())
+                self.anomaly_detector.mark_persisted(anomaly)
+                self._handle_anomaly(anomaly)
+            except Exception as exc:
+                self._record_pipeline_error("cluster analysis", event, exc)
+        self._write_pipeline_status()
+
+    def _record_pipeline_error(self, stage: str, event, exc: Exception):
+        self._pipeline_stats["errors"] += 1
+        self._pipeline_stats["last_error"] = f"{stage}: {type(exc).__name__}: {exc}"
+        self._pipeline_stats["last_error_at"] = time.time()
+        logger.error("%s failed for %s", stage, getattr(event, "source", "unknown"), exc_info=exc)
+        self._write_pipeline_status(force=True)
     
     def _setup_sensors(self):
         """Initialize and register all sensors."""
@@ -529,7 +597,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("crypto", {"timestamp": reading.timestamp, "source": "crypto", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("crypto")
+                        self._record_sensor_reading("crypto", reading)
                     else:
                         self.health_monitor.record_failure("crypto", "Collection returned None")
                 except Exception as e:
@@ -550,7 +618,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("blockchain", {"timestamp": reading.timestamp, "source": "blockchain", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("blockchain")
+                        self._record_sensor_reading("blockchain", reading)
                     else:
                         self.health_monitor.record_failure("blockchain", "Collection returned None")
                 except Exception as e:
@@ -576,7 +644,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("weather", {"timestamp": reading.timestamp, "source": "weather", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("weather")
+                        self._record_sensor_reading("weather", reading)
                     else:
                         self.health_monitor.record_failure("weather", "Collection returned None")
                 except Exception as e:
@@ -597,7 +665,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("news", {"timestamp": reading.timestamp, "source": "news", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("news")
+                        self._record_sensor_reading("news", reading)
                     else:
                         self.health_monitor.record_failure("news", "Collection returned None")
                 except Exception as e:
@@ -619,7 +687,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("earthquake", {"timestamp": reading.timestamp, "source": "earthquake", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("earthquake")
+                        self._record_sensor_reading("earthquake", reading)
                     else:
                         self.health_monitor.record_failure("earthquake", "Collection returned None")
                 except Exception as e:
@@ -640,7 +708,7 @@ class MatrixWatcher:
                     if reading:
                         self.storage.write_record("space_weather", {"timestamp": reading.timestamp, "source": "space_weather", **reading.data})
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("space_weather")
+                        self._record_sensor_reading("space_weather", reading)
                     else:
                         self.health_monitor.record_failure("space_weather", "Collection returned None")
                 except Exception as e:
@@ -663,7 +731,7 @@ class MatrixWatcher:
                             "solar_activity",
                             {"timestamp": reading.timestamp, "source": "solar_activity", **reading.data},
                         )
-                        self.health_monitor.record_success("solar_activity")
+                        self._record_sensor_reading("solar_activity", reading)
                     else:
                         self.health_monitor.record_failure("solar_activity", "Collection returned None")
                 except Exception as e:
@@ -689,7 +757,7 @@ class MatrixWatcher:
                             "solar_wind",
                             {"timestamp": reading.timestamp, "source": "solar_wind", **reading.data},
                         )
-                        self.health_monitor.record_success("solar_wind")
+                        self._record_sensor_reading("solar_wind", reading)
                     else:
                         self.health_monitor.record_failure("solar_wind", "Collection returned None")
                 except Exception as e:
@@ -722,7 +790,7 @@ class MatrixWatcher:
                             "earth_tides",
                             {"timestamp": reading.timestamp, "source": "earth_tides", **reading.data},
                         )
-                        self.health_monitor.record_success("earth_tides")
+                        self._record_sensor_reading("earth_tides", reading)
                     else:
                         self.health_monitor.record_failure("earth_tides", "Collection returned None")
                 except Exception as e:
@@ -753,7 +821,7 @@ class MatrixWatcher:
                             "wikipedia_edits",
                             {"timestamp": reading.timestamp, "source": "wikipedia_edits", **reading.data},
                         )
-                        self.health_monitor.record_success("wikipedia_edits")
+                        self._record_sensor_reading("wikipedia_edits", reading)
                     else:
                         self.health_monitor.record_failure("wikipedia_edits", "Collection returned None")
                 except Exception as e:
@@ -780,7 +848,7 @@ class MatrixWatcher:
                             "volcanic_activity",
                             {"timestamp": reading.timestamp, "source": "volcanic_activity", **reading.data},
                         )
-                        self.health_monitor.record_success("volcanic_activity")
+                        self._record_sensor_reading("volcanic_activity", reading)
                     else:
                         self.health_monitor.record_failure("volcanic_activity", "Collection returned None")
                 except Exception as e:
@@ -809,7 +877,7 @@ class MatrixWatcher:
                         record = {"timestamp": reading.timestamp, **reading.data}
                         self.storage.write_record("quantum_rng", record)
                         # Event already published by BaseSensor.safe_collect()
-                        self.health_monitor.record_success("quantum_rng")
+                        self._record_sensor_reading("quantum_rng", reading)
                     else:
                         self.health_monitor.record_failure("quantum_rng", "Collection returned None")
                 except Exception as e:
@@ -832,39 +900,10 @@ class MatrixWatcher:
     def _setup_event_handlers(self):
         """Set up event bus handlers."""
         def on_data(event):
-            # Record event for smart analysis
-            self.smart_analyzer.record_event(event)
-            
-            # Check for pattern events (for predictions)
-            # Event has 'payload' not 'data'
-            payload = getattr(event, 'payload', None)
-            if payload:
-                source = payload.get('source', getattr(event, 'source', 'unknown'))
-                
-                # Log for debugging
-                if source == 'earthquake':
-                    mag = payload.get('max_magnitude', 0)
-                    logger.info(f"📊 Earthquake: mag={mag}")
-                
-                # Log quantum_rng data
-                if 'randomness_score' in payload:
-                    rs = payload.get('randomness_score', 1.0)
-                    logger.info(f"🎲 Quantum RNG: randomness={rs:.3f}")
-                
-                detected_events = self.pattern_tracker.check_events(payload)
-                for evt in detected_events:
-                    logger.info(f"🎯 Pattern event detected: {evt.event_type} ({evt.severity})")
-            
-            # Detect anomalies
-            anomalies = self.anomaly_detector.process(event)
-            for anomaly in anomalies:
-                self.storage.write_anomaly(anomaly.to_dict())
-                # Run cluster / pattern / prediction analysis (always — file-driven, no notifier gating)
-                if self._loop:
-                    asyncio.run_coroutine_threadsafe(
-                        self._handle_anomaly(anomaly),
-                        self._loop
-                    )
+            if self._loop and self._loop.is_running():
+                self._loop.call_soon_threadsafe(self._process_data_event, event)
+            else:
+                logger.error("Data event arrived while processing loop was stopped")
         
         self.event_bus.subscribe(on_data, event_types=[EventType.DATA])
     
@@ -879,6 +918,7 @@ class MatrixWatcher:
         await self.health_monitor.start()
         
         self._running = True
+        self._write_pipeline_status(force=True)
         self.scheduler.start()
         
         # Start auto-calibration check (runs once per day)
@@ -909,6 +949,7 @@ class MatrixWatcher:
         await self.health_monitor.stop()
         self.storage.flush_all()
         self.storage.close()
+        self._write_pipeline_status(force=True)
         
         # Save pattern tracker data
         self.pattern_tracker.save()
@@ -933,9 +974,14 @@ class MatrixWatcher:
         self.start()
         
         try:
+            last_maintenance = time.monotonic()
             while self._running:
                 self._loop.run_until_complete(asyncio.sleep(1))
-                self.health_monitor.log_health()
+                if time.monotonic() - last_maintenance >= 60:
+                    self.storage.flush_all()
+                    self.health_monitor.log_health()
+                    self._write_pipeline_status(force=True)
+                    last_maintenance = time.monotonic()
         except KeyboardInterrupt:
             self.stop()
 

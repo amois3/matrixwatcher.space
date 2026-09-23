@@ -6,7 +6,7 @@ Monitors solar flares, CMEs, and geomagnetic activity.
 import logging
 from typing import Any
 import aiohttp
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from .base import BaseSensor, SensorConfig
 from ..core.types import SensorReading
@@ -35,15 +35,19 @@ class SpaceWeatherSensor(BaseSensor):
         logger.info("Space Weather: Starting data collection")
         async with aiohttp.ClientSession() as session:
             # Get solar flares
-            flares = await self._get_solar_flares(session)
-            logger.info(f"Space Weather: Found {len(flares)} flares")
+            flares_result = await self._get_solar_flares(session)
+            flares = flares_result or []
+            logger.info(f"Space Weather: Found {len(flares)} M/X flares")
             
             # Get geomagnetic K-index
             kp_index = await self._get_kp_index(session)
+            if kp_index is None:
+                raise RuntimeError("NOAA Kp feed returned no usable measurement")
             logger.info(f"Space Weather: Kp index = {kp_index}")
             
             # Get solar wind
-            solar_wind = await self._get_solar_wind(session)
+            solar_wind_result = await self._get_solar_wind(session)
+            solar_wind = solar_wind_result or {}
             logger.info(f"Space Weather: Solar wind = {solar_wind}")
             
             # Determine alert level
@@ -52,53 +56,56 @@ class SpaceWeatherSensor(BaseSensor):
             reading = SensorReading.create(
                 source="space_weather",
                 data={
-                    "solar_flares_24h": len(flares),
-                    "flare_count": len(flares),  # For detector compatibility
-                    "max_flare_class": flares[0]["class_type"] if flares else "A",
+                    "solar_flares_24h": len(flares) if flares_result is not None else None,
+                    "flare_count": len(flares) if flares_result is not None else None,
+                    "max_flare_class": max((f["class_type"] for f in flares), default="A") if flares_result is not None else None,
                     "kp_index": kp_index,
                     "geomagnetic_storm": kp_index >= 5,
-                    "solar_wind_speed_kms": solar_wind.get("speed", 0),
-                    "solar_wind_density": solar_wind.get("density", 0),
+                    "solar_wind_speed_kms": solar_wind.get("speed"),
+                    "solar_wind_density": solar_wind.get("density"),
                     "alert_level": alert_level,
-                    "recent_flares": flares[:3]
+                    "recent_flares": flares[-3:],
+                    "solar_wind_source": solar_wind.get("source"),
+                    "solar_wind_observed_at": solar_wind.get("observed_at"),
+                    "quality": {
+                        "complete": flares_result is not None and solar_wind_result is not None,
+                        "missing_fields": (["xray_flares"] if flares_result is None else [])
+                                          + (["solar_wind"] if solar_wind_result is None else []),
+                    },
                 }
             )
             logger.info(f"Space Weather: Collection complete, alert_level={alert_level}")
             return reading
     
-    async def _get_solar_flares(self, session: aiohttp.ClientSession) -> list[dict]:
-        """Get recent solar flares."""
+    async def _get_solar_flares(self, session: aiohttp.ClientSession) -> list[dict] | None:
+        """Get distinct NOAA flare events with M/X peak in the last 24 hours."""
         try:
-            url = f"{self.base_url}/goes/xrs-2-day.json"
+            url = f"{self.base_url}/goes/primary/xray-flares-7-day.json"
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status != 200:
-                    return []
+                    return None
                 
                 data = await response.json()
-                
-                # Parse flares (simplified - look for X-ray flux spikes)
                 flares = []
-                cutoff_time = datetime.utcnow() - timedelta(hours=24)
-                
-                for entry in data[-100:]:  # Last 100 entries
+                cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
+                for entry in data:
                     try:
-                        time_str = entry.get("time_tag", "")
-                        flux = entry.get("flux", 0)
-                        
-                        if flux > 1e-6:  # M-class or higher
-                            flare_class = self._classify_flare(flux)
+                        time_str = entry.get("max_time") or entry.get("time_tag")
+                        peak = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+                        flare_class = (entry.get("max_class") or "")[:1]
+                        if peak >= cutoff_time and flare_class in ("M", "X"):
                             flares.append({
                                 "time": time_str,
-                                "flux": flux,
+                                "flux": entry.get("max_xrlong"),
                                 "class_type": flare_class
                             })
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         continue
                 
                 return flares
         except Exception as e:
             logger.warning(f"Failed to get solar flares: {e}")
-            return []
+            return None
     
     def _classify_flare(self, flux: float) -> str:
         """Classify solar flare by X-ray flux."""
@@ -113,42 +120,57 @@ class SpaceWeatherSensor(BaseSensor):
         else:
             return "A"  # A-class (minimal)
     
-    async def _get_kp_index(self, session: aiohttp.ClientSession) -> float:
+    async def _get_kp_index(self, session: aiohttp.ClientSession) -> float | None:
         """Get current Kp index (geomagnetic activity)."""
         try:
             url = f"{self.base_url}/planetary_k_index_1m.json"
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status != 200:
-                    return 0.0
+                    return None
                 
                 data = await response.json()
                 if data:
                     latest = data[-1]
-                    return float(latest.get("kp_index", 0))
-                return 0.0
+                    measured_at = datetime.fromisoformat(latest["time_tag"].replace("Z", "+00:00"))
+                    if measured_at.tzinfo is None:
+                        measured_at = measured_at.replace(tzinfo=timezone.utc)
+                    if (datetime.now(timezone.utc) - measured_at).total_seconds() > 1800:
+                        return None
+                    value = latest.get("kp_index")
+                    return float(value) if value is not None else None
+                return None
         except Exception as e:
             logger.warning(f"Failed to get Kp index: {e}")
-            return 0.0
+            return None
     
-    async def _get_solar_wind(self, session: aiohttp.ClientSession) -> dict:
-        """Get solar wind data."""
+    async def _get_solar_wind(self, session: aiohttp.ClientSession) -> dict | None:
+        """Use the freshest active spacecraft row, with source provenance."""
         try:
             url = f"{self.base_url}/rtsw/rtsw_wind_1m.json"
             async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                 if response.status != 200:
-                    return {}
+                    return None
                 
                 data = await response.json()
-                if data:
-                    latest = data[-1]
-                    return {
-                        "speed": float(latest.get("wind_speed", 0)),
-                        "density": float(latest.get("density", 0))
-                    }
-                return {}
+                latest = next((row for row in data if row.get("active") is True
+                               and row.get("proton_speed") is not None
+                               and row.get("proton_density") is not None), None)
+                if latest is None:
+                    return None
+                measured_at = datetime.fromisoformat(latest["time_tag"].replace("Z", "+00:00"))
+                if measured_at.tzinfo is None:
+                    measured_at = measured_at.replace(tzinfo=timezone.utc)
+                if (datetime.now(timezone.utc) - measured_at).total_seconds() > 1800:
+                    return None
+                return {
+                    "speed": float(latest["proton_speed"]),
+                    "density": float(latest["proton_density"]),
+                    "source": latest.get("source"),
+                    "observed_at": measured_at.isoformat(),
+                }
         except Exception as e:
             logger.warning(f"Failed to get solar wind: {e}")
-            return {}
+            return None
     
     def _calculate_alert_level(self, flares: list, kp: float, solar_wind: dict) -> str:
         """Calculate overall alert level."""

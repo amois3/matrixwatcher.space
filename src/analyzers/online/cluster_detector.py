@@ -5,13 +5,13 @@ occur within the same short time window. The level reflects how many distinct
 sources participated:
 
 Level 1: Single source (background fluctuation, not a cluster)
-Level 2: 2 independent sources (temporal coincidence)
-Level 3: 3 independent sources (multi-domain cluster)
-Level 4: 4 independent sources (rare, significant)
-Level 5: 5+ independent sources (extreme synchronicity — stands out against
+Level 2: 2 independent domains (temporal coincidence)
+Level 3: 3 independent domains (multi-domain cluster)
+Level 4: 4 independent domains (rare, significant)
+Level 5: 5+ independent domains (extreme synchronicity — stands out against
          the whole observation history)
 
-The level is determined STRICTLY by the count of distinct sources in the
+The level is determined by the count of distinct physical/social domains in the
 window. The accompanying ``probability`` field is a qualitative rarity tier,
 NOT a calibrated statistical p-value (see ``_rarity_indicator``).
 """
@@ -36,6 +36,23 @@ LEVEL_DESCRIPTIONS = {
     5: "Critical synchronicity",
 }
 
+# Related feeds must not be counted as independent evidence. In particular,
+# solar activity, solar wind and Kp measure one physical chain.
+SOURCE_DOMAINS = {
+    "solar_activity": "heliophysics", "solar_wind": "heliophysics",
+    "space_weather": "heliophysics", "earthquake": "geophysics",
+    "volcanic_activity": "geophysics", "earth_tides": "geophysics",
+    "news": "human_activity", "wikipedia_edits": "human_activity",
+    "crypto": "markets", "blockchain": "blockchain",
+    "weather": "atmosphere", "quantum_rng": "quantum",
+    "system": "local_system", "network": "local_system",
+    "random": "local_system", "time_drift": "local_system",
+}
+
+
+def source_domain(source: str) -> str:
+    return SOURCE_DOMAINS.get(source, source)
+
 
 @dataclass
 class AnomalyCluster:
@@ -47,12 +64,14 @@ class AnomalyCluster:
     description: str
     is_precursor: bool = False
     precursor_event: Any = None
+    domains: tuple[str, ...] = ()
+    source_count: int = 0
 
 
 class ClusterDetector:
     """Detects clusters and correlations between anomalies.
 
-    A cluster's level equals the number of distinct sensor sources that produced
+    A cluster's level equals the number of distinct domains that produced
     an anomaly within ``cluster_window_seconds``. Level 5 (5+ sources) is a
     genuinely extreme event and is intentionally reachable so rare synchronicities
     are never silently dropped.
@@ -91,6 +110,11 @@ class ClusterDetector:
         """
         current_time = time.time() if now is None else now
 
+        # A delayed or backfilled observation is still a valid individual
+        # anomaly, but must never create a live coincidence with current data.
+        if not 0 <= current_time - anomaly.timestamp < self.cluster_window:
+            return None
+
         # Store anomaly
         self._recent_anomalies.append({
             "anomaly": anomaly,
@@ -125,8 +149,9 @@ class ClusterDetector:
         if not recent:
             return None
 
-        sources = set(a["anomaly"].sensor_source for a in recent)
-        n_sources = len(sources)
+        sources = {a["anomaly"].sensor_source for a in recent}
+        domains = tuple(sorted({source_domain(source) for source in sources}))
+        n_sources = len(domains)
 
         if n_sources == 1:
             return AnomalyCluster(
@@ -135,6 +160,7 @@ class ClusterDetector:
                 timestamp=new_anomaly.timestamp,
                 probability=1.0,  # lone anomaly, not a cluster
                 description=LEVEL_DESCRIPTIONS[1],
+                domains=domains, source_count=len(sources),
             )
 
         # Multiple distinct sources -> cluster. Level capped at 5 for labelling.
@@ -147,6 +173,7 @@ class ClusterDetector:
             timestamp=new_anomaly.timestamp,
             probability=self._rarity_indicator(n_sources),
             description=LEVEL_DESCRIPTIONS[level],
+            domains=domains, source_count=len(sources),
         )
 
     @staticmethod

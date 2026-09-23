@@ -172,14 +172,12 @@ class ThresholdDetector:
                 description="Extreme time desynchronization"
             ),
             
-            # News: Detect headline volume spikes > 2x. Lookback must exceed the
-            # ~900s poll interval, otherwise there is never a prior reading in
-            # the window to compare against (the old 300s lookback never fired).
+            # At most 40 headlines are read per poll. A burst of 8 newly seen
+            # headlines is observable; the old >50 target was impossible.
             ThresholdRule(
-                parameter_pattern="news.headline_count",
-                min_change_percent=100.0,
-                lookback_seconds=2000.0,
-                description="News spike"
+                parameter_pattern="news.new_items_count",
+                trigger_when_above=8.0,
+                description="News publication burst"
             ),
 
             # Blockchain: the sensor sets `any_anomalous` (a top-level 0/1 flag)

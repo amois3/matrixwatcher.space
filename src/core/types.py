@@ -24,6 +24,7 @@ class EventType(str, Enum):
 class SensorStatus(str, Enum):
     """Status of a sensor."""
     RUNNING = "running"
+    DEGRADED = "degraded"
     STOPPED = "stopped"
     ERROR = "error"
     RATE_LIMITED = "rate_limited"

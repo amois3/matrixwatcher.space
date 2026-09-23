@@ -4,6 +4,7 @@ import asyncio
 import bisect
 import json
 import logging
+import os
 import re
 import time
 from datetime import datetime
@@ -17,6 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.analyzers.online.digest_generator import build_digest, date_str_utc
+from src.monitoring.coverage import get_coverage
+from src.analyzers.online.cluster_detector import source_domain
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -142,6 +145,11 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def _domain_level(record: dict) -> int:
+    sources = {item.get("sensor_source") for item in record.get("cluster", {}).get("anomalies", [])}
+    return min(5, len({source_domain(source) for source in sources if source}))
+
+
 def load_recent_anomalies(hours: int = 24) -> list[dict]:
     """Load recent anomalies from logs (only level >= 3, deduplicated by minute)."""
     anomalies = []
@@ -163,10 +171,11 @@ def load_recent_anomalies(hours: int = 24) -> list[dict]:
                 for line in f:
                     try:
                         data = json.loads(line.strip())
-                        level = data.get("cluster", {}).get("level", 0)
+                        level = _domain_level(data)
                         ts = data.get("timestamp", 0)
                         
                         if level >= 3 and ts > cutoff:
+                            data["cluster"]["level"] = level
                             # Create dedup key: minute + level + sorted sources
                             minute = int(ts // 60)
                             sources = sorted(set(
@@ -206,9 +215,10 @@ def load_anomalies_for_date(date_str: str) -> list[dict]:
                     data = json.loads(line.strip())
                 except json.JSONDecodeError:
                     continue
-                level = data.get("cluster", {}).get("level", 0)
+                level = _domain_level(data)
                 if level < 3:
                     continue
+                data["cluster"]["level"] = level
                 ts = data.get("timestamp", 0)
                 minute = int(ts // 60)
                 sources = sorted(set(
@@ -257,23 +267,25 @@ def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
                         except (TypeError, ValueError):
                             pass
                     md = d.get("metadata") or {}
-                    detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts))
+                    if src == "quantum_rng" and not _verified_quantum_anomaly(d):
+                        continue
+                    detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts), md)
                     out.append({
                         "timestamp": ts, "source": src,
                         "parameter": d.get("parameter", ""), "value": d.get("value"),
                         "z_score": d.get("z_score"), "reason": md.get("reason", ""),
                         "severity": md.get("severity", "medium"),
                         "method": md.get("detection_method", ""),
+                        "event_id": md.get("usgs_id"),
                         "detail": detail, "context": context,
                     })
         except Exception as e:
             logger.error(f"activity read {log_file}: {e}")
     out.sort(key=lambda x: x["timestamp"], reverse=True)
-    # Collapse repeats: one card per source (newest first) with a count, so the
-    # feed shows distinct activity instead of a wall of identical duplicates.
+    # Keep distinct USGS earthquakes visible; collapse repeats for other streams.
     grouped: dict[str, dict] = {}
     for item in out:
-        src = item["source"]
+        src = (item["source"], item.get("event_id")) if item.get("event_id") else item["source"]
         g = grouped.get(src)
         if g is None:
             grouped[src] = {**item, "count": 1}
@@ -374,6 +386,7 @@ def get_active_predictions(use_cache: bool = True) -> list[dict]:
             p for p in best_predictions
             if p.get("skill") is not None and p["skill"] >= SKILL_THRESHOLD_PP
             and p.get("observations", p.get("condition_count", 0)) >= MIN_OBS_TO_SHOW
+            and p.get("validated_on_holdout") is True
         ]
         informative.sort(key=lambda p: p.get("skill", 0), reverse=True)
 
@@ -632,6 +645,13 @@ def _raw_record_at(source: str, ts: float, max_dt: float = 900.0):
     return best
 
 
+def _verified_quantum_anomaly(anomaly: dict) -> bool:
+    if (anomaly.get("metadata") or {}).get("measurement_source") == "anu_quantum":
+        return True
+    raw = _raw_record_at("quantum_rng", anomaly.get("timestamp"), max_dt=0.001)
+    return bool(raw and raw.get("source") == "anu_quantum")
+
+
 def _robust_delta(reason: str):
     """Parse 'X is N robust-σ (above|below) its 7d median M' -> (direction, median)."""
     m = re.search(r"robust-σ (above|below) its [\d.]+d median ([\-\d.]+)", reason or "")
@@ -713,7 +733,7 @@ def _concise_fact(parameter: str, value, reason: str) -> str:
 
 
 
-def _activity_enrich(src, parameter, value, reason, ts):
+def _activity_enrich(src, parameter, value, reason, ts, metadata=None):
     """Return (primary_detail, gray_context) for an activity card.
     Primary goes on the main line; context goes on a second, grey line."""
     detail = _concise_fact(parameter, value, reason)
@@ -725,7 +745,8 @@ def _activity_enrich(src, parameter, value, reason, ts):
     pl = (parameter or "").lower()
 
     if src == "earthquake":
-        full = _earthquake_detail_at(ts)          # "M5.0 · Kermadec Islands region"
+        place = (metadata or {}).get("place")
+        full = f"M{v:.1f} · {place}" if v is not None and place else _earthquake_detail_at(ts)
         if full and " · " in full:
             detail, context = full.split(" · ", 1)
         elif full:
@@ -818,9 +839,13 @@ def _activity_enrich(src, parameter, value, reason, ts):
 def format_level_event(anomaly: dict) -> dict | None:
     """Format anomaly for level display - detailed like Telegram but in English."""
     cluster = anomaly.get("cluster", {})
+    if any(a.get("sensor_source") == "quantum_rng" and
+           not _verified_quantum_anomaly(a)
+           for a in cluster.get("anomalies", [])):
+        return None
     index_data = anomaly.get("index", {})
     
-    level = cluster.get("level", 0)
+    level = _domain_level(anomaly)
     if level < 3:  # Only show Level 3+ (significant correlations)
         return None
     
@@ -847,10 +872,9 @@ def format_level_event(anomaly: dict) -> dict | None:
                 a.get("value"),
                 (a.get("metadata") or {}).get("reason", "") or "",
             )
-            # For earthquakes, add WHERE (USGS place isn't stored on the anomaly,
-            # so look it up from the raw feed by timestamp): "M5.3 · Turpan, China".
+            # Each USGS event carries its own location; old records use raw lookup.
             if src == "earthquake" and detail.startswith("M"):
-                place = _earthquake_place_at(a.get("timestamp", anomaly.get("timestamp", 0)))
+                place = (a.get("metadata") or {}).get("place") or _earthquake_place_at(a.get("timestamp", anomaly.get("timestamp", 0)))
                 if place:
                     detail = f"{detail} · {place}"
             source_detail[src] = detail
@@ -868,11 +892,7 @@ def format_level_event(anomaly: dict) -> dict | None:
     sources_formatted = [_fmt_source(s) for s in sources]
     
     # Level descriptions (must match digest_generator.LEVEL_NAME exactly)
-    level_names = {
-        3: "Multiple Correlation",
-        4: "Strong Correlation",
-        5: "Critical Synchronicity"
-    }
+    level_names = {3: "Three-domain coincidence", 4: "Four-domain coincidence", 5: "Five-domain coincidence"}
 
     level_colors = {3: "var(--neon-orange)", 4: "var(--neon-orange)", 5: "var(--neon-red)"}
 
@@ -895,9 +915,9 @@ def format_level_event(anomaly: dict) -> dict | None:
     
     # System comment based on level
     comments = {
-        3: "Stable cluster of deviations detected across multiple independent domains. Observed behavior exceeds normal background.",
-        4: "Strong correlation pattern emerging. Multiple sensors showing synchronized anomalous readings.",
-        5: "Critical anomaly state. Unprecedented correlation across monitoring systems. Maximum observation priority."
+        3: "Three domains showed unusual observations within the configured window. Statistical significance is untested.",
+        4: "Four domains coincided within the configured window. Statistical significance is untested.",
+        5: "Five or more domains coincided. This is an observation, not evidence of causation.",
     }
     
     return {
@@ -915,7 +935,8 @@ def format_level_event(anomaly: dict) -> dict | None:
         "time_str": time_str,
         "date_str": date_str,
         "comment": comments.get(level, "Anomaly detected."),
-        "source_count": len(sources)
+        "source_count": len(sources),
+        "domain_count": level,
     }
 
 
@@ -947,6 +968,25 @@ async def llms_txt():
 async def health():
     """Health check."""
     return {"status": "ok", "timestamp": time.time()}
+
+
+@app.get("/api/coverage")
+async def coverage():
+    """Collector freshness, completeness and actual processing health."""
+    return get_coverage()
+
+
+@app.get("/api/evidence")
+async def evidence():
+    """Read the last scheduled, explicitly exploratory multi-window analysis."""
+    try:
+        report_path = Path(os.environ.get("MATRIX_WATCHER_EVIDENCE_PATH", "logs/evidence/current.json"))
+        report = json.loads(report_path.read_text())
+        if time.time() - report.get("generated_at", 0) > 172800:
+            return {"status": "stale", "generated_at": report.get("generated_at")}
+        return report
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unavailable"}
 
 
 @app.get("/api/predictions")

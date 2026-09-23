@@ -1,0 +1,18 @@
+[Unit]
+Description=Matrix Watcher collector and analysis
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+WorkingDirectory=/home/amois/matrix-watcher
+ExecStart=/home/amois/matrix-watcher-python.sh main.py
+StandardOutput=journal
+StandardError=journal
+Restart=always
+RestartSec=30
+Nice=10
+
+[Install]
+WantedBy=default.target

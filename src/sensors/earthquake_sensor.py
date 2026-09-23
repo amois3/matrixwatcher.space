@@ -4,6 +4,7 @@ Monitors global seismic activity for anomalies and correlations.
 """
 
 import logging
+import time
 from typing import Any
 import aiohttp
 
@@ -36,7 +37,9 @@ class EarthquakeSensor(BaseSensor):
         """
         super().__init__("earthquake", config, event_bus)
         self.min_magnitude = min_magnitude
-        self.api_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson"
+        # A day-long M4.5+ feed catches events after collector outages. The
+        # aggregate fields below still describe only the most recent hour.
+        self.api_url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_day.geojson"
     
     async def collect(self) -> SensorReading:
         """Collect earthquake data from USGS."""
@@ -48,7 +51,8 @@ class EarthquakeSensor(BaseSensor):
                 data = await response.json()
                 
                 # Parse earthquakes
-                earthquakes = []
+                now = time.time()
+                significant_events = []
                 for feature in data.get("features", []):
                     props = feature.get("properties", {})
                     coords = feature.get("geometry", {}).get("coordinates", [])
@@ -56,11 +60,18 @@ class EarthquakeSensor(BaseSensor):
                     mag = props.get("mag")
                     if mag is None or mag < self.min_magnitude:
                         continue
+                    occurred_ms = props.get("time")
+                    if not isinstance(occurred_ms, (int, float)) or occurred_ms <= 0:
+                        continue
+                    occurred = occurred_ms / 1000
+                    if occurred > now + 120:
+                        continue
                     
-                    earthquakes.append({
+                    significant_events.append({
+                        "id": str(feature.get("id") or f"{props.get('time')}:{coords}:{mag}"),
                         "magnitude": mag,
                         "place": props.get("place", "Unknown"),
-                        "time": props.get("time", 0) / 1000,  # Convert to seconds
+                        "time": occurred,
                         "depth_km": coords[2] if len(coords) > 2 else None,
                         "latitude": coords[1] if len(coords) > 1 else None,
                         "longitude": coords[0] if len(coords) > 0 else None,
@@ -68,6 +79,9 @@ class EarthquakeSensor(BaseSensor):
                         "tsunami": props.get("tsunami", 0) == 1
                     })
                 
+                # The one-hour aggregate retains its original meaning, while
+                # the full day of IDs supports catch-up after a short outage.
+                earthquakes = [eq for eq in significant_events if eq["time"] >= now - 3600]
                 # Sort by magnitude (strongest first)
                 earthquakes.sort(key=lambda x: x["magnitude"], reverse=True)
                 
@@ -94,6 +108,7 @@ class EarthquakeSensor(BaseSensor):
                         "shallow_count": shallow_count,
                         "has_tsunami_risk": any(eq["tsunami"] for eq in earthquakes),
                         "earthquakes": earthquakes[:5],  # Top 5 strongest
+                        "significant_events": significant_events,
                         "total_energy_released": sum(10 ** (1.5 * eq["magnitude"]) for eq in earthquakes)  # Richter energy
                     }
                 )

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Matrix Watcher evidence analysis daily
+
+[Timer]
+OnCalendar=*-*-* 03:20:00 UTC
+Persistent=true
+Unit=matrix-watcher-evidence.service
+
+[Install]
+WantedBy=timers.target

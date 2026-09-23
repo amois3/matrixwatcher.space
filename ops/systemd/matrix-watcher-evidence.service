@@ -1,0 +1,10 @@
+[Unit]
+Description=Matrix Watcher daily exploratory evidence analysis
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/amois/matrix-watcher
+ExecStart=/home/amois/matrix-watcher-python.sh -m src.analyzers.offline.evidence --days 120 --iterations 500
+StandardOutput=journal
+StandardError=journal
+Nice=15

@@ -130,8 +130,20 @@ class HealthMonitor:
         health = self._sensors[sensor_name]
         health.status = SensorStatus.RUNNING
         health.last_success = time.time()
+        health.error_message = None
         health.consecutive_failures = 0
         health.total_successes += 1
+        if health.disabled:
+            health.disabled = False
+            health.disabled_reason = None
+            logger.info(f"Sensor {sensor_name} re-enabled after a successful run")
+
+    def record_degraded(self, sensor_name: str, reason: str) -> None:
+        """A reading exists but one or more expected components are missing."""
+        self.record_success(sensor_name)
+        health = self._sensors[sensor_name]
+        health.status = SensorStatus.DEGRADED
+        health.error_message = reason
     
     def record_failure(self, sensor_name: str, error: str | None = None) -> None:
         """Record sensor failure.

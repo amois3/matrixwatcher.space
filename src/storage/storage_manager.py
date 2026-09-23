@@ -122,6 +122,8 @@ class StorageManager:
             anomaly_record: Anomaly data to store
         """
         self.write_record("anomalies", anomaly_record)
+        # Low-frequency findings must be durable and visible immediately.
+        self.flush("anomalies")
     
     def flush(self, sensor_name: str | None = None) -> int:
         """Flush buffered records to storage.

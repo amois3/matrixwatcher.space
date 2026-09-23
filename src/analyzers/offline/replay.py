@@ -1,7 +1,7 @@
 """Offline replay of raw sensor logs through the live detection pipeline.
 
 Replays recorded raw observations (prices, earthquakes, space weather, quantum
-randomness, etc.) chronologically through the current ``ThresholdDetector`` +
+randomness, etc.) chronologically through the current ``HybridDetector`` +
 ``ClusterDetector`` + ``HistoricalPatternTracker``, rebuilding the derived
 anomaly and pattern labels (``logs/anomalies/<date>.jsonl`` + ``logs/patterns/``).
 
@@ -38,11 +38,11 @@ from typing import Any, Iterable, Iterator
 from ...core.types import Event, EventType
 from ..online.anomaly_index import AnomalyIndexCalculator
 from ..online.cluster_detector import ClusterDetector
+from ..online.hybrid_detector import HybridDetector
 from ..online.historical_pattern_tracker import (
     Condition,
     HistoricalPatternTracker,
 )
-from ..online.threshold_detector import ThresholdDetector
 
 
 logger = logging.getLogger(__name__)
@@ -51,13 +51,9 @@ logger = logging.getLogger(__name__)
 # Sensors the LIVE system processes today (system/time_drift/network/random are
 # disabled — their raw files are ignored to match production behaviour).
 ENABLED_SENSORS: tuple[str, ...] = (
-    "crypto",
-    "blockchain",
-    "weather",
-    "news",
-    "earthquake",
-    "space_weather",
-    "quantum_rng",
+    "crypto", "blockchain", "weather", "news", "earthquake",
+    "space_weather", "solar_activity", "solar_wind", "earth_tides",
+    "wikipedia_edits", "volcanic_activity", "quantum_rng",
 )
 
 
@@ -172,7 +168,7 @@ class Pipeline:
     """
 
     def __init__(self, patterns_path: Path):
-        self.detector = ThresholdDetector(event_bus=None, enable_calibration_tracking=False)
+        self.detector = HybridDetector(event_bus=None)
         # 30s window matches the live config and the README's documented method
         self.cluster_detector = ClusterDetector(cluster_window_seconds=30.0)
         self.anomaly_index = AnomalyIndexCalculator(baseline_window_hours=24)
@@ -186,16 +182,21 @@ class Pipeline:
 
     def process_event(self, event: Event) -> tuple[list[dict], list[dict]]:
         """Process one historical event, returning (anomaly_records, cluster_records)."""
+        if event.source == "quantum_rng" and event.payload.get("source") != "anu_quantum":
+            return [], []
         # Pattern-tracker event detection (uses event timestamp as the clock)
         self.pattern_tracker.check_events(event.payload, current_time=event.timestamp)
 
-        # Threshold anomalies
+        # Exactly the same anomaly detector as the live collector
         anomalies = self.detector.process(event)
         anomaly_records: list[dict] = []
         cluster_records: list[dict] = []
 
         for anomaly in anomalies:
             anomaly_records.append(anomaly.to_dict())
+            # Replay is deterministic and writes this batch to its isolated
+            # output. Acknowledge IDs here to mirror subsequent live polls.
+            self.detector.mark_persisted(anomaly)
             cluster = self.cluster_detector.add_anomaly(anomaly, now=event.timestamp)
             if not cluster:
                 continue
@@ -217,6 +218,8 @@ class Pipeline:
                     "level": cluster.level,
                     "timestamp": cluster.timestamp,
                     "probability": cluster.probability,
+                    "domains": list(cluster.domains),
+                    "source_count": cluster.source_count,
                     "anomalies": [a.to_dict() for a in cluster.anomalies],
                 },
                 "index": {

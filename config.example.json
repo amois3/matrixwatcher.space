@@ -120,6 +120,24 @@
       "priority": "medium",
       "custom_params": {}
     },
+    "solar_wind": {
+      "enabled": true,
+      "interval_seconds": 180,
+      "priority": "high",
+      "custom_params": {}
+    },
+    "wikipedia_edits": {
+      "enabled": true,
+      "interval_seconds": 60,
+      "priority": "medium",
+      "custom_params": {"sample_seconds": 8.0}
+    },
+    "earth_tides": {
+      "enabled": true,
+      "interval_seconds": 300,
+      "priority": "low",
+      "custom_params": {}
+    },
     "volcanic_activity": {
       "enabled": true,
       "interval_seconds": 3600,

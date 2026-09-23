@@ -85,6 +85,14 @@ class NewsSensor(BaseSensor):
                 new_items_count += stats.get("new_items", 0)
         
         logger.info(f"News: Collected {len(all_items)} items from {len(self.feeds)} feeds")
+        successful = sum(1 for stat in feed_stats if stat["success"])
+        if not successful:
+            raise RuntimeError("All news feeds failed")
+        # The first poll establishes which headlines already exist; it is not
+        # evidence of a sudden burst of newly published stories.
+        if not getattr(self, "_baseline_ready", False):
+            new_items_count = 0
+            self._baseline_ready = True
         
         # Calculate aggregate entropy
         all_text = " ".join(item["headline"] for item in all_items)
@@ -96,8 +104,10 @@ class NewsSensor(BaseSensor):
             "items_count": len(all_items),
             "new_items_count": new_items_count,
             "feeds_stats": feed_stats,
-            "feeds_successful": sum(1 for s in feed_stats if s["success"]),
+            "feeds_successful": successful,
             "feeds_total": len(self.feeds),
+            "quality": {"complete": successful == len(self.feeds),
+                        "failed_feeds": [s["feed"] for s in feed_stats if not s["success"]]},
             "aggregate_entropy": round(aggregate_entropy, 4),
             # Add headline_count for anomaly detection (same as items_count)
             "headline_count": len(all_items)
