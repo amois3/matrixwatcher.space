@@ -4,6 +4,7 @@ import asyncio
 import bisect
 import json
 import logging
+import os
 import re
 import time
 from datetime import datetime
@@ -966,7 +967,8 @@ async def coverage():
 async def evidence():
     """Read the last scheduled, explicitly exploratory multi-window analysis."""
     try:
-        report = json.loads(Path("logs/evidence/current.json").read_text())
+        report_path = Path(os.environ.get("MATRIX_WATCHER_EVIDENCE_PATH", "logs/evidence/current.json"))
+        report = json.loads(report_path.read_text())
         if time.time() - report.get("generated_at", 0) > 172800:
             return {"status": "stale", "generated_at": report.get("generated_at")}
         return report

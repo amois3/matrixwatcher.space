@@ -5,6 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/home/amois/matrix-watcher
 ExecStart=/home/amois/matrix-watcher-python.sh main.py
 StandardOutput=journal

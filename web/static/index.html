@@ -98,16 +98,16 @@
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
                 "isAccessibleForFree": true,
-                "dateModified": "2026-06-01",
+                "dateModified": "2026-09-23",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
                     "Monitoring of 12 data streams with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
-                    "Shuffle test and out-of-sample backtest against chance",
-                    "Base-rate honest prediction filter (skill vs base rate)",
+                    "Exploratory multi-window timing controls with adjusted p-values",
+                    "Future-data validation required for public predictive signals",
                     "Daily plain-language digest of observations",
-                    "All data from real public feeds (Binance, USGS, NOAA, ANU QRNG, Smithsonian)"
+                    "Public data feeds and a locally computed earth-tide covariate"
                 ]
             },
             {
@@ -133,7 +133,7 @@
                 "isAccessibleForFree": true,
                 "license": "https://github.com/amois3/matrixwatcher.space",
                 "keywords": ["anomaly detection", "cross-domain correlation", "quantum randomness", "space weather", "seismic activity", "null result"],
-                "measurementTechnique": "Threshold-based edge-triggered anomaly detection with shuffle-test and out-of-sample backtest validation"
+                "measurementTechnique": "Hybrid anomaly detection, domain-aware coincidence episodes and exploratory timing controls"
             },
             {
                 "@type": "FAQPage",
@@ -162,7 +162,7 @@
                     {
                         "@type": "Question",
                         "name": "Does Matrix Watcher use AI or neural networks?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "No. All detection and statistics are transparent and rule-based: probability = occurrences / observations, validated with shuffle tests and bootstrap. There are no neural networks, language models, or black boxes in the analysis." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Detection uses transparent rules and robust statistics. Historical timing controls are exploratory, and no predictive claim is validated on future observations." }
                     }
                 ]
             }
@@ -1666,17 +1666,17 @@
 
             <div class="modal-section">
                 <h3>No AI. Pure Statistics.</h3>
-                <p>Matrix Watcher intentionally does <strong>not</strong> use artificial intelligence, neural networks, or language models. All predictions are based on pure statistical observation:</p>
+                <p>Matrix Watcher uses transparent statistical rules and no generative model for detection. Its current condition frequencies are exploratory:</p>
                 <ul>
                     <li><code>probability = occurrences / observations</code></li>
                     <li>Prospective forecast scoring is required before reporting calibration</li>
-                    <li>No hallucinations. No speculation. Just data.</li>
+                    <li>Independent future observations are needed before a forecast claim</li>
                 </ul>
             </div>
 
             <div class="modal-section">
                 <h3>Philosophy</h3>
-                <p>Matrix Watcher never claims to know <em>why</em> a coincidence occurs. We detect it, measure it, and test — honestly — whether it predicts anything at all. The universe is full of patterns; most are chance, a few might not be. A rigorous "nothing here" is itself a real result, and reporting it truthfully is the whole point. Our job is to watch, and to never lie about what we see.</p>
+                <p>Matrix Watcher does not claim to know why a coincidence occurs. It records what it can observe, exposes gaps in coverage, and compares timing against controls. An empty result remains inconclusive when measurements are incomplete or the test has low power.</p>
             </div>
 
             <div class="modal-section">
@@ -2595,7 +2595,7 @@
                         '<span style="font-size:8px;color:' + actDot(x.severity) + ';">●</span></div>' +
                     '<div style="font-family:\'Inter\',sans-serif;font-size:14px;color:var(--text-primary);line-height:1.4;margin-top:3px;">' + esc(actHuman(x)) + '</div>' +
                     (x.context ? '<div style="font-size:12px;color:var(--text-secondary);line-height:1.4;margin-top:2px;">' + esc(x.context) + '</div>' : '') +
-                    '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + (x.count > 1 ? x.count + '\u00d7 \u00b7 latest ' : '') + actAgo(x.timestamp) + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);margin-top:4px;">' + (x.count > 1 ? x.count + ' flagged readings \u00b7 latest ' : '') + actAgo(x.timestamp) + '</div>' +
                     '</div></div>';
             }).join("") + "</div>";
             adjustActivityLayout();

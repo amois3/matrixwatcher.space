@@ -1,180 +1,72 @@
-<div align="center">
+# Matrix Watcher
 
-# <img src="web/static/icons/activity.svg" width="28" alt=""> Matrix Watcher
+[Live dashboard](https://matrixwatcher.space) · [License](LICENSE) · [Author](https://moisejevs.com)
 
-### A rigorously honest monitor for hidden correlations across independent real-world systems
+Matrix Watcher is an open experiment collecting real measurements and asking whether unusual observations in different domains coincide more often than a timing control suggests. It does **not** claim to predict earthquakes or markets. No cross-domain discovery has been independently validated.
 
-[![Live](https://img.shields.io/badge/live-matrixwatcher.space-00d4ff?style=flat-square)](https://matrixwatcher.space)
-[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square)](LICENSE)
-[![Python](https://img.shields.io/badge/python-3.11%2B-3776ab?style=flat-square&logo=python&logoColor=white)](https://www.python.org)
-[![Status](https://img.shields.io/badge/status-running%2024%2F7-00ff88?style=flat-square)](https://matrixwatcher.space)
-[![No AI](https://img.shields.io/badge/analysis-pure%20statistics-aa66ff?style=flat-square)](#no-ai-pure-statistics)
+## Twelve observed streams
 
-**[Live dashboard → matrixwatcher.space](https://matrixwatcher.space)**
+| Stream | Data | Domain |
+|---|---|---|
+| Crypto | Binance BTC and ETH markets | markets |
+| Blockchain | block timing from public nodes | blockchain |
+| Quantum RNG | ANU hardware randomness | quantum |
+| Space weather | NOAA geomagnetic Kp and related readings | heliophysics |
+| Solar wind | NOAA speed, density and interplanetary magnetic field | heliophysics |
+| Solar activity | NOAA radio flux, X-rays and protons | heliophysics |
+| Earthquakes | USGS seismic feed | geophysics |
+| Volcanoes | Smithsonian/USGS activity reports | geophysics |
+| Weather | temperature and pressure at the configured location, currently New York | atmosphere |
+| News | newly seen headlines from four RSS feeds | human activity |
+| Wikipedia | non-bot edits during an 8-second sample of each roughly 60-second poll | human activity |
+| Earth tides | locally calculated gravitational tide; stored as context only | geophysics |
 
-*We watch. We measure. We tell the truth — even when the truth is "nothing here."*
+These are **not twelve independent domains**. Related solar feeds measure one physical chain. Earth tides are not an anomaly trigger. The live cluster level counts distinct domains within 30 seconds; a cluster is an observation, not a p-value or evidence of causation. A short window has limited power when streams are polled minutes apart.
 
-</div>
+## Processing and data quality
 
----
+1. Sensors store timestamped raw JSONL. Missing core measurements cause collection errors; partial crypto, news and NOAA results carry quality metadata.
+2. The live `HybridDetector` combines rolling robust deviations for continuous variables with named thresholds for physical events. News bursts use an attainable count of new headlines after the initial RSS baseline.
+3. A single event-loop callback processes readings in order. It persists individual anomalies and domain-aware cluster records before optional pattern analysis. Exceptions are logged and published in `logs/pipeline_status.json`.
+4. The dashboard and `/api/coverage` show freshness and completeness of the latest stored reading for each source, plus pipeline health. They do not certify that every historical interval was observed.
+5. Internal condition → event frequencies are exploratory. Repeated states, changing base rates and selection bias can inflate them. The public signal panel stays empty until a candidate has passed independent future-data validation. The former aggregate called a “Brier score” was not a proper forecast score and is no longer presented as one.
 
-## What is Matrix Watcher?
+The daily **Evidence Lab** counts distinct three-domain episodes at 30 seconds, 5 minutes and 15 minutes. Its control shifts whole domain event trains by complete days within each UTC month, preserving bursts, time of day and polling phase. Holm adjustment covers the three windows. The historical result remains **exploratory** because the method was refined after these data were seen. `/api/evidence` provides the report as JSON.
 
-Matrix Watcher watches **12 completely independent real-world data streams** at once — from Bitcoin to earthquakes to hardware quantum noise to the solid-earth tide — and asks a single, honest question:
+## September 2026 audit
 
-> **Do anomalies in unrelated domains line up more often than pure chance would produce?**
+The previous live pipeline had a `NameError` during probability calculation. Background-task exceptions were discarded, so cluster summaries failed to persist while individual anomalies continued to appear. News detection was disconnected from the live hybrid detector, and its target required 50 new headlines although the sensor read at most 40. One NOAA flare URL returned 404. Another NOAA parser read nonexistent solar-wind fields from an old row. Health could remain green while BTC was absent. Offline replay used different detector rules and fewer streams than live collection.
 
-It is a **measurement instrument, not a fortune teller.** It does not promise to predict markets or earthquakes. It records what happens, tests it against chance with methods designed to *disprove* any apparent pattern, and publishes the result transparently — including the unglamorous but valuable answer: *no significant signal so far.*
+Those code faults have been repaired. The production history remains incomplete; it cannot become clean prospective evidence retroactively. On the available post-May-2026 anomaly records, the new exploratory analysis found no three-domain 30-second episode. Longer windows contain coincidences, but the September 23 comparison did not show a convincing excess after its timing control and three-window correction. This is **inconclusive**, especially with historical coverage gaps and low power at short timescales.
 
-That honesty is the point. Most "correlation" projects fool themselves (or you). Matrix Watcher is built to be impossible to fool — by itself or anyone else.
-
----
-
-## The 12 data sources
-
-Every source is a **real, public data feed** — no simulations, no fabricated numbers.
-
-| # | Source | What it tracks | Feed |
-|---|--------|----------------|------|
-| <img src="web/static/icons/crypto.svg" width="20" alt=""> | **Crypto** | BTC/ETH price moves & volatility | Binance |
-| <img src="web/static/icons/blockchain.svg" width="20" alt=""> | **Blockchain** | Network block times & on-chain anomalies | public RPC |
-| <img src="web/static/icons/quantum.svg" width="20" alt=""> | **Quantum RNG** | Hardware quantum randomness | ANU QRNG |
-| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Space Weather** | Geomagnetic Kp index | NOAA SWPC |
-| <img src="web/static/icons/space_weather.svg" width="20" alt=""> | **Solar Wind** | Real-time speed, density & IMF Bz (storm precursor) | NOAA DSCOVR |
-| <img src="web/static/icons/solar.svg" width="20" alt=""> | **Solar Activity** | F10.7 flux, GOES X-ray flares, proton flux | NOAA |
-| <img src="web/static/icons/earthquake.svg" width="20" alt=""> | **Earthquakes** | Global seismicity (magnitude, location) | USGS |
-| <img src="web/static/icons/volcanic.svg" width="20" alt=""> | **Volcanoes** | Weekly volcanic activity report | Smithsonian / USGS |
-| <img src="web/static/icons/weather.svg" width="20" alt=""> | **Weather** | Temperature & pressure swings | Open-Meteo |
-| <img src="web/static/icons/news.svg" width="20" alt=""> | **News** | Global headline volume | public RSS |
-| <img src="web/static/icons/news.svg" width="20" alt=""> | **Wikipedia** | Global human edit rate (info-field pulse) | Wikimedia EventStreams |
-| <img src="web/static/icons/clusters.svg" width="20" alt=""> | **Earth Tides** | Solid-earth gravitational tide (Sun & Moon) — local phase reference | computed locally |
-
----
-
-## How it works
-
-```
-12 live sensors → adaptive anomaly detection (each stream's own floating "normal")
-              → self-learning  predict → verify → score  loop  →  honest live dashboard + activity feed
-```
-
-1. **Sensing** — each source is polled in real time and stored as raw JSONL.
-2. **Adaptive anomaly detection** — no fixed thresholds. A reading is flagged only when it is unusual *relative to that stream's own recent distribution* (robust statistics, floating thresholds); the bar drifts with each stream's regime. Real physical events (a quake, a geomagnetic storm, an M-class flare) are flagged at their established physical levels. Emitted **once on the rising edge** — a single ongoing event is never double-counted.
-3. **Clustering** — when anomalies from several *independent* sources land in the same 30-second window, that is a cluster. The level (1–5) is simply *how many distinct domains coincided* — a temporal coincidence, never a claim of causation.
-4. **Self-learning predict → verify → score** — for every condition the system learns `P(event│condition)`, shows a prediction **only when it beats the event's base rate** (`skill = P(event│condition) − P(event)`) with enough evidence, then **verifies** each prediction against what actually happened and keeps an honest running score. Patterns that stop working stop being shown — the loop keeps re-learning. Any domain can predict any other.
-
-| Level | Meaning |
-|-------|---------|
-| **L1** | single source (background) |
-| **L2** | two domains coincide |
-| **L3** | three domains — *Multiple Correlation* |
-| **L4** | four domains — *Strong Correlation* |
-| **L5** | five or more — *Critical Synchronicity* (rarest) |
-
----
-
-## How we avoid fooling ourselves
-
-This is the heart of the project. Apparent patterns are stress-tested with methods built to **disprove** them:
-
-- **Edge-triggering** — one ongoing event counts once, not once per poll (kills duplication artifacts).
-- **Shuffle test** — observed clusters are compared against time-randomized data (circular and schedule-aware nulls).
-- **Out-of-sample backtest + block bootstrap** — is any predictive skill statistically real, or noise?
-- **Base-rate comparison** — a 90% probability that merely matches the 90% base rate is *not* a finding.
-
-The full analysis toolkit (`replay`, `shuffle_test`, `backtest`) lives in [`src/analyzers/offline/`](src/analyzers/offline/).
-
----
-
-## Honest finding (as of June 2026)
-
-Across months of clean, de-duplicated data covering the nine domains running
-at the time — solar wind, Wikipedia edit rate and the solid-earth tide were
-added after this result, and have not been part of a published finding yet:
-
-> **No cross-domain predictive edge has held up out of sample.** The only relationships that survive testing live *within a single domain* (storm persistence, earthquake aftershocks) — known physics, not hidden links between unrelated worlds.
-
-The rebuilt adaptive system now accumulates forward evidence continuously, so the honest verdict on cross-domain links is **"not proven — still gathering data,"** not a final "no." If a genuine signal ever appears, the same strict tests will surface it **credibly** — not by accident or wishful thinking.
-
-Counted on the live instance on 16 September 2026: 140 tracked patterns in 27
-groups, and no prediction currently clearing its own base rate — which is what
-"still gathering data" looks like from the outside.
-
----
-
-## No AI. Pure statistics.
-
-Matrix Watcher intentionally uses **no artificial intelligence, neural networks, or language models** in its analysis. Every number is transparent and reproducible:
-
-```
-probability = occurrences / observations
-skill       = P(event│condition) − P(event)
-```
-
-Validated with shuffle tests and bootstrap. No black boxes. No hallucinations. Just data.
-
----
-
-## Tech stack
-
-- **Python 3.11+** — async sensor scheduler, event bus, adaptive anomaly detector
-- **FastAPI** — real-time API + PWA backend
-- **Vanilla JS PWA** — installable dashboard, offline-capable
-- **JSONL** storage — simple, append-only, auditable
-- **systemd** — 24/7 operation with auto-restart + watchdog
-
-## Project structure
-
-```
-src/
-├── sensors/            # 12 independent data collectors
-├── core/               # event bus, scheduler, types
-├── analyzers/
-│   ├── online/         # adaptive detector, cluster detector,
-│   │                   #   anomaly index, pattern tracker, digest
-│   └── offline/        # replay, shuffle test, backtest (the rigor)
-├── monitoring/         # health, alerting, calibration
-└── storage/            # JSONL storage manager
-web/                    # FastAPI API + PWA dashboard
-```
-
-## Run it yourself
+## Run and verify
 
 ```bash
-git clone https://github.com/amois3/matrixwatcher.space.git
-cd matrixwatcher.space
-python -m venv venv && source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-cp config.example.json config.json     # all sources work key-free out of the box
-python main.py                          # start the collector
-python run_pwa.py                       # start the dashboard (http://localhost:5555)
+cp config.example.json config.json
+python -m pytest tests -q
+python main.py
+# In another shell:
+python run_pwa.py
 ```
 
----
+Collector health: `http://localhost:8080/health`. Dashboard: `http://localhost:5555/`. Change the collector health port with `MATRIX_WATCHER_HEALTH_PORT`. Check feed access and coverage before interpreting an empty result. Some sources require site-specific configuration.
 
-## Get involved
+```bash
+# Rebuild derived observations without overwriting the live logs:
+python -m src.analyzers.offline.replay --logs logs --out-dir /tmp/matrix-watcher-replay --dry-run
+python -m src.analyzers.offline.evidence --logs logs/anomalies --out /tmp/matrix-watcher-evidence.json --days 120 --iterations 500
+```
 
-Matrix Watcher is open source because the right people make it better. It may be useful to you if you work in:
+The committed [tests](tests/) cover live detection, replay, domain grouping, NOAA parsing, news bursts, durable cluster records and coverage degradation. The `ops/systemd/` units provide a collector, PWA watchdog and daily evidence timer for the current server; change their paths for another host. Service output goes to the journal rather than unbounded application log files.
 
-- **Data science / statistics** — rigorous null-result methodology, multi-stream correlation testing
-- **Geophysics & space weather** — open, timestamped cross-domain observation data
-- **Quantitative research** — a clean, honest framework for testing "is this signal real?"
-- **Anyone** who values measurement over hype
+## Limits and research standard
 
-If this resonates — for collaboration, research, or a serious conversation — open an issue or reach out.
+- Wikipedia samples only part of each interval; brief edit bursts can be missed. Weather currently covers one location.
+- Public feeds can lag, change schema or fail. Sensor and pipeline status belong beside every apparent statistical finding.
+- Nearby threshold crossings and repeated polls are not independent experiments. Evidence Lab counts overlap episodes; condition frequencies remain candidate descriptions.
+- A predictive claim needs a frozen event definition and horizon, independent future episodes, a matched current base rate, calibration against binary outcomes and correction for all candidates tried.
 
-**Author:** Aleksejs Moisejevs
-
----
-
-## 📄 License
-
-[MIT](LICENSE) © Aleksejs Moisejevs
-
-<div align="center">
-<sub>Built to watch honestly. <a href="https://matrixwatcher.space">matrixwatcher.space</a></sub>
-</div>
-
----
-
-The rest of this work, and how it is built: [moisejevs.com](https://moisejevs.com)
+The detection pipeline uses transparent statistical rules rather than generative AI. Its purpose is to make both unusual observations and failures of observation visible.

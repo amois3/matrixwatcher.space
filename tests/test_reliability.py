@@ -77,6 +77,34 @@ def test_cluster_is_durable_before_optional_pattern_analysis():
         assert watcher._pipeline_stats["clusters_persisted"] == 1
 
 
+def test_event_pipeline_records_measurements_and_reports_analysis_failure():
+    with TemporaryDirectory() as directory:
+        watcher = object.__new__(MatrixWatcher)
+        watcher.storage = StorageManager(base_path=directory, buffer_size=1000)
+        item = anomaly("crypto", time.time())
+        cluster = AnomalyCluster(1, [item], item.timestamp, 1, "Single", domains=("markets",), source_count=1)
+        watcher.smart_analyzer = SimpleNamespace(record_event=lambda _: None, record_anomaly=lambda _: None)
+        watcher.anomaly_detector = SimpleNamespace(process=lambda _: [item])
+        watcher.cluster_detector = SimpleNamespace(add_anomaly=lambda _: cluster)
+        watcher.anomaly_index = SimpleNamespace(calculate=lambda _: SimpleNamespace(
+            index=1, baseline_ratio=1, status="normal", breakdown={}))
+        watcher.pattern_tracker = SimpleNamespace(
+            check_events=lambda _: [], record_condition=lambda _: None,
+            get_probabilities=lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("pattern failure")),
+        )
+        watcher._pipeline_stats = {"events_processed": 0, "anomalies_detected": 0,
+                                   "clusters_persisted": 0, "errors": 0,
+                                   "last_error": None, "last_error_at": None, "last_event_at": None}
+        watcher._write_pipeline_status = lambda force=False: None
+        watcher._process_data_event(Event.create("crypto", EventType.DATA, {"source": "crypto"}))
+        records = [json.loads(line) for path in (Path(directory) / "anomalies").glob("*.jsonl")
+                   for line in path.read_text().splitlines()]
+        assert len(records) == 2
+        assert any("cluster" in record for record in records)
+        assert watcher._pipeline_stats["errors"] == 1
+        assert watcher._pipeline_stats["clusters_persisted"] == 1
+
+
 def test_news_burst_is_detectable_only_with_enough_feeds():
     detector = HybridDetector()
     ts = time.time()

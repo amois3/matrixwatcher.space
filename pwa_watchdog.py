@@ -22,7 +22,7 @@ last_restart = 0
 
 def log(msg):
     timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-    print(f"[{timestamp}] {msg}")
+    print(f"[{timestamp}] {msg}", flush=True)
 
 
 def get_pwa_pid():
@@ -86,8 +86,6 @@ def start_pwa():
     log("Starting PWA...")
     pwa_process = subprocess.Popen(
         [sys.executable, PWA_SCRIPT],
-        stdout=open("pwa.log", "a"),
-        stderr=subprocess.STDOUT,
         cwd=os.path.dirname(os.path.abspath(__file__))
     )
     last_restart = time.time()
