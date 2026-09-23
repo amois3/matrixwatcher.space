@@ -1025,6 +1025,22 @@ async def context_fireballs():
             "source_url": "https://ssd-api.jpl.nasa.gov/doc/fireball.html"}
 
 
+@app.get("/api/context/network")
+async def context_network():
+    """Freshness and ping loss for a frozen RIPE Atlas K-root probe panel."""
+    record = _latest_reading(Path("logs"), "ripe_atlas", time.time())
+    if not record:
+        return {"status": "unavailable", "regions": {}}
+    return {"status": "context_only", "retrieved_at": record.get("timestamp"),
+            "measurement_id": record.get("measurement_id"),
+            "target": record.get("target"),
+            "fresh_probes": record.get("fresh_probes", 0),
+            "expected_probes": record.get("expected_probes", 0),
+            "quality": record.get("quality"),
+            "regions": record.get("regions") or {},
+            "source_url": "https://atlas.ripe.net/docs/getting-started/built-in-measurements/"}
+
+
 @app.get("/api/predictions")
 async def get_predictions():
     """Get active predictions."""
