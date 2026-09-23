@@ -1,7 +1,7 @@
 {
   "name": "Matrix Watcher - Anomaly Detection",
   "short_name": "Matrix Watcher",
-  "description": "Real-time anomaly detection and correlation monitoring across crypto, quantum RNG, space weather, and seismic data. We watch, we don't explain.",
+  "description": "Open observation experiment with 11 anomaly streams, one calculated covariate, four context feeds, coverage checks and cautious timing analysis.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
@@ -10,7 +10,7 @@
   "orientation": "any",
   "scope": "/",
   "lang": "en",
-  "categories": ["utilities", "finance", "news"],
+  "categories": ["science", "utilities"],
   "icons": [
     {
       "src": "/static/icon-maskable-512.png?v=2",
