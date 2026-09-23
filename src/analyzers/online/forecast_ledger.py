@@ -234,6 +234,6 @@ class ForecastLedger:
         return {"status": "collecting_no_validated_forecast" if now < END_AT else "endpoint_review_required",
                 "version": VERSION, "start_at": START_AT, "end_at": END_AT,
                 "time_basis": "collector detection times; late source reports never backdate issuance",
-                "method": "fixed historical probabilities, independent 30-minute source episodes, binary outcomes, raw-target coverage gate, Brier versus matched timing-control baseline",
+                "method": "fixed historical probabilities, 30-minute source episode collapse, observed positive outcomes, negative outcomes gated by raw-target coverage, Brier versus matched timing-control baseline",
                 "caveat": "Descriptive scores across related rules are not significance tests or validated signals; review data coverage and the frozen 120-day study at the endpoint.",
                 "rules": rows}
