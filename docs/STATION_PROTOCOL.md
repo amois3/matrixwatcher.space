@@ -4,6 +4,28 @@ This adapter is ready for two **real**, physically separated stations. No statio
 is connected or counted as a live source yet. `stations.example.json` keeps both
 identities disabled until hardware, sites and calibrations have been recorded.
 
+## Suggested kit for each site
+
+- One [Raspberry Pi Zero 2 W](https://www.raspberrypi.com/products/raspberry-pi-zero-2-w/)
+  with a fitted GPIO header, suitable power supply and microSD card. Its 2.4 GHz
+  Wi-Fi must be reliable at the chosen site; use a different board if wired
+  networking is needed.
+- One I²C breakout using the [Sensirion SHT45](https://sensirion.com/products/catalog/SHT45)
+  for temperature and humidity. Sensirion specifies factory calibration and
+  typical accuracy of ±0.1 °C and ±1% RH.
+- One I²C breakout using the [Bosch BMP390](https://www.bosch-sensortec.com/en/products/environmental-sensors/pressure-sensors/bmp390)
+  for pressure. Bosch specifies typical absolute accuracy of ±0.5 hPa in its
+  stated range. Record **surface** pressure and site altitude; values from
+  different elevations must not be compared as though they were at sea level.
+- A ventilated, rain-protected enclosure or radiation shield that keeps the
+  sensors out of direct sun and away from heat sources. Keep the Pi's heat away
+  from the sensor chamber. Log power interruptions and installation changes.
+
+Buy two complete, separately powered sets only after choosing two installation
+sites. The choice above is an engineering starting point, not a claim that
+consumer parts are a calibrated scientific observatory. A side-by-side
+comparison and site-specific calibration record are required before use.
+
 ## Instrument and site requirements
 
 - Put Station A and Station B in different buildings and local networks, with
