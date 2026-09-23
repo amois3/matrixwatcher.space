@@ -36,3 +36,9 @@ def test_documented_keyed_response_shape_is_supported():
     payload = {str(row["prb_id"]): [row] for row in rows()}
     result = summarize_results(payload, now=1000)
     assert result["fresh_probes"] == 18
+
+
+def test_second_root_is_a_distinct_measurement_for_same_fixed_probes():
+    second = [{**row, "msm_id": 1004} for row in rows()]
+    assert summarize_results(second, now=1000, measurement_id=1004)["fresh_probes"] == 18
+    assert summarize_results(second, now=1000, measurement_id=1001)["fresh_probes"] == 0

@@ -26,6 +26,7 @@ from src.analyzers.online.cluster_detector import ClusterDetector
 from src.analyzers.online.anomaly_index import AnomalyIndexCalculator
 from src.analyzers.online.enhanced_message_generator import EnhancedMessageGenerator
 from src.analyzers.online.historical_pattern_tracker import HistoricalPatternTracker, Condition
+from src.analyzers.online.forecast_ledger import ForecastLedger
 from src.sensors import (
     SystemSensor,
     TimeDriftSensor,
@@ -45,6 +46,7 @@ from src.sensors.wikipedia_edits_sensor import WikipediaEditsSensor
 from src.sensors.volcanic_activity_sensor import VolcanicActivitySensor
 from src.sensors.fireball_sensor import FireballSensor
 from src.sensors.ripe_atlas_sensor import RipeAtlasSensor
+from src.sensors.weather_grid_sensor import WeatherGridSensor
 from src.sensors.quantum_rng_sensor import QuantumRNGSensor
 from src.monitoring import HealthMonitor, AlertingSystem
 from src.monitoring.auto_calibrator import get_auto_calibrator
@@ -92,6 +94,7 @@ class MatrixWatcher:
         
         # Historical Pattern Tracker for probabilistic estimates
         self.pattern_tracker = HistoricalPatternTracker(storage_path="logs/patterns")
+        self.forecast_ledger = ForecastLedger()
         
         # Auto-calibrator for automatic threshold optimization
         # auto_apply=True: system auto-applies changes with high confidence and notifies
@@ -487,8 +490,13 @@ class MatrixWatcher:
         for anomaly in anomalies:
             try:
                 self._pipeline_stats["anomalies_detected"] += 1
-                self.storage.write_anomaly(anomaly.to_dict())
+                detected_at = time.time()
+                record = anomaly.to_dict()
+                record["detected_at"] = detected_at
+                self.storage.write_anomaly(record)
                 self.anomaly_detector.mark_persisted(anomaly)
+                if getattr(self, "forecast_ledger", None) is not None:
+                    self.forecast_ledger.record_anomaly(anomaly, detected_at)
                 self._handle_anomaly(anomaly)
             except Exception as exc:
                 self._record_pipeline_error("cluster analysis", event, exc)
@@ -845,6 +853,27 @@ class MatrixWatcher:
                 interval=sensor_cfg.interval_seconds,
             )
 
+        # Fixed geographic weather-model panel. A common model source is
+        # contextual data, not six independent atmospheric anomaly votes.
+        sensor_cfg = self.config.sensors.get("weather_grid")
+        if sensor_cfg and sensor_cfg.enabled:
+            grid_sensor = WeatherGridSensor()
+            self._sensors["weather_grid"] = grid_sensor
+            self.health_monitor.register_sensor("weather_grid")
+
+            async def collect_weather_grid(s=grid_sensor):
+                reading = await s.safe_collect()
+                if reading:
+                    self.storage.write_record("weather_grid", {"timestamp": reading.timestamp, "source": "weather_grid", **reading.data})
+                    self._record_sensor_reading("weather_grid", reading)
+                else:
+                    self.health_monitor.record_failure("weather_grid", "Collection returned None")
+
+            self.scheduler.register_task(
+                "weather_grid", lambda f=collect_weather_grid: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
         # Wikipedia Edits — bounded EventStreams history replay between polls.
         # The reading is published only after raw persistence and only if no
         # history had to be skipped, so a partial catch-up cannot trigger an anomaly.
@@ -943,6 +972,7 @@ class MatrixWatcher:
         # Register Predictions refresh task (every 60 seconds)
         # This ensures PWA always has fresh predictions even without new anomalies
         self.scheduler.register_task("predictions_refresh", self._refresh_predictions_file, interval=60.0)
+        self.scheduler.register_task("forecast_settlement", self.forecast_ledger.settle_due, interval=300.0)
         
         logger.info(f"Registered {len(self._sensors)} sensors + anomaly index logger + pattern tracker + predictions refresh")
 

@@ -1,35 +1,19 @@
 # Matrix Watcher
 
-> An open, real-time experiment that monitors 12 completely independent real-world data streams and rigorously tests one honest question: do anomalies in unrelated domains line up more often than pure chance would produce? Live at https://matrixwatcher.space — open source, real public data, and honest about its results.
+> An open observation experiment at https://matrixwatcher.space. It records public data, reports coverage gaps and compares apparent cross-domain coincidences with timing controls. No cross-domain discovery or predictive signal has been independently validated.
 
-## What it is
-- A measurement instrument, **not** a prediction service. It does not claim to predict crypto prices or earthquakes.
-- Uses **no AI or neural networks** — only transparent, rule-based statistics (probability = occurrences / observations), validated with shuffle tests and out-of-sample backtesting.
-- Founded 2025 by Aleksejs Moisejevs. Collecting data continuously since 12 December 2025.
+## Sources and limits
+- Twelve core streams span markets, blockchain, heliophysics, geophysics, human activity, modelled weather and ANU quantum randomness when ANU is available. Several streams share a physical domain or upstream provider; they are not twelve independent experiments.
+- Three context feeds add NASA fireballs, paired RIPE Atlas K-root/F-root pings and a six-city Open-Meteo weather-model grid. Context feeds do not trigger anomaly clusters. The six weather values are model estimates, not readings from separate physical stations.
+- Wikimedia editing is measured through EventStreams with bounded history replay; gaps longer than the replay limit are marked incomplete. A sensor reporting a record does not prove that the observation was complete.
+- Historical data include known collection and processing gaps. Earlier coincidences are exploratory, not proof of a hidden mechanism.
 
-## The 12 monitored sources (all real public feeds)
-- **Crypto** — Bitcoin & Ethereum prices and volatility (Binance)
-- **Blockchain** — network block times and on-chain anomalies
-- **Quantum RNG** — hardware quantum randomness (ANU QRNG)
-- **Space Weather** — geomagnetic Kp index (NOAA SWPC)
-- **Solar Wind** — real-time solar-wind speed, density and IMF Bz; the physical precursor that drives geomagnetic storms (NOAA DSCOVR)
-- **Solar Activity** — F10.7 radio flux, GOES X-ray flares, proton flux (NOAA)
-- **Earthquakes** — global seismic activity, magnitude and location (USGS)
-- **Volcanoes** — weekly volcanic activity report (Smithsonian / USGS)
-- **Weather** — temperature and pressure (Open-Meteo)
-- **News** — global headline volume (public RSS)
-- **Wikipedia** — global human edit rate, an objective pulse of the information field (Wikimedia EventStreams, Wikipedia-only, bots filtered)
-- **Earth Tides** — solid-earth gravitational tide from the Sun and Moon, computed locally from ephemerides; used as a phase reference (a covariate, not an anomaly stream), and immune to any network outage
-
-## How it works
-- Each source is polled in real time. Detection is **adaptive**: a reading is flagged only when it is unusual relative to that stream's own recent distribution (robust statistics, floating thresholds) — no hardcoded numbers. Genuine physical events (real earthquakes, geomagnetic storms, M-class flares) are flagged at their established physical levels.
-- **Self-learning, forward-verifying loop:** for every condition the system learns P(event | condition), shows a prediction only when it beats the event's base rate by a meaningful margin and has enough observations, then verifies each prediction against what actually happened and keeps an honest running score. If a pattern stops working it stops being shown. Every domain can predict any other.
-- When anomalies from several independent sources fall in the same 30-second window, that is a cluster. The level (1–5) is simply how many distinct domains coincided — a temporal coincidence, never a claim of causation.
-- Apparent patterns are stress-tested to disprove them: a **shuffle test** vs time-randomized data, an **out-of-sample backtest with block bootstrap**, and **base-rate comparison** (a probability that merely matches chance is not a finding).
-
-## Honest finding (as of June 2026)
-- No cross-domain predictive edge has held up out of sample. The only relationships that survive testing are **within a single domain** (storm persistence, earthquake aftershocks) — known physics, not hidden links between unrelated worlds. The rebuilt adaptive system now accumulates forward evidence continuously; the honest verdict on cross-domain links is **“not proven — still gathering data,”** not a final “no.” If a genuine signal appears, the same strict tests will surface it credibly.
+## Research method
+- The public Evidence Lab compares fixed 30-second, 5-minute and 15-minute episode windows with a timing control. The Lag Lab explores twelve predefined directed comparisons and labels known physical or human-response links.
+- A frozen 120-day future-data screen runs from 24 September 2026 to 22 January 2027 UTC. It does not publish interim p-values.
+- A separate append-only forecast diary issues five historical candidate probabilities before outcomes, scores binary results only when target coverage is adequate, and compares Brier scores with a frozen matched timing baseline. These are exploratory scores; no rule is automatically promoted to a validated signal.
+- A paired RIPE network reference is collected over a fixed 14-day window. Two physical environmental stations have a documented ingest protocol but are not installed or counted as live sources.
 
 ## Links
-- Live dashboard: https://matrixwatcher.space
-- Source code: https://github.com/amois3/matrixwatcher.space
+- Dashboard: https://matrixwatcher.space
+- Source and methods: https://github.com/amois3/matrixwatcher.space

@@ -149,6 +149,12 @@
       "priority": "low",
       "custom_params": {}
     },
+    "weather_grid": {
+      "enabled": true,
+      "interval_seconds": 300,
+      "priority": "low",
+      "custom_params": {}
+    },
     "earth_tides": {
       "enabled": true,
       "interval_seconds": 300,

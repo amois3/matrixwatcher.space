@@ -1027,18 +1027,49 @@ async def context_fireballs():
 
 @app.get("/api/context/network")
 async def context_network():
-    """Freshness and ping loss for a frozen RIPE Atlas K-root probe panel."""
+    """Two frozen RIPE Atlas targets, with a future fixed reference window."""
     record = _latest_reading(Path("logs"), "ripe_atlas", time.time())
     if not record:
         return {"status": "unavailable", "regions": {}}
+    baseline_path = Path("logs/research/ripe-baseline.json")
+    if not baseline_path.exists():
+        baseline_path = Path("logs/research/ripe-baseline-progress.json")
+    try:
+        baseline = json.loads(baseline_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        baseline = {"status": "awaiting_reference_start", "complete_days": 0}
     return {"status": "context_only", "retrieved_at": record.get("timestamp"),
             "measurement_id": record.get("measurement_id"),
             "target": record.get("target"),
+            "targets": record.get("targets") or {},
+            "paired_probes": record.get("paired_probes"),
+            "baseline": baseline,
             "fresh_probes": record.get("fresh_probes", 0),
             "expected_probes": record.get("expected_probes", 0),
             "quality": record.get("quality"),
             "regions": record.get("regions") or {},
             "source_url": "https://atlas.ripe.net/docs/getting-started/built-in-measurements/"}
+
+
+@app.get("/api/context/weather-grid")
+async def context_weather_grid():
+    """Fixed six-city model panel; model valid time is distinct from retrieval."""
+    record = _latest_reading(Path("logs"), "weather_grid", time.time())
+    if not record:
+        return {"status": "unavailable", "cells": []}
+    return {"status": "context_only", "retrieved_at": record.get("timestamp"),
+            "data_kind": record.get("data_kind"), "cells": record.get("cells") or [],
+            "fresh_locations": record.get("fresh_locations", 0),
+            "expected_locations": record.get("expected_locations", 0),
+            "quality": record.get("quality"),
+            "source_url": "https://open-meteo.com/en/docs"}
+
+
+@app.get("/api/research/forecast-audit")
+async def research_forecast_audit():
+    """Prospective binary scoring for the frozen exploratory forecast family."""
+    from src.analyzers.online.forecast_ledger import ForecastLedger
+    return ForecastLedger().report()
 
 
 @app.get("/api/predictions")
