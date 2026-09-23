@@ -23,7 +23,28 @@ WINDOWS = (30, 300, 900)
 DETECTOR_EPOCH = 1780254840.0
 
 
-def domain_events(records: list[dict], after: float = DETECTOR_EPOCH) -> list[tuple[float, str]]:
+def verified_quantum_times(logs_root: Path, days: int) -> set[float]:
+    """Recover provenance for legacy anomalies from exact raw sample times."""
+    verified = set()
+    directory = logs_root / "quantum_rng"
+    for path in sorted(directory.glob("*.jsonl"), reverse=True)[:days + 2]:
+        try:
+            with path.open(encoding="utf-8") as stream:
+                for line in stream:
+                    try:
+                        record = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    ts = record.get("timestamp")
+                    if record.get("source") == "anu_quantum" and isinstance(ts, (int, float)):
+                        verified.add(float(ts))
+        except OSError:
+            continue
+    return verified
+
+
+def domain_events(records: list[dict], after: float = DETECTOR_EPOCH,
+                  verified_quantum: set[float] | None = None) -> list[tuple[float, str]]:
     events = []
     for record in records:
         if "cluster" in record:
@@ -31,7 +52,9 @@ def domain_events(records: list[dict], after: float = DETECTOR_EPOCH) -> list[tu
         ts, source = record.get("timestamp"), record.get("sensor_source")
         if not isinstance(ts, (int, float)) or ts < after or not source:
             continue
-        if source == "quantum_rng" and (record.get("metadata") or {}).get("measurement_source") != "anu_quantum":
+        if (source == "quantum_rng" and
+                (record.get("metadata") or {}).get("measurement_source") != "anu_quantum" and
+                float(ts) not in (verified_quantum or ())):
             continue
         events.append((float(ts), source_domain(source)))
     return sorted(events)
@@ -109,7 +132,7 @@ def analyze(events: list[tuple[float, str]], iterations: int = 500, seed: int = 
         "domains": dict(Counter(domain for _, domain in events)),
         "method": "whole-day circular shifts per domain within each UTC month",
         "status": "exploratory_not_validated",
-        "exclusions": {"quantum_rng": "historical anomalies without ANU source provenance excluded"},
+        "exclusions": {"quantum_rng": "anomalies without matching ANU source provenance excluded"},
         "windows": [
             {"seconds": window, "observed_episodes": count,
              "null_mean_episodes": round(sum(null) / iterations, 2),
@@ -127,7 +150,10 @@ def main() -> None:
     parser.add_argument("--iterations", type=int, default=500)
     args = parser.parse_args()
     records = load_anomalies_from_logs(args.logs, args.days)
-    events = domain_events(records, after=max(DETECTOR_EPOCH, time.time() - args.days * 86400))
+    events = domain_events(
+        records, after=max(DETECTOR_EPOCH, time.time() - args.days * 86400),
+        verified_quantum=verified_quantum_times(Path(args.logs).parent, args.days),
+    )
     report = analyze(events, iterations=args.iterations)
     destination = Path(args.out)
     destination.parent.mkdir(parents=True, exist_ok=True)

@@ -267,7 +267,7 @@ def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
                         except (TypeError, ValueError):
                             pass
                     md = d.get("metadata") or {}
-                    if src == "quantum_rng" and md.get("measurement_source") != "anu_quantum":
+                    if src == "quantum_rng" and not _verified_quantum_anomaly(d):
                         continue
                     detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts), md)
                     out.append({
@@ -645,6 +645,13 @@ def _raw_record_at(source: str, ts: float, max_dt: float = 900.0):
     return best
 
 
+def _verified_quantum_anomaly(anomaly: dict) -> bool:
+    if (anomaly.get("metadata") or {}).get("measurement_source") == "anu_quantum":
+        return True
+    raw = _raw_record_at("quantum_rng", anomaly.get("timestamp"), max_dt=0.001)
+    return bool(raw and raw.get("source") == "anu_quantum")
+
+
 def _robust_delta(reason: str):
     """Parse 'X is N robust-σ (above|below) its 7d median M' -> (direction, median)."""
     m = re.search(r"robust-σ (above|below) its [\d.]+d median ([\-\d.]+)", reason or "")
@@ -833,7 +840,7 @@ def format_level_event(anomaly: dict) -> dict | None:
     """Format anomaly for level display - detailed like Telegram but in English."""
     cluster = anomaly.get("cluster", {})
     if any(a.get("sensor_source") == "quantum_rng" and
-           (a.get("metadata") or {}).get("measurement_source") != "anu_quantum"
+           not _verified_quantum_anomaly(a)
            for a in cluster.get("anomalies", [])):
         return None
     index_data = anomaly.get("index", {})

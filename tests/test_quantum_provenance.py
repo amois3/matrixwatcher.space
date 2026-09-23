@@ -1,10 +1,11 @@
 """Atmospheric and local entropy must never masquerade as quantum evidence."""
 
 import asyncio
+import json
 
 import pytest
 
-from src.analyzers.offline.evidence import domain_events
+from src.analyzers.offline.evidence import domain_events, verified_quantum_times
 from src.analyzers.online.hybrid_detector import HybridDetector
 from src.core.types import Event, EventType
 from src.monitoring.coverage import _issues
@@ -50,3 +51,17 @@ def test_historical_quantum_needs_provenance():
     ]
     assert domain_events(records) == [(1780300001.0, "quantum"),
                                       (1780300002.0, "markets")]
+
+
+def test_legacy_anu_anomaly_is_retained_from_exact_raw_match(tmp_path):
+    raw_dir = tmp_path / "quantum_rng"
+    raw_dir.mkdir()
+    samples = [
+        {"timestamp": 1780300000.0, "source": "anu_quantum"},
+        {"timestamp": 1780300001.0, "source": "random_org_atmospheric"},
+    ]
+    (raw_dir / "2026-06-01.jsonl").write_text("\n".join(map(json.dumps, samples)) + "\n")
+    verified = verified_quantum_times(tmp_path, days=120)
+    records = [{"timestamp": sample["timestamp"], "sensor_source": "quantum_rng"}
+               for sample in samples]
+    assert domain_events(records, verified_quantum=verified) == [(1780300000.0, "quantum")]
