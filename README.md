@@ -2,55 +2,53 @@
 
 [Live dashboard](https://matrixwatcher.space) · [License](LICENSE) · [Author](https://moisejevs.com)
 
-Matrix Watcher is an open experiment collecting real measurements and asking whether unusual observations in different domains coincide more often than a timing control suggests. It does **not** claim to predict earthquakes or markets. No cross-domain discovery has been independently validated.
+Matrix Watcher is an open observation experiment. It records public measurements, checks whether each source was available, flags unusual readings, and asks whether events in different domains coincide more often than timing controls suggest. It does not establish that reality is a simulation, explain a coincidence, or offer a validated forecast. No cross-domain discovery has been independently confirmed.
 
-## Twelve observed streams
+## What is running
 
-| Stream | Data | Domain |
-|---|---|---|
-| Crypto | Binance BTC and ETH markets | markets |
-| Blockchain | block timing from public nodes | blockchain |
-| Quantum RNG | ANU hardware randomness when the API is available | quantum |
-| Space weather | NOAA geomagnetic Kp and related readings | heliophysics |
-| Solar wind | NOAA speed, density and interplanetary magnetic field | heliophysics |
-| Solar activity | NOAA radio flux, X-rays and protons | heliophysics |
-| Earthquakes | USGS seismic feed | geophysics |
-| Volcanoes | Smithsonian/USGS activity reports | geophysics |
-| Weather | Open-Meteo model estimates of temperature and pressure at the configured location, currently New York | atmosphere |
-| News | newly seen headlines from four RSS feeds | human activity |
-| Wikipedia | non-bot edits from Wikimedia EventStreams, with bounded history replay between polls | human activity |
-| Earth tides | locally calculated gravitational tide; stored as context only | geophysics |
+The live configuration monitors **16 sources**: 11 can produce anomaly events, one is a calculated covariate, and four provide context. Counts are sources, not independent experiments. Related feeds can share a physical process or an upstream API.
 
-Four additional feeds are **context only**. The NASA/JPL CNEOS fireball catalogue can publish events days after they occurred; see the [NASA API description](https://ssd-api.jpl.nasa.gov/doc/fireball.html). RIPE Atlas measurements 1001 and 1004 ping K-root and F-root DNS servers from the same frozen panel of 18 public probes across Germany, the United States, Brazil, South Africa, Japan and Australia. The API can cache results for five minutes, and a connected probe may still have stale measurement results; the dashboard reports freshness for both targets. The paired targets help distinguish target issues from probe issues, but share the probes and API. The Weather Grid uses one batched Open-Meteo call for six fixed cities; its "current" values are [weather-model estimates](https://open-meteo.com/en/docs), not six independent station readings. None of these context feeds enters the anomaly detector or cluster count.
+| Source | Observation | Role / domain |
+| --- | --- | --- |
+| Crypto | Binance BTC and ETH market data | Anomaly / markets |
+| Blockchain | Block timing from public nodes | Anomaly / blockchain |
+| Quantum RNG | ANU hardware random samples, only when ANU responds | Anomaly / quantum |
+| Space weather | NOAA geomagnetic Kp and related values | Anomaly / heliophysics |
+| Solar wind | NOAA speed, density and interplanetary magnetic field | Anomaly / heliophysics |
+| Solar activity | NOAA radio flux, X-rays and protons | Anomaly / heliophysics |
+| Earthquakes | USGS seismic feed | Anomaly / geophysics |
+| Volcanoes | Smithsonian/USGS activity reports | Anomaly / geophysics |
+| Weather | Open-Meteo **model estimate** for New York | Anomaly / atmosphere |
+| News | Newly seen headlines from four public RSS feeds | Anomaly / human activity |
+| Wikipedia | Non-bot edits from Wikimedia EventStreams | Anomaly / human activity |
+| Earth tides | Locally calculated gravitational tide | Covariate / geophysics; no anomaly vote |
+| NASA fireballs | [CNEOS catalogue](https://ssd-api.jpl.nasa.gov/doc/fireball.html), sometimes published days late | Context / astronomy |
+| RIPE Atlas | Paired K-root and F-root pings from a fixed panel of 18 public probes | Context / network |
+| Weather Grid | Six-city [Open-Meteo model](https://open-meteo.com/en/docs) estimates | Context / atmosphere |
+| Global Stations | Physical airport [METAR observations](https://aviationweather.gov/data/api/) in six world regions | Context / atmosphere |
 
-The Global Stations feed polls one [Aviation Weather Center METAR API](https://aviationweather.gov/data/api/) request every ten minutes for a fixed panel: KJFK/New York, EVRA/Riga, SBGR/São Paulo, FACT/Cape Town, RJTT/Tokyo and YSSY/Sydney. These airport reports are physical observations from six world regions, not six independent anomaly domains. The AWC API defines observation time (`obsTime`) separately from report time; the dashboard shows the observation age and marks missing or stale stations explicitly. Temperature and dew point are Celsius; `altim` is the altimeter setting in hPa. The original METAR text is retained with each usable report for audit. Polling the same METAR twice does not create a new observation. Airport locations differ from city-centre model grid points, and altimeter settings cannot be compared directly with model surface pressure.
+The model grid covers New York, Riga, São Paulo, Cape Town, Tokyo and Sydney. The physical station panel uses nearby airports KJFK, EVRA, SBGR, FACT, RJTT and YSSY. The METAR feed makes one batch request every ten minutes. It stores each source observation time and raw report, validates station identity, location, age and values, and shows missing or stale reports. A repeated poll of one METAR is still one observation. An airport altimeter setting is not the same measurement as model surface pressure, and airport locations differ from city centres. These weather context feeds are **not** six extra anomaly votes.
 
-These are **not twelve independent domains**. Related solar feeds measure one physical chain. Earth tides are not an anomaly trigger. The live cluster level counts distinct domains within 30 seconds; a cluster is an observation, not a p-value or evidence of causation. A short window has limited power when streams are polled minutes apart.
+## From a reading to a finding
 
-## Processing and data quality
+1. The collector polls or streams enabled sources and stores timestamped raw JSONL readings. Failed and partial collections are surfaced through [coverage](https://matrixwatcher.space/api/coverage), rather than silently interpreted as normal. The dashboard's online indicator only shows that its API answered; use the coverage panel to judge the measurements.
+2. The live `HybridDetector` uses rolling robust deviations where appropriate and explicit thresholds for named physical events. USGS earthquakes are identified individually, news bursts count newly seen headlines, and a genuine ANU sample is required for the quantum stream. Cached or substitute data do not become quantum or weather anomalies.
+3. The live cluster detector groups anomalies within **30 seconds** and counts distinct domains. Solar activity, solar wind and geomagnetic Kp count as one heliophysics domain; news and Wikipedia share human activity. The level describes the number of domains observed in a time window. It is **not** a p-value, a proof of causation, or a calibrated probability.
+4. The daily **Evidence Lab** also examines distinct three-domain episodes within 30 seconds, 5 minutes and 15 minutes. It compares them with within-month whole-day shifts of domain event trains and adjusts across those three windows. The historical analysis is exploratory because the method was refined after seeing historical data. [Current report](https://matrixwatcher.space/api/evidence).
+5. The **Observation Atlas** audits the previous 30 complete UTC days of raw records. It estimates the opportunity for a hypothetical event to overlap a usable poll or stream interval. It does not measure the power of every detector or account for every upstream reporting delay. The **Lag Lab** compares six predeclared directed pairs at two lag bands against a shifted-time control and adjusts all twelve comparisons. A solar-wind → geomagnetic pair is a known-physics check, not a new discovery. [Atlas](https://matrixwatcher.space/api/research/quality) · [Lag Lab](https://matrixwatcher.space/api/research/lags).
+6. Two studies use **future observations from 2026-09-24 00:00 to 2027-01-22 00:00 UTC**. The lag screen freezes its twelve comparisons and does not issue interim p-values. The append-only [Forecast Audit](https://matrixwatcher.space/api/research/forecast-audit) records five frozen candidate probabilities before their target outcomes and compares binary Brier scores with a frozen matched-timing baseline. A negative outcome is scored only with adequate target coverage. Neither study automatically promotes a rule to the public **Validated Signals** panel; endpoint review and independent replication are still required.
 
-1. Sensors store timestamped raw JSONL. Missing core measurements cause collection errors; partial crypto, news and NOAA results carry quality metadata.
-2. The live `HybridDetector` combines rolling robust deviations for continuous variables with named thresholds for physical events. A one-day USGS M4.5+ feed catches up after short collector outages; each earthquake is identified separately, acknowledged after storage and timed by its reported origin. The hourly aggregate still describes the past hour. News bursts use an attainable count of new headlines after the initial RSS baseline.
-3. A single event-loop callback processes readings in order. It persists individual anomalies and domain-aware cluster records before optional pattern analysis. Exceptions are logged and published in `logs/pipeline_status.json`.
-   The scheduler now measures configured intervals between the starts of polls; previously it added each request's duration, reducing actual sampling frequency. It still prevents the same sensor from overlapping itself.
-4. The dashboard and `/api/coverage` show freshness and completeness of the latest stored reading for each source, plus pipeline health. They do not certify that every historical interval was observed.
-5. Internal condition → event frequencies are exploratory. Repeated states, changing base rates and selection bias can inflate them. The public signal panel stays empty until a candidate has passed independent future-data validation. The former aggregate called a “Brier score” was not a proper forecast score and is no longer presented as one. A separate append-only Forecast Audit starts on 24 September 2026: five frozen historical candidate probabilities are issued prospectively at collector detection time, repeated source anomalies are collapsed into 30-minute episodes, observed target episodes score positive, negative outcomes require adequate target coverage, and actual Brier scores are compared with a frozen matched-timing baseline. Its scores are descriptive and cannot independently validate a signal.
+The RIPE Atlas K-root/F-root panel has its own fixed 14-day reference period from 2026-09-24 to 2026-10-08 UTC. Both targets share probes and an API, so a change remains network context until outages, routes and maintenance are considered.
 
-The daily **Evidence Lab** counts distinct three-domain episodes at 30 seconds, 5 minutes and 15 minutes. Its control shifts whole domain event trains by complete days within each UTC month, preserving bursts, time of day and polling phase. Holm adjustment covers the three windows. The historical result remains **exploratory** because the method was refined after these data were seen. `/api/evidence` provides the report as JSON.
+## What to expect
 
-The **Discovery Workbench** adds two independent audits. The 30-day Observation Atlas scans raw records by UTC day, counts partial readings, and estimates how often hypothetical 30-second, 5-minute and 1-hour events could overlap a usable poll or Wikipedia observation interval. This is *sampling opportunity*, not measured detector power; it excludes source reporting lag and threshold misses. The Lag Lab collapses repeated anomalies into episodes and tests six directed, predeclared source pairs at two lag bands against within-month whole-day target shifts. Holm adjustment covers all twelve comparisons. The solar-wind → space-weather pair is a known-physics calibration; historical results remain exploratory. Earthquake anomaly timestamps use USGS origin time while most other streams use observation time, so apparent lags can arise from reporting delays. API: `/api/research/quality`, `/api/research/lags`, `/api/context/fireballs`.
+The September 2026 audit repaired a broken cluster-processing path, disconnected news detection, NOAA parser failures, slow scheduling and a quantum fallback that had mislabeled non-ANU randomness. The repaired pipeline gives a better chance of **observing and correctly classifying** events that the earlier implementation could miss. Coverage and explicit gaps make a quiet result easier to interpret. They do not increase the prevalence of real unexplained phenomena.
 
-The same twelve comparisons have a frozen **future-data screen**: UTC 2026-09-24 00:00 through 2027-01-22 00:00 (120 days), method `lag-v1-20260924`. No interim p-values are calculated. The first endpoint analysis is stored once in `logs/research/prospective-final.json`; daily reruns read that frozen file. Even a passing future screen would need source-coverage review and independent replication before a validated-signal claim.
+The global weather stations, six-city model grid, NASA catalogue and RIPE probes broaden what the site can show, but they are context only and **do not raise the live cluster count**. The 30-second window still has limited power when some sources update only every few minutes or publish late. The Observation Atlas and wider-window research reports expose that limitation. Adding sensors without a predeclared hypothesis, local baselines and controls would mainly add chances for false positives.
 
-The prospective Forecast Audit uses method `forecast-v1-20260924` over the same dates. It is a different test: forecasts are written before target outcomes, probabilities remain fixed throughout the study, and collection gaps mark negative outcomes unscorable. The solar-wind → Kp rule is a known-physics calibration. The forecast family's candidate probabilities were fit on pre-study exploratory history and may be miscalibrated; no result is promoted to the public validated-signal panel by the scoring code. API: `/api/research/forecast-audit`.
+Historical production data were not retroactively made complete by fixing the code. The available post-May-2026 anomaly history showed no three-domain 30-second episode in the 2026-09-23 exploratory report; longer-window coincidences did not show a convincing excess after the timing control and correction. This is **inconclusive**, not evidence that no relationship can exist. The dashboard reports current status; consult the dated API reports before interpreting any result.
 
-## September 2026 audit
-
-The previous live pipeline had a `NameError` during probability calculation. Background-task exceptions were discarded, so cluster summaries failed to persist while individual anomalies continued to appear. News detection was disconnected from the live hybrid detector, and its target required 50 new headlines although the sensor read at most 40. One NOAA flare URL returned 404. Another NOAA parser read nonexistent solar-wind fields from an old row. Health could remain green while BTC was absent. Offline replay used different detector rules and fewer streams than live collection.
-
-Those code faults have been repaired. A further live check found that ANU errors had silently switched the "quantum" sensor to Random.org atmospheric noise or local entropy. These substitute readings are now excluded from live analysis, replay and the public evidence report; older genuine ANU anomalies are retained only when their timestamps match raw ANU samples. Coverage exposes ANU outages. The production history remains incomplete; it cannot become clean prospective evidence retroactively. On the available post-May-2026 anomaly records, the exploratory analysis found no three-domain 30-second episode. Longer windows contain coincidences, but the September 23 comparison did not show a convincing excess after its timing control and three-window correction. This is **inconclusive**, especially with historical coverage gaps and low power at short timescales.
-
-## Run and verify
+## Run locally
 
 ```bash
 python -m venv .venv
@@ -63,27 +61,22 @@ python main.py
 python run_pwa.py
 ```
 
-Collector health: `http://localhost:8080/health`. Dashboard: `http://localhost:5555/`. Change the collector health port with `MATRIX_WATCHER_HEALTH_PORT`. Check feed access and coverage before interpreting an empty result. Some sources require site-specific configuration.
+Collector health is at `http://localhost:8080/health`; the dashboard is at `http://localhost:5555/`. Set `MATRIX_WATCHER_HEALTH_PORT` to change the collector health port. Inspect `/api/coverage` and source access before reading a quiet dashboard as a null result. Production uses the user-level units in [`ops/systemd/`](ops/systemd/), including the collector, PWA watchdog, evidence timer and research timer. Service output is in the systemd journal. The code is public; production observation logs are not bundled with this repository.
+
+For an offline analysis without overwriting live logs:
 
 ```bash
-# Rebuild derived observations without overwriting the live logs:
 python -m src.analyzers.offline.replay --logs logs --out-dir /tmp/matrix-watcher-replay --dry-run
 python -m src.analyzers.offline.evidence --logs logs/anomalies --out /tmp/matrix-watcher-evidence.json --days 120 --iterations 500
 python -m src.analyzers.offline.quality_atlas --logs logs --out /tmp/matrix-watcher-quality.json --days 30
 python -m src.analyzers.offline.lag_lab --logs logs/anomalies --out /tmp/matrix-watcher-lags.json --days 120 --iterations 500
 ```
 
-The committed [tests](tests/) cover live detection, replay, domain grouping, NOAA parsing, news bursts, durable cluster records, coverage degradation and the new research reports. The `ops/systemd/` units provide a collector, PWA watchdog, evidence timer and research timer for the current server; change their paths for another host. Service output goes to the journal rather than unbounded application log files.
+## Scientific limits
 
-## Limits and research standard
+- An empty result is informative only to the extent that source coverage, sampling opportunity and detector sensitivity are known. ANU's public endpoint can fail; other entropy must not be labelled quantum. Wikimedia replay is bounded to ten minutes, and longer gaps are marked incomplete.
+- Reporting times differ by source. USGS earthquake origin time and collector detection time are different clocks. The forecast diary uses collector detection time so a late report cannot create a forecast in the past.
+- Nearby threshold crossings and repeated polls are not independent experiments. A candidate association needs a frozen definition, matched base rate, independent future episodes, uncertainty, calibration and correction for all tried candidates.
+- A future weather anomaly study would need station-specific hour-of-day and seasonal baselines, source-time alignment, consistent physical quantities and multiple-testing controls. The current global station panel makes no anomaly claim.
 
-- Wikipedia now resumes from the last persisted coverage endpoint using Wikimedia's `since` history stream. It waits for a small event-time watermark, deduplicates event IDs, excludes canary events and records exact covered intervals. Replay is capped at ten minutes so the public upstream is not burdened by a long outage. If that cap skips time, the reading is marked partial and withheld from live anomaly detection. Event-time ordering and late publication remain limitations; this is bounded replay, not a promise of perfect capture. The active weather detector still covers one location; the six-city model grid is context only. Cached or stale New York weather is excluded from anomaly detection. The Observation Atlas shows actual intervals measured from stored records.
-- Public feeds can lag, change schema or fail. ANU's legacy public endpoint fails intermittently; a reliable quantum stream requires working ANU access, and no other entropy source will be labelled quantum. Sensor and pipeline status belong beside every apparent statistical finding.
-- Nearby threshold crossings and repeated polls are not independent experiments. Evidence Lab counts overlap episodes; condition frequencies remain candidate descriptions.
-- A predictive claim needs a frozen event definition and horizon, independent future episodes, a matched current base rate, calibration against binary outcomes and correction for all candidates tried.
-
-The detection pipeline uses transparent statistical rules rather than generative AI. Its purpose is to make both unusual observations and failures of observation visible.
-
-## Next instrument decisions
-
-The [RIPE Atlas built-in measurements](https://atlas.ripe.net/docs/getting-started/built-in-measurements/) now cover two distinct root targets. A fixed 14-day reference period begins at UTC 2026-09-24 00:00 and freezes on 2026-10-08; it requires at least 100 unique measurements on ten days for two probes per region and target. The reference is never silently extended, and future deviations remain context until route changes, outages and maintenance are controlled. The six-city Weather Grid fixes coordinates, units and model-time freshness. The six global airport stations add observed atmospheric values without equipment purchases. Their airport locations differ from the model grid coordinates, and altimeter settings are not interchangeable with model surface pressure; raw differences are not anomaly claims. Any future weather anomaly test needs local hour-of-day and seasonal baselines at each station, source-time alignment and multiple-testing controls.
+Matrix Watcher uses transparent detection rules rather than a generative model. Its purpose is to make both unusual observations and failures of observation visible.

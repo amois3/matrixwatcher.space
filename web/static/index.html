@@ -18,10 +18,10 @@
     
     <!-- SEO Meta Tags -->
     <title>Matrix Watcher — Cross-Domain Anomaly Monitor &amp; Open Experiment</title>
-    <meta name="description" content="Matrix Watcher observes 12 real-world data streams and checks their freshness, completeness and anomaly timing. Related feeds are grouped by domain; candidate patterns require independent validation.">
+    <meta name="description" content="Matrix Watcher monitors 16 sources: 11 anomaly streams, one calculated covariate and four context feeds. It reports coverage gaps and tests cross-domain timing with cautious controls.">
     <meta name="keywords" content="anomaly detection, cross-domain correlation, quantum randomness monitor, geomagnetic activity, earthquake monitoring, space weather dashboard, open data experiment, statistical null result, real-time monitoring, ANU QRNG, NOAA space weather, USGS earthquakes">
     <meta name="author" content="Aleksejs Moisejevs">
-    <meta name="last-modified" content="2026-05-29">
+    <meta name="last-modified" content="2026-09-23">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <link rel="canonical" href="https://matrixwatcher.space/">
 
@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and four context feeds, with transparent coverage and cross-domain controls.">
+    <meta property="og:description" content="An open experiment monitoring 16 sources with transparent coverage, global weather context and cross-domain timing controls.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors twelve core streams and four context feeds and audits the quality of its own observations.",
+                "description": "An open experiment that monitors eleven anomaly streams, one calculated covariate and four context feeds, and audits observation quality.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring twelve core streams and four context feeds, with coverage checks and cross-domain anomaly analysis.",
+                "description": "Live dashboard for sixteen monitored sources, coverage checks and exploratory cross-domain anomaly analysis.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-09-23",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Monitoring of twelve core streams and four context feeds with per-source coverage checks",
+                    "Monitoring of eleven anomaly streams, one covariate and four context feeds with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Exploratory multi-window timing controls with adjusted p-values",
@@ -124,25 +124,13 @@
                 "knowsLanguage": "en"
             },
             {
-                "@type": "Dataset",
-                "@id": "https://matrixwatcher.space/#dataset",
-                "name": "Matrix Watcher cross-domain anomaly observations",
-                "description": "Readings from 12 configured streams including markets, geophysics, heliophysics, weather, news and ANU quantum randomness when available. Source coverage and quality are published alongside results.",
-                "creator": { "@id": "https://matrixwatcher.space/#org" },
-                "temporalCoverage": "2025-12-12/..",
-                "isAccessibleForFree": true,
-                "license": "https://github.com/amois3/matrixwatcher.space",
-                "keywords": ["anomaly detection", "cross-domain correlation", "quantum randomness", "space weather", "seismic activity", "null result"],
-                "measurementTechnique": "Hybrid anomaly detection, domain-aware coincidence episodes and exploratory timing controls"
-            },
-            {
                 "@type": "FAQPage",
                 "@id": "https://matrixwatcher.space/#faq",
                 "mainEntity": [
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and four context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring eleven anomaly streams, one calculated covariate and four context feeds. It tracks source quality and exploratory coincidences across domains." }
                     },
                     {
                         "@type": "Question",
@@ -157,7 +145,7 @@
                     {
                         "@type": "Question",
                         "name": "Where does Matrix Watcher's data come from?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Sources include Binance, USGS, NOAA SWPC, Open-Meteo, public RSS and ANU QRNG when available. The coverage panel shows outages. Atmospheric or local entropy is never analyzed as a quantum measurement." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Sources include Binance, USGS, NOAA SWPC, Open-Meteo, Aviation Weather Center METAR reports, RIPE Atlas, NASA, public RSS and ANU QRNG when available. The coverage panel shows outages; substitute entropy is never treated as ANU quantum data." }
                     },
                     {
                         "@type": "Question",
@@ -1456,8 +1444,8 @@
     <noscript>
         <div style="padding:24px;max-width:760px;margin:0 auto;font-family:monospace;line-height:1.6;">
             <h1>Matrix Watcher — Cross-Domain Anomaly Monitor</h1>
-        <p>Matrix Watcher is an open experiment monitoring <strong>12 real-world data streams</strong>. Some streams measure the same physical process, so we group them by domain when examining coincidences.</p>
-            <h2>The 12 monitored sources (all real public data)</h2>
+        <p>Matrix Watcher monitors <strong>16 sources</strong>: eleven anomaly streams, one calculated earth-tide covariate and four context feeds. Related streams are grouped by domain when examining coincidences.</p>
+            <h2>Eleven anomaly streams and one covariate</h2>
             <ul>
                 <li>Crypto — Bitcoin &amp; Ethereum prices and volatility (Binance)</li>
                 <li>Blockchain — network block times and on-chain anomalies</li>
@@ -1472,6 +1460,8 @@
                 <li>Wikipedia — global human editing activity (Wikimedia EventStreams)</li>
                 <li>Earth Tides — solid-earth gravitational tide from Sun &amp; Moon, computed locally (phase reference)</li>
             </ul>
+            <h2>Four context feeds</h2>
+            <p>NASA fireballs, paired RIPE Atlas root-server probes, a six-city Open-Meteo model grid and physical airport METAR reports from New York, Riga, São Paulo, Cape Town, Tokyo and Sydney. They show useful context and coverage gaps but do not trigger anomaly clusters.</p>
             <h2>What we've found</h2>
         <p>No cross-domain discovery has been independently validated. Earlier collection and analysis had coverage gaps, so historical absence of a signal is inconclusive. The live coverage panel shows where observations are fresh, partial or missing.</p>
             <p>Open source: <a href="https://github.com/amois3/matrixwatcher.space">github.com/amois3/matrixwatcher.space</a></p>
@@ -1542,7 +1532,7 @@
                 <span class="panel-count" id="coverageCount">—</span>
             </div>
             <div class="panel-content">
-                <p class="coverage-intro">Fresh data and complete data are different. This panel checks the last stored reading from every source and the processing pipeline. Earth tides are recorded as context only.</p>
+                <p class="coverage-intro">Fresh data and complete data are different. This panel checks the last stored reading from every source and the processing pipeline. Earth tides are a calculated covariate; NASA, RIPE and both weather panels are context only.</p>
                 <div id="pipelineCoverage" class="coverage-intro" role="status">Checking processing pipeline…</div>
                 <div id="coverageGrid" class="coverage-grid" aria-live="polite">Checking sensors…</div>
             </div>
@@ -1620,7 +1610,7 @@
             <div class="panel-content" id="levelsPanel">
                 <div class="empty-state">
                     <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-clusters"/></svg></div>
-                    <div>No anomalies detected</div>
+                    <div>No cross-domain clusters in this view</div>
                 </div>
             </div>
         </section>
@@ -1635,12 +1625,12 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to ANU quantum samples when available — plus four context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
+                <p>Matrix Watcher monitors eleven streams eligible for anomaly detection, one calculated earth-tide covariate and four context feeds. It asks whether unusual observations across distinct domains coincide more often than timing controls suggest. No cross-domain discovery or reliable prediction has been independently validated.</p>
             </div>
 
             <div class="modal-section">
                 <h3>Data Sources</h3>
-                <p>Twelve streams drawn from public data or local calculations. Their quality and freshness are shown in the coverage panel:</p>
+                <p>These eleven anomaly streams and the earth-tide covariate have different update schedules. The coverage panel shows the latest freshness and completeness; a green site connection alone does not certify the measurements.</p>
                 <div class="sensor-grid">
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-crypto"/></svg>Crypto</strong><br>Bitcoin & Ethereum price moves and volatility (Binance)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-blockchain"/></svg>Blockchain</strong><br>Network block times and on-chain anomalies</div>
@@ -1653,8 +1643,13 @@
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>News</strong><br>Global headline volume from public RSS feeds</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Solar Wind</strong><br>Real-time speed, density & IMF Bz — the precursor that drives geomagnetic storms (NOAA DSCOVR)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>Wikipedia</strong><br>Human edit rate across Wikipedia languages, with bounded stream replay</div>
-                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-clusters"/></svg>Earth Tides</strong><br>Solid-earth gravitational tide from the Sun & Moon, computed locally — a phase reference, immune to any network outage</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-clusters"/></svg>Earth Tides</strong><br>Locally calculated gravitational phase reference; it never triggers an anomaly</div>
                 </div>
+            </div>
+
+            <div class="modal-section">
+                <h3>Four context feeds</h3>
+                <p>NASA's fireball catalogue can arrive days after an event. RIPE Atlas compares K-root and F-root pings from the same fixed public probe panel. The Weather Grid shows six <em>model estimates</em> from Open-Meteo. Global Stations shows physical airport METAR reports from New York, Riga, São Paulo, Cape Town, Tokyo and Sydney, including the time each observation was made. All four feeds expose gaps and add context; none raises the live anomaly-cluster level. The six airports share one atmospheric domain and one reporting API.</p>
             </div>
 
             <div class="modal-section">
@@ -1664,12 +1659,17 @@
 
             <div class="modal-section">
                 <h3>Coincidences across domains</h3>
-                <p>When anomalies fall in the same 30-second window, we record the observed domains. The level counts distinct domains, rather than the number of feeds. A cluster is a temporal coincidence, not evidence of causation or statistical significance. With the current polling intervals, a short window can miss slower relationships.</p>
+                <p>When anomalies fall in the same 30-second window, the level counts distinct domains, rather than the number of feeds. Solar wind, solar activity and geomagnetic Kp count as one heliophysics domain. A cluster is a temporal coincidence, not evidence of causation or statistical significance. Polling intervals and upstream reporting delays can make a short window miss real events.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>What changed, and what to expect</h3>
+                <p>Repairs to collection, anomaly processing and coverage checks improve the chance that the system records an event it previously missed. They do not make unexplained phenomena more common. The global weather stations and other context feeds make the site more informative but do not create extra anomaly votes. A quiet day remains inconclusive when a source was missing, late or sampled too slowly.</p>
             </div>
 
             <div class="modal-section">
                 <h3>From patterns to tested signals</h3>
-                <p>The system records candidate condition → event frequencies. These are retrospective descriptions and may reflect repeated states, changing base rates or chance. A candidate is only eligible for the public signal panel after a separate future-data evaluation:</p>
+                <p>Historical condition → event frequencies are exploratory descriptions, not calibrated forecast probabilities. Evidence Lab compares three coincidence windows with shifted-time controls; Observation Atlas measures sampling opportunity; Lag Lab tests twelve directed lag comparisons. A frozen 120-day future-data screen and a five-rule Forecast Audit cover 24 September 2026 through 22 January 2027 UTC. A candidate is only eligible for the public signal panel after separate future-data evaluation:</p>
                 <ul>
                     <li>Freeze the event definition, horizon and candidate before evaluating future data</li>
                     <li>Count independent event episodes and compare against a current, matched base rate</li>
@@ -1680,10 +1680,10 @@
 
             <div class="modal-section">
                 <h3>How We Avoid Fooling Ourselves</h3>
-                <p>We preserve raw observations, audit sensor coverage, and use replay and time-shuffle analyses to challenge candidate relationships. Historical exploratory tests do not establish a discovery.</p>
+                <p>We preserve raw observations, audit sensor coverage and use replay and within-month whole-day shifts of domain event trains as timing controls. Historical exploratory tests do not establish a discovery. The forecast diary scores a negative outcome only when target coverage is adequate.</p>
                 <ul>
                     <li><strong>Edge-triggering:</strong> one ongoing event counts once, not once per poll</li>
-                    <li><strong>Shuffle test:</strong> compare real clusters against time-randomized data</li>
+                    <li><strong>Timing control:</strong> compare real episodes with shifted domain event trains</li>
                     <li><strong>Future-data validation:</strong> required before a candidate becomes a public signal</li>
                     <li><strong>Matched base rate:</strong> a frequent event alone is not a finding</li>
                 </ul>
@@ -1691,16 +1691,16 @@
 
             <div class="modal-section">
                 <h3>What We've Found So Far</h3>
-                <p>No cross-domain predictive edge has been independently verified. A recent audit found historical coverage gaps and a processing error; the absence of previous findings cannot settle the question. The repaired system reports observation coverage and keeps unvalidated candidates off the signal panel.</p>
+                <p>No cross-domain predictive edge has been independently verified. A September 2026 audit found historical coverage gaps and a processing error. Fixes improve future collection but cannot fill missing historical observations. In the available post-May-2026 history, the 30-second research window had no three-domain episode; wider-window coincidences were inconclusive after controls. The frozen future-data period ends on 22 January 2027 UTC and requires endpoint review.</p>
             </div>
 
             <div class="modal-section">
-                <h3>No AI. Pure Statistics.</h3>
-                <p>Matrix Watcher uses transparent statistical rules and no generative model for detection. Its current condition frequencies are exploratory:</p>
+                <h3>What the numbers mean</h3>
+                <p>Detection uses transparent statistical rules, not a generative model. A cluster level is a domain count, not a p-value. Historical condition frequencies are sample proportions and should not be read as reliable forecast probabilities:</p>
                 <ul>
-                    <li><code>probability = occurrences / observations</code></li>
-                    <li>Prospective forecast scoring is required before reporting calibration</li>
-                    <li>Independent future observations are needed before a forecast claim</li>
+                    <li>Evidence Lab's historical p-values are exploratory and corrected across its three windows</li>
+                    <li>Forecast Audit records candidate probabilities before outcomes and scores them against a fixed comparison</li>
+                    <li>Even a promising future score needs endpoint review and independent replication</li>
                 </ul>
             </div>
 
@@ -1711,8 +1711,8 @@
 
             <div class="modal-section">
                 <h3>🔓 Open Source</h3>
-                <p>Matrix Watcher is open source and available on <a href="https://github.com/amois3/matrixwatcher.space" target="_blank" style="color: var(--neon-blue);">GitHub</a>. Built with Python, running 24/7, collecting data since December 2025.</p>
-                <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">Note: The codebase is open source. Historical data and trained models remain proprietary.</p>
+                <p>Matrix Watcher code and its current methodology are available on <a href="https://github.com/amois3/matrixwatcher.space" target="_blank" rel="noopener noreferrer" style="color: var(--neon-blue);">GitHub</a>. Production observations date back to December 2025, but that archive has known gaps.</p>
+                <p style="margin-top: 12px; font-size: 13px; color: var(--text-muted);">Read the <a href="https://github.com/amois3/matrixwatcher.space/blob/main/README.md" target="_blank" rel="noopener noreferrer" style="color: var(--neon-blue);">current README and scientific limits</a>. Production logs are not included in the source repository.</p>
             </div>
         </div>
     </div>
@@ -2181,7 +2181,7 @@
                            'How many times today 3 or more distinct domains showed unusual readings within the same 30 seconds.')}
                     ${tile('activity', 'Activity level', actWord,
                            `${anomToday} ${anomToday === 1 ? 'reading' : 'readings'} flagged`, actColor,
-                           'How many individual readings were flagged as unusual across all sources today — solo wobbles included, not just cross-domain moments.')}
+                           'How many individual readings were flagged as unusual among anomaly-eligible sources today — including solo events, not just cross-domain moments.')}
                     ${tile((activeIcon || 'clusters'), 'Most active', activeName,
                            mostActive ? `${activeCount} ${activeCount === 1 ? 'reading' : 'readings'} lately` : '',
                            'var(--text-primary)',
@@ -2213,7 +2213,7 @@
                             <span style="color:var(--neon-purple);font-weight:600;">Day ${daysWatching()} of watching.</span>
                             No candidate has been validated on future data. Historical counts are
                             exploratory, and gaps in earlier observations limit what they can prove.
-                            The coverage panel above shows whether today's measurements are complete.
+                            The coverage panel above shows the latest source status, not whole-day completeness.
                         </div>
                     </div>
                 `;
@@ -2324,22 +2324,22 @@
                     biasIcon = '📉';
                     biasText = 'Bearish tendency';
                     biasClass = 'bias-bearish';
-                    biasTooltip = 'Price drop is significantly more likely than rise';
+                    biasTooltip = 'Displayed drop estimate is at least three times the rise estimate';
                 } else if (pumpRatio >= 3) {
                     biasIcon = '📈';
                     biasText = 'Bullish tendency';
                     biasClass = 'bias-bullish';
-                    biasTooltip = 'Price rise is significantly more likely than drop';
+                    biasTooltip = 'Displayed rise estimate is at least three times the drop estimate';
                 } else if (dumpRatio >= 1.5) {
                     biasIcon = '↘️';
                     biasText = 'Slight bearish';
                     biasClass = 'bias-slight-bear';
-                    biasTooltip = 'Price drop is slightly more likely';
+                    biasTooltip = 'Displayed drop estimate exceeds the rise estimate';
                 } else if (pumpRatio >= 1.5) {
                     biasIcon = '↗️';
                     biasText = 'Slight bullish';
                     biasClass = 'bias-slight-bull';
-                    biasTooltip = 'Price rise is slightly more likely';
+                    biasTooltip = 'Displayed rise estimate exceeds the drop estimate';
                 } else {
                     biasIcon = '⚖️';
                     biasText = 'Balanced';
@@ -2802,7 +2802,7 @@
             if (!panel) return;
             if (count) count.textContent = items.length;
             if (!items.length) {
-                panel.innerHTML = '<div class="empty-state" style="padding:22px 24px;color:var(--text-secondary);font-size:15px;">All quiet — every source is within its normal range right now.</div>';
+                panel.innerHTML = '<div class="empty-state" style="padding:22px 24px;color:var(--text-secondary);font-size:15px;">No recent flagged event is available in this view. Check source coverage before interpreting a quiet period.</div>';
                 return;
             }
             const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
