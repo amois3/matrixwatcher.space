@@ -267,6 +267,8 @@ def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
                         except (TypeError, ValueError):
                             pass
                     md = d.get("metadata") or {}
+                    if src == "quantum_rng" and md.get("measurement_source") != "anu_quantum":
+                        continue
                     detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts), md)
                     out.append({
                         "timestamp": ts, "source": src,
@@ -830,6 +832,10 @@ def _activity_enrich(src, parameter, value, reason, ts, metadata=None):
 def format_level_event(anomaly: dict) -> dict | None:
     """Format anomaly for level display - detailed like Telegram but in English."""
     cluster = anomaly.get("cluster", {})
+    if any(a.get("sensor_source") == "quantum_rng" and
+           (a.get("metadata") or {}).get("measurement_source") != "anu_quantum"
+           for a in cluster.get("anomalies", [])):
+        return None
     index_data = anomaly.get("index", {})
     
     level = _domain_level(anomaly)

@@ -845,8 +845,7 @@ class HistoricalPatternTracker:
     def _check_quantum_anomaly(self, data: dict, threshold: float) -> bool:
         """Check if quantum RNG anomaly occurred."""
         try:
-            # Check if this is quantum_rng data (source can be 'random_org_atmospheric' or similar)
-            if 'randomness_score' not in data:
+            if data.get('source') != 'anu_quantum' or 'randomness_score' not in data:
                 return False
             
             randomness = data.get('randomness_score', 1.0)

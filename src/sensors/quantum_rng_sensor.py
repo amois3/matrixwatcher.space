@@ -1,17 +1,12 @@
-"""Quantum RNG Sensor - True Random Number Generation.
+"""ANU quantum random-number sensor.
 
-Monitors quantum random number generators for non-random patterns.
-Uses multiple sources with intelligent fallback:
-1. ANU QRNG (quantum vacuum fluctuations) - PRIMARY
-2. Random.org (atmospheric noise) - FALLBACK 1  
-3. Local entropy (hardware RNG) - FALLBACK 2
+Other entropy sources are not interchangeable experimental measurements.
 """
 
 import logging
 from typing import Any
 import aiohttp
 import statistics
-import secrets
 
 from .base import BaseSensor, SensorConfig
 from ..core.types import SensorReading
@@ -23,12 +18,8 @@ logger = logging.getLogger(__name__)
 class QuantumRNGSensor(BaseSensor):
     """Sensor for monitoring quantum random number generators.
     
-    Uses multiple sources with fallback:
-    - ANU QRNG: True quantum randomness from vacuum fluctuations
-    - Random.org: Atmospheric noise (radio static)
-    - Local entropy: Hardware RNG (/dev/urandom + secrets)
-    
-    Analyzes for non-random patterns (potential "glitches").
+    Analyzes verified ANU samples only. A failed ANU request is a failed
+    measurement, never a synthetic or atmospheric replacement.
     """
     
     def __init__(
@@ -56,50 +47,17 @@ class QuantumRNGSensor(BaseSensor):
         else:
             self.anu_url = "https://qrng.anu.edu.au/API/jsonI.php"
         
-        self.random_org_url = "https://www.random.org/integers/"
-        
-        # Track failures for intelligent fallback
-        self.anu_failures = 0
-        self.random_org_failures = 0
-        self.current_source = "unknown"
+        self.current_source = "anu_quantum"
     
     async def collect(self) -> SensorReading:
         """Collect quantum random numbers and analyze."""
-        numbers = None
-        source = "unknown"
-        
-        # Try ANU QRNG first (quantum vacuum)
-        try:
-            numbers = await self._fetch_anu_quantum()
-            source = "anu_quantum"
-            self.anu_failures = 0
-            logger.info("QRNG: ✓ Using ANU Quantum (vacuum fluctuations)")
-        except Exception as e:
-            self.anu_failures += 1
-            logger.warning(f"QRNG: ✗ ANU failed (attempt {self.anu_failures}): {e}")
-            
-            # Try Random.org (atmospheric noise)
-            try:
-                numbers = await self._fetch_random_org()
-                source = "random_org_atmospheric"
-                self.random_org_failures = 0
-                logger.info("QRNG: ✓ Using Random.org (atmospheric noise)")
-            except Exception as e2:
-                self.random_org_failures += 1
-                logger.warning(f"QRNG: ✗ Random.org failed (attempt {self.random_org_failures}): {e2}")
-                
-                # Fallback to local entropy
-                numbers = self._generate_local_entropy()
-                source = "local_entropy"
-                logger.info("QRNG: ✓ Using local entropy (hardware RNG)")
-        
-        self.current_source = source
+        numbers = await self._fetch_anu_quantum()
+        if len(numbers) != self.sample_size or any(type(n) is not int or not 0 <= n <= 255 for n in numbers):
+            raise ValueError("ANU returned an incomplete or invalid uint8 sample")
         
         # Analyze randomness
         analysis = self._analyze_randomness(numbers)
-        analysis["source"] = source
-        analysis["anu_failures"] = self.anu_failures
-        analysis["random_org_failures"] = self.random_org_failures
+        analysis["source"] = "anu_quantum"
         
         return SensorReading.create(
             source="quantum_rng",
@@ -247,14 +205,7 @@ class QuantumRNGSensor(BaseSensor):
     
     async def _fetch_anu_quantum(self) -> list[int]:
         """Fetch quantum random numbers from ANU QRNG (quantum vacuum)."""
-        # Create SSL context that doesn't verify certificates (ANU cert expired)
-        import ssl
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-        
-        connector = aiohttp.TCPConnector(ssl=ssl_context)
-        async with aiohttp.ClientSession(connector=connector) as session:
+        async with aiohttp.ClientSession() as session:
             if self.anu_api_key:
                 # Use authenticated API with key (correct header format)
                 headers = {"X-Api-Key": self.anu_api_key}
@@ -309,45 +260,6 @@ class QuantumRNGSensor(BaseSensor):
                         raise Exception("Insufficient numbers received")
                     
                     return numbers
-    
-    async def _fetch_random_org(self) -> list[int]:
-        """Fetch random numbers from Random.org (atmospheric noise)."""
-        params = {
-            "num": self.sample_size,
-            "min": 0,
-            "max": 255,
-            "col": 1,
-            "base": 10,
-            "format": "plain",
-            "rnd": "new"
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(
-                self.random_org_url,
-                params=params,
-                timeout=aiohttp.ClientTimeout(total=15)
-            ) as response:
-                if response.status != 200:
-                    raise Exception(f"Random.org returned {response.status}")
-                
-                text = await response.text()
-                numbers = [int(x.strip()) for x in text.strip().split('\n') if x.strip()]
-                
-                if len(numbers) < 100:
-                    raise Exception(f"Random.org returned too few numbers: {len(numbers)}")
-                
-                return numbers[:self.sample_size]
-    
-    def _generate_local_entropy(self) -> list[int]:
-        """Generate random numbers from local entropy sources.
-        
-        Uses Python's secrets module which uses:
-        - /dev/urandom on Unix (hardware RNG)
-        - CryptGenRandom on Windows
-        """
-        numbers = [secrets.randbelow(256) for _ in range(self.sample_size)]
-        return numbers
     
     def get_schema(self) -> dict[str, type]:
         """Get schema for quantum RNG data."""

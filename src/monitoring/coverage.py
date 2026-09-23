@@ -73,6 +73,8 @@ def _issues(name: str, reading: dict) -> list[str]:
         issues.append("Fewer than three news feeds available")
     elif name == "space_weather" and reading.get("kp_index") is None:
         issues.append("Kp measurement unavailable")
+    elif name == "quantum_rng" and reading.get("source") != "anu_quantum":
+        issues.append("ANU quantum sample unavailable; prior fallback is not quantum")
     return issues
 
 

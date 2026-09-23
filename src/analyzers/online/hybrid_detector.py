@@ -138,9 +138,14 @@ class HybridDetector:
         return out
 
     def process(self, event: Event) -> list[AnomalyEvent]:
+        if event.source == "quantum_rng" and event.payload.get("source") != "anu_quantum":
+            return []
         if event.source == "news" and event.payload.get("feeds_successful", 0) < 3:
             return []
         adaptive = self.adaptive.process(event)
+        if event.source == "quantum_rng":
+            for anomaly in adaptive:
+                anomaly.metadata = {**(anomaly.metadata or {}), "measurement_source": "anu_quantum"}
         if event.source == "earthquake" and isinstance(event.payload.get("significant_events"), list):
             # The old max-magnitude edge latch conflates two distinct USGS IDs.
             # Keep it for legacy replay records that lack per-event IDs.

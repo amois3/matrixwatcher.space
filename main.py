@@ -465,6 +465,11 @@ class MatrixWatcher:
         """Handle all observations on one event loop, in arrival order."""
         self._pipeline_stats["events_processed"] += 1
         self._pipeline_stats["last_event_at"] = time.time()
+        if event.source == "quantum_rng" and event.payload.get("source") != "anu_quantum":
+            # Legacy fallback samples are atmospheric/local entropy, not ANU
+            # quantum measurements. Never train or correlate on them.
+            self._write_pipeline_status()
+            return
         try:
             self.smart_analyzer.record_event(event)
             payload = getattr(event, "payload", None)

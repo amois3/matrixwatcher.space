@@ -17,14 +17,24 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ..online.cluster_detector import source_domain
-from .shuffle_test import extract_anomalies, load_anomalies_from_logs
+from .shuffle_test import load_anomalies_from_logs
 
 WINDOWS = (30, 300, 900)
 DETECTOR_EPOCH = 1780254840.0
 
 
 def domain_events(records: list[dict], after: float = DETECTOR_EPOCH) -> list[tuple[float, str]]:
-    return sorted((ts, source_domain(source)) for ts, source in extract_anomalies(records) if ts >= after)
+    events = []
+    for record in records:
+        if "cluster" in record:
+            continue
+        ts, source = record.get("timestamp"), record.get("sensor_source")
+        if not isinstance(ts, (int, float)) or ts < after or not source:
+            continue
+        if source == "quantum_rng" and (record.get("metadata") or {}).get("measurement_source") != "anu_quantum":
+            continue
+        events.append((float(ts), source_domain(source)))
+    return sorted(events)
 
 
 def count_episodes(events: list[tuple[float, str]], window: float) -> int:
@@ -99,6 +109,7 @@ def analyze(events: list[tuple[float, str]], iterations: int = 500, seed: int = 
         "domains": dict(Counter(domain for _, domain in events)),
         "method": "whole-day circular shifts per domain within each UTC month",
         "status": "exploratory_not_validated",
+        "exclusions": {"quantum_rng": "historical anomalies without ANU source provenance excluded"},
         "windows": [
             {"seconds": window, "observed_episodes": count,
              "null_mean_episodes": round(sum(null) / iterations, 2),

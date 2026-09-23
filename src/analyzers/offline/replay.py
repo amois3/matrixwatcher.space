@@ -182,6 +182,8 @@ class Pipeline:
 
     def process_event(self, event: Event) -> tuple[list[dict], list[dict]]:
         """Process one historical event, returning (anomaly_records, cluster_records)."""
+        if event.source == "quantum_rng" and event.payload.get("source") != "anu_quantum":
+            return [], []
         # Pattern-tracker event detection (uses event timestamp as the clock)
         self.pattern_tracker.check_events(event.payload, current_time=event.timestamp)
 

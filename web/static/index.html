@@ -127,7 +127,7 @@
                 "@type": "Dataset",
                 "@id": "https://matrixwatcher.space/#dataset",
                 "name": "Matrix Watcher cross-domain anomaly observations",
-                "description": "Readings from 12 monitored streams including markets, geophysics, heliophysics, weather, news and quantum randomness. Related streams are not counted as independent domains.",
+                "description": "Readings from 12 configured streams including markets, geophysics, heliophysics, weather, news and ANU quantum randomness when available. Source coverage and quality are published alongside results.",
                 "creator": { "@id": "https://matrixwatcher.space/#org" },
                 "temporalCoverage": "2025-12-12/..",
                 "isAccessibleForFree": true,
@@ -157,7 +157,7 @@
                     {
                         "@type": "Question",
                         "name": "Where does Matrix Watcher's data come from?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Entirely from real public feeds: Binance (crypto), USGS (earthquakes), NOAA SWPC (space weather and solar activity), the ANU Quantum Random Number Generator, the Smithsonian/USGS volcanic activity report, Open-Meteo (weather) and public RSS (news). No simulated or fabricated data is used." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Sources include Binance, USGS, NOAA SWPC, Open-Meteo, public RSS and ANU QRNG when available. The coverage panel shows outages. Atmospheric or local entropy is never analyzed as a quantum measurement." }
                     },
                     {
                         "@type": "Question",
@@ -1451,7 +1451,7 @@
             <ul>
                 <li>Crypto — Bitcoin &amp; Ethereum prices and volatility (Binance)</li>
                 <li>Blockchain — network block times and on-chain anomalies</li>
-                <li>Quantum RNG — hardware quantum randomness (ANU QRNG)</li>
+                <li>Quantum RNG — ANU hardware randomness when its API is available; never substituted with atmospheric noise</li>
                 <li>Space Weather — geomagnetic Kp index (NOAA SWPC)</li>
                 <li>Solar Wind — real-time speed, density &amp; IMF Bz, the storm precursor (NOAA DSCOVR)</li>
                 <li>Solar Activity — F10.7 flux, GOES X-ray flares, proton flux (NOAA)</li>
@@ -1614,7 +1614,7 @@
                 <div class="sensor-grid">
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-crypto"/></svg>Crypto</strong><br>Bitcoin & Ethereum price moves and volatility (Binance)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-blockchain"/></svg>Blockchain</strong><br>Network block times and on-chain anomalies</div>
-                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-quantum"/></svg>Quantum RNG</strong><br>Hardware quantum randomness (ANU QRNG)</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-quantum"/></svg>Quantum RNG</strong><br>ANU hardware source only; availability shown in coverage</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Space Weather</strong><br>Geomagnetic Kp index (NOAA SWPC)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-solar"/></svg>Solar Activity</strong><br>F10.7 flux, GOES X-ray flares, proton flux (NOAA)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-earthquake"/></svg>Earthquakes</strong><br>Global seismic activity, magnitude & depth (USGS)</div>

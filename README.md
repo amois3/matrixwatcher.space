@@ -10,7 +10,7 @@ Matrix Watcher is an open experiment collecting real measurements and asking whe
 |---|---|---|
 | Crypto | Binance BTC and ETH markets | markets |
 | Blockchain | block timing from public nodes | blockchain |
-| Quantum RNG | ANU hardware randomness | quantum |
+| Quantum RNG | ANU hardware randomness when the API is available | quantum |
 | Space weather | NOAA geomagnetic Kp and related readings | heliophysics |
 | Solar wind | NOAA speed, density and interplanetary magnetic field | heliophysics |
 | Solar activity | NOAA radio flux, X-rays and protons | heliophysics |
@@ -37,7 +37,7 @@ The daily **Evidence Lab** counts distinct three-domain episodes at 30 seconds, 
 
 The previous live pipeline had a `NameError` during probability calculation. Background-task exceptions were discarded, so cluster summaries failed to persist while individual anomalies continued to appear. News detection was disconnected from the live hybrid detector, and its target required 50 new headlines although the sensor read at most 40. One NOAA flare URL returned 404. Another NOAA parser read nonexistent solar-wind fields from an old row. Health could remain green while BTC was absent. Offline replay used different detector rules and fewer streams than live collection.
 
-Those code faults have been repaired. The production history remains incomplete; it cannot become clean prospective evidence retroactively. On the available post-May-2026 anomaly records, the new exploratory analysis found no three-domain 30-second episode. Longer windows contain coincidences, but the September 23 comparison did not show a convincing excess after its timing control and three-window correction. This is **inconclusive**, especially with historical coverage gaps and low power at short timescales.
+Those code faults have been repaired. A further live check found that ANU errors had silently switched the "quantum" sensor to Random.org atmospheric noise or local entropy. These substitute readings are now excluded from live analysis, replay and the public evidence report; coverage exposes ANU's failure. Historical quantum anomalies without source provenance are excluded. The production history remains incomplete; it cannot become clean prospective evidence retroactively. On the available post-May-2026 anomaly records, the exploratory analysis found no three-domain 30-second episode. Longer windows contain coincidences, but the September 23 comparison did not show a convincing excess after its timing control and three-window correction. This is **inconclusive**, especially with historical coverage gaps and low power at short timescales.
 
 ## Run and verify
 
@@ -65,7 +65,7 @@ The committed [tests](tests/) cover live detection, replay, domain grouping, NOA
 ## Limits and research standard
 
 - Wikipedia samples only part of each interval; brief edit bursts can be missed. Weather currently covers one location.
-- Public feeds can lag, change schema or fail. Sensor and pipeline status belong beside every apparent statistical finding.
+- Public feeds can lag, change schema or fail. ANU's legacy public endpoint is currently failing; a reliable quantum stream requires working ANU access, and no other entropy source will be labelled quantum. Sensor and pipeline status belong beside every apparent statistical finding.
 - Nearby threshold crossings and repeated polls are not independent experiments. Evidence Lab counts overlap episodes; condition frequencies remain candidate descriptions.
 - A predictive claim needs a frozen event definition and horizon, independent future episodes, a matched current base rate, calibration against binary outcomes and correction for all candidates tried.
 
