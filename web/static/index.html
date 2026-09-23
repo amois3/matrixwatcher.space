@@ -1994,14 +1994,14 @@
                 if (data.status !== 'context_only') throw new Error('no weather grid data');
                 weatherGrid.replaceChildren();
                 const intro = document.createElement('p');
-                intro.textContent = `${data.fresh_locations}/${data.expected_locations} fresh locations. Open-Meteo current values are weather-model estimates, not independent station observations. Model time and retrieval delay are shown for each city; this grid is context only.`;
+                intro.textContent = `${data.fresh_locations}/${data.expected_locations} fresh locations. Open-Meteo current values are weather-model estimates, not independent station observations. Model time and retrieval delay are shown for each city; surface pressure depends on altitude. This grid is context only.`;
                 weatherGrid.append(intro);
                 for (const cell of data.cells || []) {
                     const row = document.createElement('div'); row.className = 'research-row';
                     const title = document.createElement('strong'); title.textContent = cell.label;
                     const detail = document.createElement('small');
                     detail.textContent = cell.status === 'ok'
-                        ? `${cell.temperature_celsius} °C · ${cell.pressure_hpa} hPa · model ${new Date(cell.model_valid_at * 1000).toLocaleTimeString()} · received ${Math.round(cell.retrieval_lag_seconds / 60)} min later`
+                        ? `${cell.temperature_celsius} °C · ${cell.pressure_hpa} hPa · model ${new Date(cell.model_valid_at * 1000).toISOString().slice(11, 16)} UTC · received ${Math.round(cell.retrieval_lag_seconds / 60)} min later`
                         : 'Model value missing or stale';
                     row.append(title, detail); weatherGrid.append(row);
                 }
@@ -2014,11 +2014,11 @@
                 const data = await response.json();
                 forecastAudit.replaceChildren();
                 const intro = document.createElement('p');
-                intro.textContent = 'Five historical candidate rules are frozen before future observations. Each issued forecast receives a binary outcome only when target coverage is adequate. No rule is a validated signal.';
+                intro.textContent = 'Five historical candidate rules are frozen before future observations. Observed target episodes score positive; a negative is scored only when target coverage is adequate. No rule is a validated signal.';
                 forecastAudit.append(intro);
                 if (Date.now() / 1000 < data.start_at) {
                     const start = document.createElement('p'); start.className = 'research-note';
-                    start.textContent = `Future scoring starts ${new Date(data.start_at * 1000).toLocaleString()}.`;
+                    start.textContent = `Future scoring starts ${new Date(data.start_at * 1000).toISOString().replace('T', ' ').slice(0, 16)} UTC.`;
                     forecastAudit.append(start);
                 }
                 for (const item of data.rules || []) {

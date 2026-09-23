@@ -26,6 +26,7 @@ def test_sparse_probe_history_cannot_be_declared_a_frozen_baseline(tmp_path):
     path.write_text(json.dumps(_record(0)) + "\n")
     before = build_baseline(tmp_path, START_AT + 2 * 86400)
     assert before["status"] == "collecting_reference"
+    assert before["problems"] == []
     after = build_baseline(tmp_path, END_AT + 1)
     assert after["status"] == "insufficient_frozen_reference"
     assert after["problems"]

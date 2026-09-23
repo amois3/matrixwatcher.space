@@ -104,7 +104,7 @@ def build_baseline(logs: Path, now: float | None = None) -> dict:
             "complete_days": max(0, min(14, int((now - START_AT) // 86400))),
             "minimum_unique_measurements_per_probe": MIN_UNIQUE_MEASUREMENTS,
             "minimum_observed_days_per_probe": MIN_OBSERVED_DAYS,
-            "problems": problems, "targets": targets,
+            "problems": problems if now >= END_AT else [], "targets": targets,
             "caveat": "Fixed-probe medians are network context, not independent evidence of a global anomaly."}
 
 
