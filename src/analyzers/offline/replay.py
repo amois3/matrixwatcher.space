@@ -192,6 +192,9 @@ class Pipeline:
 
         for anomaly in anomalies:
             anomaly_records.append(anomaly.to_dict())
+            # Replay is deterministic and writes this batch to its isolated
+            # output. Acknowledge IDs here to mirror subsequent live polls.
+            self.detector.mark_persisted(anomaly)
             cluster = self.cluster_detector.add_anomaly(anomaly, now=event.timestamp)
             if not cluster:
                 continue

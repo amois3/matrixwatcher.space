@@ -71,8 +71,10 @@ class MatrixWatcher:
             compression=self.config.storage.compression,
             buffer_size=self.config.storage.buffer_size
         )
-        # Use threshold detector instead of z-score detector
-        self.anomaly_detector = HybridDetector(event_bus=self.event_bus)
+        self.anomaly_detector = HybridDetector(
+            event_bus=self.event_bus,
+            anomaly_log_dir=Path(self.config.storage.base_path) / "anomalies",
+        )
         self.smart_analyzer = SmartAnalyzer(
             lookback_seconds=getattr(self.config.analysis, "precursor_lookback_seconds", 60),
             correlation_threshold=self.config.analysis.correlation_threshold,
@@ -479,6 +481,7 @@ class MatrixWatcher:
             try:
                 self._pipeline_stats["anomalies_detected"] += 1
                 self.storage.write_anomaly(anomaly.to_dict())
+                self.anomaly_detector.mark_persisted(anomaly)
                 self._handle_anomaly(anomaly)
             except Exception as exc:
                 self._record_pipeline_error("cluster analysis", event, exc)

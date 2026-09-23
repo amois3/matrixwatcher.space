@@ -110,6 +110,11 @@ class ClusterDetector:
         """
         current_time = time.time() if now is None else now
 
+        # A delayed or backfilled observation is still a valid individual
+        # anomaly, but must never create a live coincidence with current data.
+        if not 0 <= current_time - anomaly.timestamp < self.cluster_window:
+            return None
+
         # Store anomaly
         self._recent_anomalies.append({
             "anomaly": anomaly,

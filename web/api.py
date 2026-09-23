@@ -267,23 +267,23 @@ def load_recent_activity(hours: int = 48, limit: int = 60) -> list[dict]:
                         except (TypeError, ValueError):
                             pass
                     md = d.get("metadata") or {}
-                    detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts))
+                    detail, context = _activity_enrich(src, d.get("parameter", ""), d.get("value"), md.get("reason", "") or "", d.get("timestamp", ts), md)
                     out.append({
                         "timestamp": ts, "source": src,
                         "parameter": d.get("parameter", ""), "value": d.get("value"),
                         "z_score": d.get("z_score"), "reason": md.get("reason", ""),
                         "severity": md.get("severity", "medium"),
                         "method": md.get("detection_method", ""),
+                        "event_id": md.get("usgs_id"),
                         "detail": detail, "context": context,
                     })
         except Exception as e:
             logger.error(f"activity read {log_file}: {e}")
     out.sort(key=lambda x: x["timestamp"], reverse=True)
-    # Collapse repeats: one card per source (newest first) with a count, so the
-    # feed shows distinct activity instead of a wall of identical duplicates.
+    # Keep distinct USGS earthquakes visible; collapse repeats for other streams.
     grouped: dict[str, dict] = {}
     for item in out:
-        src = item["source"]
+        src = (item["source"], item.get("event_id")) if item.get("event_id") else item["source"]
         g = grouped.get(src)
         if g is None:
             grouped[src] = {**item, "count": 1}
@@ -724,7 +724,7 @@ def _concise_fact(parameter: str, value, reason: str) -> str:
 
 
 
-def _activity_enrich(src, parameter, value, reason, ts):
+def _activity_enrich(src, parameter, value, reason, ts, metadata=None):
     """Return (primary_detail, gray_context) for an activity card.
     Primary goes on the main line; context goes on a second, grey line."""
     detail = _concise_fact(parameter, value, reason)
@@ -736,7 +736,8 @@ def _activity_enrich(src, parameter, value, reason, ts):
     pl = (parameter or "").lower()
 
     if src == "earthquake":
-        full = _earthquake_detail_at(ts)          # "M5.0 · Kermadec Islands region"
+        place = (metadata or {}).get("place")
+        full = f"M{v:.1f} · {place}" if v is not None and place else _earthquake_detail_at(ts)
         if full and " · " in full:
             detail, context = full.split(" · ", 1)
         elif full:
@@ -858,10 +859,9 @@ def format_level_event(anomaly: dict) -> dict | None:
                 a.get("value"),
                 (a.get("metadata") or {}).get("reason", "") or "",
             )
-            # For earthquakes, add WHERE (USGS place isn't stored on the anomaly,
-            # so look it up from the raw feed by timestamp): "M5.3 · Turpan, China".
+            # Each USGS event carries its own location; old records use raw lookup.
             if src == "earthquake" and detail.startswith("M"):
-                place = _earthquake_place_at(a.get("timestamp", anomaly.get("timestamp", 0)))
+                place = (a.get("metadata") or {}).get("place") or _earthquake_place_at(a.get("timestamp", anomaly.get("timestamp", 0)))
                 if place:
                     detail = f"{detail} · {place}"
             source_detail[src] = detail

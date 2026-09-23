@@ -84,7 +84,7 @@ def test_event_pipeline_records_measurements_and_reports_analysis_failure():
         item = anomaly("crypto", time.time())
         cluster = AnomalyCluster(1, [item], item.timestamp, 1, "Single", domains=("markets",), source_count=1)
         watcher.smart_analyzer = SimpleNamespace(record_event=lambda _: None, record_anomaly=lambda _: None)
-        watcher.anomaly_detector = SimpleNamespace(process=lambda _: [item])
+        watcher.anomaly_detector = SimpleNamespace(process=lambda _: [item], mark_persisted=lambda _: None)
         watcher.cluster_detector = SimpleNamespace(add_anomaly=lambda _: cluster)
         watcher.anomaly_index = SimpleNamespace(calculate=lambda _: SimpleNamespace(
             index=1, baseline_ratio=1, status="normal", breakdown={}))

@@ -26,7 +26,7 @@ These are **not twelve independent domains**. Related solar feeds measure one ph
 ## Processing and data quality
 
 1. Sensors store timestamped raw JSONL. Missing core measurements cause collection errors; partial crypto, news and NOAA results carry quality metadata.
-2. The live `HybridDetector` combines rolling robust deviations for continuous variables with named thresholds for physical events. News bursts use an attainable count of new headlines after the initial RSS baseline.
+2. The live `HybridDetector` combines rolling robust deviations for continuous variables with named thresholds for physical events. A one-day USGS M4.5+ feed catches up after short collector outages; each earthquake is identified separately, acknowledged after storage and timed by its reported origin. The hourly aggregate still describes the past hour. News bursts use an attainable count of new headlines after the initial RSS baseline.
 3. A single event-loop callback processes readings in order. It persists individual anomalies and domain-aware cluster records before optional pattern analysis. Exceptions are logged and published in `logs/pipeline_status.json`.
 4. The dashboard and `/api/coverage` show freshness and completeness of the latest stored reading for each source, plus pipeline health. They do not certify that every historical interval was observed.
 5. Internal condition → event frequencies are exploratory. Repeated states, changing base rates and selection bias can inflate them. The public signal panel stays empty until a candidate has passed independent future-data validation. The former aggregate called a “Brier score” was not a proper forecast score and is no longer presented as one.
