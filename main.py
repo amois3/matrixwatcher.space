@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import signal
-import sys
 import time
 from pathlib import Path
 
@@ -1066,8 +1065,9 @@ class MatrixWatcher:
     def run(self):
         """Run Matrix Watcher until interrupted."""
         def signal_handler(sig, frame):
-            self.stop()
-            sys.exit(0)
+            # A signal may arrive while run_until_complete owns the loop.
+            # Let that call return before starting asynchronous shutdown.
+            self._running = False
         
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)
@@ -1084,6 +1084,8 @@ class MatrixWatcher:
                     self._write_pipeline_status(force=True)
                     last_maintenance = time.monotonic()
         except KeyboardInterrupt:
+            self._running = False
+        finally:
             self.stop()
 
 
