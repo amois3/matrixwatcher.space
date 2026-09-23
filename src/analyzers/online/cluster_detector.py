@@ -44,7 +44,7 @@ SOURCE_DOMAINS = {
     "volcanic_activity": "geophysics", "earth_tides": "geophysics",
     "news": "human_activity", "wikipedia_edits": "human_activity",
     "crypto": "markets", "blockchain": "blockchain",
-    "weather": "atmosphere", "quantum_rng": "quantum",
+    "weather": "atmosphere", "weather_grid": "atmosphere", "quantum_rng": "quantum",
     "fireball": "astronomy", "ripe_atlas": "network",
     "system": "local_system", "network": "local_system",
     "random": "local_system", "time_drift": "local_system",

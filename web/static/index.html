@@ -51,7 +51,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://matrixwatcher.space/">
     <meta property="og:title" content="Matrix Watcher — Cross-Domain Anomaly Monitor">
-    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and two context feeds, with transparent coverage and cross-domain controls.">
+    <meta property="og:description" content="A live, open experiment monitoring twelve core streams and three context feeds, with transparent coverage and cross-domain controls.">
     <meta property="og:image" content="https://matrixwatcher.space/static/og-image.png">
     <meta property="og:site_name" content="Matrix Watcher">
     <meta property="og:locale" content="en_US">
@@ -84,7 +84,7 @@
                 "@id": "https://matrixwatcher.space/#website",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "An open experiment that monitors twelve core streams and two context feeds and audits the quality of its own observations.",
+                "description": "An open experiment that monitors twelve core streams and three context feeds and audits the quality of its own observations.",
                 "inLanguage": "en",
                 "publisher": { "@id": "https://matrixwatcher.space/#org" }
             },
@@ -93,7 +93,7 @@
                 "@id": "https://matrixwatcher.space/#app",
                 "name": "Matrix Watcher",
                 "url": "https://matrixwatcher.space",
-                "description": "Real-time dashboard monitoring twelve core streams and two context feeds, with coverage checks and cross-domain anomaly analysis.",
+                "description": "Real-time dashboard monitoring twelve core streams and three context feeds, with coverage checks and cross-domain anomaly analysis.",
                 "applicationCategory": "Science",
                 "operatingSystem": "Any (web browser)",
                 "browserRequirements": "Requires JavaScript",
@@ -101,7 +101,7 @@
                 "dateModified": "2026-09-23",
                 "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
                 "featureList": [
-                    "Monitoring of twelve core streams and two context feeds with per-source coverage checks",
+                    "Monitoring of twelve core streams and three context feeds with per-source coverage checks",
                     "Cross-domain anomaly cluster detection (Levels 1–5)",
                     "Edge-triggered detection (one event counted once)",
                     "Exploratory multi-window timing controls with adjusted p-values",
@@ -142,7 +142,7 @@
                     {
                         "@type": "Question",
                         "name": "What is Matrix Watcher?",
-                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and two context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
+                        "acceptedAnswer": { "@type": "Answer", "text": "Matrix Watcher is an open experiment monitoring twelve core streams and three context feeds. It tracks source quality, flags anomalies and records coincidences across physical and social domains." }
                     },
                     {
                         "@type": "Question",
@@ -1467,7 +1467,7 @@
                 <li>Solar Activity — F10.7 flux, GOES X-ray flares, proton flux (NOAA)</li>
                 <li>Earthquakes — global seismic activity (USGS)</li>
                 <li>Volcanoes — weekly volcanic activity report (Smithsonian/USGS)</li>
-                <li>Weather — temperature &amp; pressure (Open-Meteo)</li>
+                <li>Weather — modelled temperature &amp; pressure for New York (Open-Meteo)</li>
                 <li>News — global headline volume (public RSS)</li>
                 <li>Wikipedia — global human editing activity (Wikimedia EventStreams)</li>
                 <li>Earth Tides — solid-earth gravitational tide from Sun &amp; Moon, computed locally (phase reference)</li>
@@ -1573,6 +1573,8 @@
                     <div class="research-box"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
                     <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
                     <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
+                    <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
+                    <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
                 </div>
             </div>
         </section>
@@ -1632,7 +1634,7 @@
             
             <div class="modal-section">
                 <h3>Mission</h3>
-                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to quantum noise — plus two context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
+                <p>Matrix Watcher watches twelve core streams — from Bitcoin to earthquakes to ANU quantum samples when available — plus three context feeds, and asks whether unusual observations coincide across distinct domains more often than chance would produce. Related solar feeds are grouped together. The evidence is still being collected and validated.</p>
             </div>
 
             <div class="modal-section">
@@ -1646,7 +1648,7 @@
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-solar"/></svg>Solar Activity</strong><br>F10.7 flux, GOES X-ray flares, proton flux (NOAA)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-earthquake"/></svg>Earthquakes</strong><br>Global seismic activity, magnitude & depth (USGS)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-volcanic"/></svg>Volcanoes</strong><br>Weekly volcanic activity report (Smithsonian/USGS)</div>
-                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-weather"/></svg>Weather</strong><br>Temperature & pressure swings (Open-Meteo, New York)</div>
+                    <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-weather"/></svg>Weather</strong><br>Modelled temperature & pressure (Open-Meteo, New York)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>News</strong><br>Global headline volume from public RSS feeds</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-space_weather"/></svg>Solar Wind</strong><br>Real-time speed, density & IMF Bz — the precursor that drives geomagnetic storms (NOAA DSCOVR)</div>
                     <div class="sensor-item"><strong><svg class="mw-ic" style="width:15px;height:15px;color:var(--neon-blue);vertical-align:-2px;margin-right:6px"><use href="#ic-news"/></svg>Wikipedia</strong><br>Human edit rate across Wikipedia languages, with bounded stream replay</div>
@@ -1871,6 +1873,8 @@
             const lags = document.getElementById('lagLab');
             const sky = document.getElementById('fireballContext');
             const network = document.getElementById('networkContext');
+            const weatherGrid = document.getElementById('weatherGridContext');
+            const forecastAudit = document.getElementById('forecastAudit');
             try {
                 const response = await fetch('/api/research/quality');
                 if (!response.ok) throw new Error('quality HTTP');
@@ -1955,19 +1959,81 @@
                 if (data.status !== 'context_only') throw new Error('no RIPE data');
                 network.replaceChildren();
                 const intro = document.createElement('p');
-                intro.textContent = `${data.fresh_probes}/${data.expected_probes} fresh probes pinging K-root. The shared anycast target can affect several regions at once; these are network context, not independent anomaly votes.`;
+                intro.textContent = data.targets && Object.keys(data.targets).length
+                    ? `${data.paired_probes ?? 0}/18 probes fresh for both K-root and F-root. Two targets help separate a target issue from a probe issue; shared probes and API still limit independence. Network context only.`
+                    : `${data.fresh_probes}/${data.expected_probes} fresh probes pinging K-root. Network context only.`;
                 network.append(intro);
-                for (const [name, region] of Object.entries(data.regions || {})) {
-                    const row = document.createElement('div'); row.className = 'research-row';
-                    const title = document.createElement('strong'); title.textContent = name;
-                    const detail = document.createElement('small');
-                    const loss = region.probes?.filter(probe => probe.status === 'ok' && probe.packet_loss > 0).length || 0;
-                    detail.textContent = `${region.fresh_probes}/${region.expected_probes} fresh · median ${region.median_latency_ms == null ? 'unavailable' : `${region.median_latency_ms} ms`} · ${loss} probes with packet loss`;
-                    row.append(title, detail); network.append(row);
+                const targets = Object.keys(data.targets || {}).length ? data.targets : { k_root: { regions: data.regions || {}, hostname: 'k.root-servers.net' } };
+                for (const [targetKey, target] of Object.entries(targets)) {
+                    const heading = document.createElement('p');
+                    heading.textContent = `${target.hostname}: ${target.fresh_probes ?? data.fresh_probes}/${target.expected_probes ?? data.expected_probes} fresh probes`;
+                    network.append(heading);
+                    for (const [name, region] of Object.entries(target.regions || {})) {
+                        const row = document.createElement('div'); row.className = 'research-row';
+                        const title = document.createElement('strong'); title.textContent = name;
+                        const detail = document.createElement('small');
+                        const loss = region.probes?.filter(probe => probe.status === 'ok' && probe.packet_loss > 0).length || 0;
+                        const reference = data.baseline?.status === 'frozen_reference'
+                            ? data.baseline.targets?.[targetKey]?.regions?.[name]?.reference_median_latency_ms : null;
+                        detail.textContent = `${region.fresh_probes}/${region.expected_probes} fresh · median ${region.median_latency_ms == null ? 'unavailable' : `${region.median_latency_ms} ms`} · ${loss} probes with packet loss${reference == null ? '' : ` · fixed reference ${reference} ms`}`;
+                        row.append(title, detail); network.append(row);
+                    }
                 }
+                const baseline = document.createElement('div'); baseline.className = 'research-note';
+                baseline.textContent = data.baseline?.status === 'frozen_reference'
+                    ? 'The 14-day probe reference is frozen. Differences from it are descriptive, not anomaly votes.'
+                    : `Fixed 14-day reference: ${data.baseline?.complete_days ?? 0}/14 complete UTC days from 24 Sep 2026. No network anomaly claim during collection.`;
+                network.append(baseline);
                 const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'RIPE measurement method ↗';
                 network.append(link);
             } catch (_) { network.textContent = 'RIPE Atlas context unavailable.'; }
+            try {
+                const response = await fetch('/api/context/weather-grid');
+                if (!response.ok) throw new Error('weather grid HTTP');
+                const data = await response.json();
+                if (data.status !== 'context_only') throw new Error('no weather grid data');
+                weatherGrid.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = `${data.fresh_locations}/${data.expected_locations} fresh locations. Open-Meteo current values are weather-model estimates, not independent station observations. Model time and retrieval delay are shown for each city; this grid is context only.`;
+                weatherGrid.append(intro);
+                for (const cell of data.cells || []) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong'); title.textContent = cell.label;
+                    const detail = document.createElement('small');
+                    detail.textContent = cell.status === 'ok'
+                        ? `${cell.temperature_celsius} °C · ${cell.pressure_hpa} hPa · model ${new Date(cell.model_valid_at * 1000).toLocaleTimeString()} · received ${Math.round(cell.retrieval_lag_seconds / 60)} min later`
+                        : 'Model value missing or stale';
+                    row.append(title, detail); weatherGrid.append(row);
+                }
+                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'Open-Meteo method ↗';
+                weatherGrid.append(link);
+            } catch (_) { weatherGrid.textContent = 'Weather grid context unavailable.'; }
+            try {
+                const response = await fetch('/api/research/forecast-audit');
+                if (!response.ok) throw new Error('forecast audit HTTP');
+                const data = await response.json();
+                forecastAudit.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = 'Five historical candidate rules are frozen before future observations. Each issued forecast receives a binary outcome only when target coverage is adequate. No rule is a validated signal.';
+                forecastAudit.append(intro);
+                if (Date.now() / 1000 < data.start_at) {
+                    const start = document.createElement('p'); start.className = 'research-note';
+                    start.textContent = `Future scoring starts ${new Date(data.start_at * 1000).toLocaleString()}.`;
+                    forecastAudit.append(start);
+                }
+                for (const item of data.rules || []) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong');
+                    title.textContent = `${item.source.replaceAll('_', ' ')} → ${item.target.replaceAll('_', ' ')}`;
+                    const detail = document.createElement('small');
+                    const lag = item.lag_min_seconds >= 3600 ? `${item.lag_min_seconds / 3600}–${item.lag_max_seconds / 3600} h` : `${item.lag_min_seconds / 60}–${item.lag_max_seconds / 60} min`;
+                    detail.textContent = `${lag} · ${item.issued} issued · ${item.scored} scored · ${item.unscorable} unscorable${item.descriptive_brier_skill == null ? '' : ` · descriptive Brier skill ${item.descriptive_brier_skill}`}`;
+                    row.append(title, detail); forecastAudit.append(row);
+                }
+                const caveat = document.createElement('div'); caveat.className = 'research-note';
+                caveat.textContent = 'The solar-wind → Kp rule is known physics. Scores compare with a frozen matched timing control; related rules share events, and any apparent skill needs endpoint review and replication.';
+                forecastAudit.append(caveat);
+            } catch (_) { forecastAudit.textContent = 'Prospective forecast audit unavailable.'; }
         }
 
         function updateStatus(connected) {

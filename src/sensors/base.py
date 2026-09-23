@@ -127,7 +127,7 @@ class BaseSensor(ABC):
                 self._status = SensorStatus.RUNNING
                 
                 # Publish to event bus
-                if self.event_bus:
+                if self.event_bus and self.should_publish(reading):
                     event = reading.to_event()
                     self.event_bus.publish(event)
                 
@@ -160,6 +160,10 @@ class BaseSensor(ABC):
             self.event_bus.publish(error_event)
         
         return None
+
+    def should_publish(self, reading: SensorReading) -> bool:
+        """Allow sensors to keep degraded raw records out of anomaly detection."""
+        return True
     
     async def _async_sleep(self, seconds: float) -> None:
         """Async sleep helper."""

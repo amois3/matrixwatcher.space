@@ -16,7 +16,7 @@ SENSOR_MODES = {
     "solar_activity": "anomaly", "solar_wind": "anomaly",
     "quantum_rng": "anomaly", "wikipedia_edits": "anomaly",
     "volcanic_activity": "anomaly", "earth_tides": "covariate",
-    "fireball": "context", "ripe_atlas": "context",
+    "fireball": "context", "ripe_atlas": "context", "weather_grid": "context",
 }
 
 
@@ -76,6 +76,8 @@ def _issues(name: str, reading: dict) -> list[str]:
         issues.append("Kp measurement unavailable")
     elif name == "quantum_rng" and reading.get("source") != "anu_quantum":
         issues.append("ANU quantum sample unavailable; prior fallback is not quantum")
+    elif name == "weather" and (reading.get("from_cache") or reading.get("error")):
+        issues.append("Weather model update unavailable; cached values excluded from anomaly detection")
     return issues
 
 

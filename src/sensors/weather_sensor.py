@@ -12,6 +12,7 @@ values.
 """
 
 import logging
+import math
 import time
 from typing import Any
 
@@ -73,15 +74,20 @@ def parse_open_meteo(payload: dict[str, Any], location: str, country: str) -> di
     Pure function (no I/O) so it can be unit-tested without network access.
     """
     current = payload.get("current", {}) or {}
+    units = payload.get("current_units", {}) or {}
     code = current.get("weather_code")
     weather_main, weather_description = wmo_to_text(code)
 
     def _round(value, ndigits=1):
-        return round(value, ndigits) if isinstance(value, (int, float)) else value
+        return round(value, ndigits) if isinstance(value, (int, float)) and math.isfinite(value) else None
 
     return {
         "location": location,
         "country": country,
+        "data_kind": "weather_model_current",
+        "units_valid": units.get("temperature_2m") == "°C" and units.get("surface_pressure") == "hPa" and units.get("time") == "unixtime",
+        "model_valid_at": current.get("time") if isinstance(current.get("time"), (int, float)) else None,
+        "model_interval_seconds": current.get("interval"),
         "temperature_celsius": _round(current.get("temperature_2m")),
         "feels_like_celsius": _round(current.get("apparent_temperature")),
         "humidity_percent": current.get("relative_humidity_2m"),
@@ -154,6 +160,17 @@ class WeatherSensor(BaseSensor):
         try:
             data = await self._fetch_weather()
             if data:
+                valid_at = data.get("model_valid_at")
+                lag = timestamp - valid_at if isinstance(valid_at, (int, float)) else None
+                temperature = data.get("temperature_celsius")
+                pressure = data.get("pressure_hpa")
+                valid = (isinstance(lag, (int, float)) and -120 <= lag <= 3600
+                         and data.get("units_valid") is True
+                         and isinstance(temperature, (int, float)) and -90 <= temperature <= 60
+                         and isinstance(pressure, (int, float)) and 800 <= pressure <= 1100)
+                data["retrieval_lag_seconds"] = round(lag) if lag is not None else None
+                data["quality"] = {"complete": valid,
+                                   "missing_fields": [] if valid else ["fresh model timestamp, temperature or pressure"]}
                 logger.info(
                     f"Weather: Collected data for {data.get('location', 'Unknown')}, "
                     f"temp={data.get('temperature_celsius')}°C"
@@ -230,6 +247,8 @@ class WeatherSensor(BaseSensor):
                     "weather_code",
                 ]),
                 "wind_speed_unit": "ms",
+                "timeformat": "unixtime",
+                "timezone": "GMT",
             }
 
             async with session.get(
@@ -273,6 +292,7 @@ class WeatherSensor(BaseSensor):
                 **self._cached_data,
                 "from_cache": True,
                 "cache_age_seconds": round(timestamp - self._cache_time, 1),
+                "quality": {"complete": False, "missing_fields": ["fresh weather model update"]},
                 "error": error,
             })
 
@@ -285,6 +305,7 @@ class WeatherSensor(BaseSensor):
             "clouds_percent": None,
             "wind_speed_ms": None,
             "from_cache": False,
+            "quality": {"complete": False, "missing_fields": ["weather model response"]},
             "error": error,
         })
 
@@ -294,3 +315,8 @@ class WeatherSensor(BaseSensor):
             "timestamp": float,
             "from_cache": bool,
         }
+
+    def should_publish(self, reading: SensorReading) -> bool:
+        return (not reading.data.get("from_cache")
+                and reading.data.get("error") is None
+                and (reading.data.get("quality") or {}).get("complete") is True)
