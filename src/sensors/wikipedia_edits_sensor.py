@@ -23,9 +23,9 @@ Two honest design choices the raw stream forces:
      so only SHARP departures fire (not the predictable daily peak). Hence
      adaptive-only (no fixed-threshold named event).
 
-Architecture: the stream is push (SSE), our scheduler is pull. To avoid a
-persistent task, collect() samples the stream for a bounded window (~8 s) each
-poll and reports the rate; high event volume makes a short sample a stable estimate.
+Architecture: the stream is push (SSE), our scheduler is pull. collect() samples
+for a bounded window (45 s by default) each roughly 60-second poll. The
+remaining gap remains a real blind interval, published by Observation Atlas.
 """
 
 from __future__ import annotations
@@ -56,17 +56,18 @@ class WikipediaEditsSensor(BaseSensor):
     def __init__(self, config: SensorConfig | None = None, event_bus: EventBus | None = None):
         super().__init__("wikipedia_edits", config, event_bus)
         params = (config.custom_params if config and config.custom_params else {}) or {}
-        self.sample_seconds = float(params.get("sample_seconds", 8.0))
+        self.sample_seconds = max(1.0, min(50.0, float(params.get("sample_seconds", 45.0))))
 
     async def collect(self) -> SensorReading:
         total = bots = human_edits = non_wikipedia = 0
-        t0 = time.time()
+        t0 = None
         timeout = aiohttp.ClientTimeout(total=self.sample_seconds + 12.0)
         try:
             async with aiohttp.ClientSession(headers=_HEADERS) as session:
                 async with session.get(_STREAM_URL, timeout=timeout) as resp:
                     if resp.status != 200:
                         raise RuntimeError(f"Wikipedia stream returned HTTP {resp.status}")
+                    t0 = time.time()
                     async for raw in resp.content:
                         line = raw.decode("utf-8", "ignore").strip()
                         if not line.startswith("data:"):

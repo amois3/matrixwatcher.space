@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Matrix Watcher discovery research daily
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 UTC
+Persistent=true
+Unit=matrix-watcher-research.service
+
+[Install]
+WantedBy=timers.target

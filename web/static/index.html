@@ -1424,6 +1424,16 @@
         .evidence-card strong { display: block; color: var(--neon-blue); font: 600 16px 'JetBrains Mono', monospace; margin-bottom: 8px; }
         .evidence-card span { display: block; color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
         @media (max-width: 650px) { .evidence-grid { grid-template-columns: 1fr; } }
+        .research-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+        .research-box { border: 1px solid var(--border); background: var(--bg-card); border-radius: 8px; padding: 16px; min-width: 0; }
+        .research-box h3 { color: var(--neon-blue); font-size: 14px; margin: 0 0 10px; }
+        .research-box p, .research-box small { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+        .research-row { margin: 12px 0; }
+        .research-row strong { display: block; font-size: 12px; margin-bottom: 5px; overflow-wrap: anywhere; }
+        .research-track { height: 7px; border-radius: 6px; background: var(--bg-primary); overflow: hidden; }
+        .research-fill { height: 100%; background: var(--neon-blue); }
+        .research-row small { display: block; margin-top: 4px; }
+        .research-note { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
     </style>
 </head>
 <body style="background:#0d0d12;color:#fff;">
@@ -1547,6 +1557,22 @@
             <div class="panel-content">
                 <p class="coverage-intro">Three fixed windows test different timescales. Each count is a distinct episode across at least three domains. The control shifts whole domain histories by complete days within each month. These historical comparisons are exploratory; even a small p-value would require confirmation on future data.</p>
                 <div id="evidenceGrid" class="evidence-grid" aria-live="polite">Waiting for the first analysis run…</div>
+            </div>
+        </section>
+
+        <section class="panel coverage-panel" aria-labelledby="researchTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◇</span>
+                <span class="panel-title" id="researchTitle">Discovery Workbench</span>
+                <span class="panel-count">Measured limits · exploratory leads</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">How much of a short event could the current sampling schedule have observed? Which predeclared delayed relationships deserve a future test? These historical views expose blind spots and candidate leads; they do not establish a discovery.</p>
+                <div class="research-grid">
+                    <div class="research-box"><h3>Observation Atlas · last 30 complete UTC days</h3><div id="qualityAtlas" role="status">Calculating observation opportunity…</div></div>
+                    <div class="research-box"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
+                    <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
+                </div>
             </div>
         </section>
 
@@ -1791,7 +1817,7 @@
                     title.textContent = name.replaceAll('_', ' ');
                     const detail = document.createElement('small');
                     const age = sensor.age_seconds == null ? 'no recent reading' : `${Math.round(sensor.age_seconds / 60)} min ago`;
-                    detail.textContent = `${sensor.domain} · ${sensor.mode === 'covariate' ? 'context only' : 'anomaly detection'} · ${age}`;
+                    detail.textContent = `${sensor.domain} · ${sensor.mode === 'anomaly' ? 'anomaly detection' : 'context only'} · ${age}`;
                     card.append(state, title, detail);
                     if (sensor.issues?.length) {
                         const issue = document.createElement('small');
@@ -1837,6 +1863,81 @@
             } catch (_) {
                 grid.textContent = 'Evidence analysis unavailable.';
             }
+        }
+
+        async function fetchResearch() {
+            const quality = document.getElementById('qualityAtlas');
+            const lags = document.getElementById('lagLab');
+            const sky = document.getElementById('fireballContext');
+            try {
+                const response = await fetch('/api/research/quality');
+                if (!response.ok) throw new Error('quality HTTP');
+                const data = await response.json();
+                if (data.status !== 'sampling_audit_not_detection_probability') throw new Error('quality stale');
+                quality.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = `${data.period_start} to ${data.period_end}. Bars show the share of time when a hypothetical 30-second event could overlap a usable poll or stream sample.`;
+                quality.append(intro);
+                const entries = Object.entries(data.sensors || {}).filter(([, item]) => item.mode === 'anomaly');
+                entries.sort((a, b) => (a[1].sampling_opportunity?.['30'] || 0) - (b[1].sampling_opportunity?.['30'] || 0));
+                for (const [name, item] of entries) {
+                    const share = Number(item.sampling_opportunity?.['30'] || 0);
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong'); title.textContent = name.replaceAll('_', ' ');
+                    const track = document.createElement('div'); track.className = 'research-track';
+                    const fill = document.createElement('div'); fill.className = 'research-fill'; fill.style.width = `${Math.round(share * 100)}%`;
+                    const note = document.createElement('small');
+                    note.textContent = `${Math.round(share * 100)}% sampling opportunity · ${item.observed_days}/${data.days} days · ${item.partial_records} partial readings`;
+                    track.append(fill); row.append(title, track, note); quality.append(row);
+                }
+                const caveat = document.createElement('div'); caveat.className = 'research-note';
+                caveat.textContent = 'This is a schedule and data-quality audit, not detector sensitivity. Source reporting delay and detection thresholds can reduce the real chance of finding an event.';
+                quality.append(caveat);
+            } catch (_) { quality.textContent = 'Observation audit unavailable; no coverage claim can be made.'; }
+            try {
+                const response = await fetch('/api/research/lags');
+                if (!response.ok) throw new Error('lag HTTP');
+                const data = await response.json();
+                if (data.status !== 'exploratory_not_validated') throw new Error('lag stale');
+                lags.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = 'Twelve fixed tests compare event episodes with month-preserving shifted timing. The solar-wind → Kp pair is a known physical calibration, not a mystery.';
+                lags.append(intro);
+                const tests = [...(data.tests || [])].sort((a, b) => a.p_holm - b.p_holm || b.observed_matches - a.observed_matches);
+                for (const item of tests.slice(0, 5)) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong');
+                    title.textContent = `${item.source.replaceAll('_', ' ')} → ${item.target.replaceAll('_', ' ')}`;
+                    const note = document.createElement('small');
+                    const lag = item.lag_min_seconds >= 3600 ? `${item.lag_min_seconds / 3600}–${item.lag_max_seconds / 3600} h` : `${item.lag_min_seconds / 60}–${item.lag_max_seconds / 60} min`;
+                    note.textContent = `${lag} · ${item.observed_matches} matches / ${item.source_episodes} source episodes · shifted mean ${item.null_mean_matches ?? '—'} · adjusted p ${item.p_holm} · ${item.role.replaceAll('_', ' ')}${item.power_warning ? ' · too few episodes' : ''}`;
+                    row.append(title, note); lags.append(row);
+                }
+                const caveat = document.createElement('div'); caveat.className = 'research-note';
+                caveat.textContent = 'Historical candidates require prospective confirmation. Anomaly timestamps mix USGS earthquake origin times with mostly observation times, so reporting delays can create apparent lags.';
+                lags.append(caveat);
+            } catch (_) { lags.textContent = 'Lag analysis unavailable; no relationship claim can be made.'; }
+            try {
+                const response = await fetch('/api/context/fireballs');
+                if (!response.ok) throw new Error('fireball HTTP');
+                const data = await response.json();
+                if (data.status !== 'context_only') throw new Error('no fireballs');
+                sky.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = 'NASA/JPL CNEOS catalogue. Events may be published days later; this panel is sky context and never triggers an anomaly.';
+                sky.append(intro);
+                for (const event of (data.events || []).slice(0, 3)) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong');
+                    title.textContent = new Date(event.occurred_at * 1000).toLocaleString();
+                    const note = document.createElement('small');
+                    const place = event.latitude == null ? 'location unreported' : `${event.latitude.toFixed(1)}°, ${event.longitude.toFixed(1)}°`;
+                    note.textContent = `${event.estimated_impact_kt} kt estimated impact energy · ${place}`;
+                    row.append(title, note); sky.append(row);
+                }
+                const link = document.createElement('a'); link.href = data.source_url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'NASA source and methodology ↗';
+                sky.append(link);
+            } catch (_) { sky.textContent = 'NASA catalogue context unavailable.'; }
         }
 
         function updateStatus(connected) {
@@ -2635,6 +2736,7 @@
         fetchActivity();
         fetchCoverage();
         fetchEvidence();
+        fetchResearch();
 
         // Poll every 10 seconds for live data; digest changes slowly (every minute is enough)
         setInterval(fetchData, 10000);
@@ -2642,6 +2744,7 @@
         setInterval(fetchActivity, 15000);
         setInterval(fetchCoverage, 60000);
         setInterval(fetchEvidence, 3600000);
+        setInterval(fetchResearch, 3600000);
 
         // PWA - Service Worker
         if ('serviceWorker' in navigator) {

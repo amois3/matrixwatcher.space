@@ -43,6 +43,7 @@ from src.sensors.solar_wind_sensor import SolarWindSensor
 from src.sensors.earth_tides_sensor import EarthTidesSensor
 from src.sensors.wikipedia_edits_sensor import WikipediaEditsSensor
 from src.sensors.volcanic_activity_sensor import VolcanicActivitySensor
+from src.sensors.fireball_sensor import FireballSensor
 from src.sensors.quantum_rng_sensor import QuantumRNGSensor
 from src.monitoring import HealthMonitor, AlertingSystem
 from src.monitoring.auto_calibrator import get_auto_calibrator
@@ -799,6 +800,26 @@ class MatrixWatcher:
             self.scheduler.register_task(
                 "earth_tides",
                 lambda f=collect_earth_tides: asyncio.run(f()),
+                interval=sensor_cfg.interval_seconds,
+            )
+
+        # NASA fireballs are delayed catalogue context, never sent to the event bus.
+        sensor_cfg = self.config.sensors.get("fireball")
+        if sensor_cfg and sensor_cfg.enabled:
+            fireball_sensor = FireballSensor()
+            self._sensors["fireball"] = fireball_sensor
+            self.health_monitor.register_sensor("fireball")
+
+            async def collect_fireballs(s=fireball_sensor):
+                reading = await s.safe_collect()
+                if reading:
+                    self.storage.write_record("fireball", {"timestamp": reading.timestamp, "source": "fireball", **reading.data})
+                    self._record_sensor_reading("fireball", reading)
+                else:
+                    self.health_monitor.record_failure("fireball", "Collection returned None")
+
+            self.scheduler.register_task(
+                "fireball", lambda f=collect_fireballs: asyncio.run(f()),
                 interval=sensor_cfg.interval_seconds,
             )
 
