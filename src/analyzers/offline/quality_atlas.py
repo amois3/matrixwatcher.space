@@ -70,15 +70,22 @@ def scan_day(path: Path, sensor: str, interval: float, day_start: float) -> dict
                     max_gap = max(max_gap, float(ts) - last_usable)
                 last_usable = float(ts)
                 bins.add(int((ts - day_start) / interval))
+                sample_end = float(ts)
                 observed_span = 0.0
                 if sensor == "wikipedia_edits":
-                    observed_span = max(0.0, min(float(record.get("sample_seconds") or 0), interval))
+                    covered_start = record.get("covered_start_at")
+                    covered_end = record.get("covered_until_at")
+                    if isinstance(covered_start, (int, float)) and isinstance(covered_end, (int, float)):
+                        sample_end = min(float(covered_end), day_start + DAY_SECONDS)
+                        observed_span = max(0.0, sample_end - max(float(covered_start), day_start))
+                    else:
+                        observed_span = max(0.0, min(float(record.get("sample_seconds") or 0), interval))
                     sample_seconds += observed_span
-                # An event starting during this interval would still be active
-                # at this poll/sample. This estimates sampling opportunity only.
+                # An event starting up to `window` seconds before an observed
+                # span could overlap it. This is sampling opportunity only.
                 for window in WINDOWS:
-                    start = max(day_start, ts - observed_span - window)
-                    stop = min(day_start + DAY_SECONDS, float(ts))
+                    start = max(day_start, sample_end - observed_span - window)
+                    stop = min(day_start + DAY_SECONDS, sample_end)
                     if stop > start:
                         opportunities[window].append((start, stop))
     expected = max(1, round(DAY_SECONDS / interval))

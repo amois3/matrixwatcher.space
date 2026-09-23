@@ -823,13 +823,16 @@ class MatrixWatcher:
                 interval=sensor_cfg.interval_seconds,
             )
 
-        # Wikipedia Edits — global human (non-bot) Wikipedia edit rate, sampled from the
-        # EventStreams SSE feed. Adaptive-only (in FEATURE_SPEC, no named event).
+        # Wikipedia Edits — bounded EventStreams history replay between polls.
+        # The reading is published only after raw persistence and only if no
+        # history had to be skipped, so a partial catch-up cannot trigger an anomaly.
         sensor_cfg = self.config.sensors.get("wikipedia_edits")
         if sensor_cfg and sensor_cfg.enabled:
             from src.sensors.base import SensorConfig as _SCW
             wiki_sensor = WikipediaEditsSensor(
-                config=_SCW(custom_params=(sensor_cfg.custom_params or {})), event_bus=self.event_bus
+                config=_SCW(custom_params=(sensor_cfg.custom_params or {})),
+                event_bus=None,
+                log_dir=Path(self.config.storage.base_path) / "wikipedia_edits",
             )
             self._sensors["wikipedia_edits"] = wiki_sensor
             self.health_monitor.register_sensor("wikipedia_edits")
@@ -842,7 +845,10 @@ class MatrixWatcher:
                             "wikipedia_edits",
                             {"timestamp": reading.timestamp, "source": "wikipedia_edits", **reading.data},
                         )
+                        s.confirm_persisted(reading)
                         self._record_sensor_reading("wikipedia_edits", reading)
+                        if (reading.data.get("quality") or {}).get("complete") is not False:
+                            self.event_bus.publish(reading.to_event())
                     else:
                         self.health_monitor.record_failure("wikipedia_edits", "Collection returned None")
                 except Exception as e:
