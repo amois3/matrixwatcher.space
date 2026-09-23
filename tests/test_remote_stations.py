@@ -1,53 +1,53 @@
-"""Physical reports need identity, source time and unit checks before display."""
-
-from datetime import datetime, timezone
+"""Global METAR reports need stable identity, event time and completeness."""
 
 from src.sensors.remote_stations_sensor import (
     STATIONS, RemoteStationsSensor, summarize_station_observations,
 )
 
 
-def _report(station: str, now: float) -> dict:
-    stamp = datetime.fromtimestamp(now - 1200, timezone.utc).isoformat()
+def _report(station: tuple, now: float) -> dict:
+    station_id, _, _, latitude, longitude = station
     return {
-        "id": f"https://api.weather.gov/stations/{station}/observations/{stamp}",
-        "properties": {
-            "timestamp": stamp,
-            "temperature": {"unitCode": "wmoUnit:degC", "value": 20},
-            "barometricPressure": {"unitCode": "wmoUnit:Pa", "value": 101325},
-            "relativeHumidity": {"unitCode": "wmoUnit:percent", "value": 50},
-        },
+        "icaoId": station_id, "obsTime": now - 1200,
+        "temp": 20, "dewp": 12, "altim": 1013.2,
+        "lat": latitude, "lon": longitude,
+        "rawOb": f"METAR {station_id} 231800Z 00000KT CAVOK 20/12 Q1013",
     }
 
 
-def test_station_report_exposes_source_time_and_converts_pressure():
+def test_global_panel_exposes_six_regions_and_source_time():
     now = 1_800_000_000
-    payloads = {station: _report(station, now) for station, _ in STATIONS}
-    result = summarize_station_observations(payloads, now)
-    assert result["fresh_stations"] == 3
+    reports = [_report(station, now) for station in reversed(STATIONS)]
+    result = summarize_station_observations(reports, now)
+    assert result["fresh_stations"] == 6
     assert result["quality"]["complete"] is True
+    assert [row["id"] for row in result["stations"]] == [station[0] for station in STATIONS]
+    assert len({row["region"] for row in result["stations"]}) == 6
     assert all(row["reporting_lag_seconds"] == 1200 for row in result["stations"])
-    assert all(row["barometric_pressure_hpa"] == 1013.2 for row in result["stations"])
+    assert all(row["altimeter_hpa"] == 1013.2 for row in result["stations"])
     assert result["context_only"] is True
     assert RemoteStationsSensor().event_bus is None
 
 
-def test_wrong_station_stale_report_and_wrong_unit_are_missing():
+def test_newest_report_is_selected_without_duplication():
     now = 1_800_000_000
-    payloads = {station: _report(station, now) for station, _ in STATIONS}
-    payloads["KJFK"]["id"] = payloads["KLAX"]["id"]
-    payloads["KLAX"]["properties"]["timestamp"] = datetime.fromtimestamp(
-        now - 7200, timezone.utc).isoformat()
-    payloads["KSEA"]["properties"]["barometricPressure"]["unitCode"] = "wmoUnit:hPa"
-    result = summarize_station_observations(payloads, now)
-    assert result["fresh_stations"] == 0
-    assert result["quality"]["complete"] is False
-    assert all(row["temperature_celsius"] is None for row in result["stations"])
-
-
-def test_missing_one_station_is_explicitly_partial():
-    now = 1_800_000_000
-    result = summarize_station_observations({"KJFK": _report("KJFK", now)}, now)
+    older = _report(STATIONS[0], now)
+    older["obsTime"] -= 600
+    older["temp"] = 99
+    result = summarize_station_observations([_report(STATIONS[0], now), older], now)
     assert result["fresh_stations"] == 1
-    assert result["stations"][1]["status"] == "missing"
-    assert len(result["quality"]["missing_fields"]) == 2
+    assert result["stations"][0]["temperature_celsius"] == 20
+
+
+def test_stale_missing_and_mismatched_station_are_visible():
+    now = 1_800_000_000
+    reports = [_report(station, now) for station in STATIONS]
+    reports[0]["icaoId"] = "XXXX"
+    reports[1]["obsTime"] = now - 7200
+    reports[2]["lat"] += 2
+    reports[3]["altim"] = None
+    result = summarize_station_observations(reports, now)
+    assert result["fresh_stations"] == 2
+    assert result["quality"]["complete"] is False
+    assert all(row["temperature_celsius"] is None for row in result["stations"][:4])
+    assert len(result["quality"]["missing_fields"]) == 4
