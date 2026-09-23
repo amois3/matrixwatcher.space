@@ -1903,6 +1903,14 @@
                 const intro = document.createElement('p');
                 intro.textContent = 'Twelve fixed tests compare event episodes with month-preserving shifted timing. The solar-wind → Kp pair is a known physical calibration, not a mystery.';
                 lags.append(intro);
+                if (data.prospective) {
+                    const study = document.createElement('p');
+                    study.className = 'research-note';
+                    study.textContent = data.prospective.status === 'collecting_no_interim_test'
+                        ? `Future-data study: ${data.prospective.complete_days}/120 complete days. Fixed endpoint ${new Date(data.prospective.end_at * 1000).toLocaleDateString()}; no interim p-values.`
+                        : 'The fixed future-data screen is complete. Review its coverage and frozen result in the API before interpretation; independent replication remains necessary.';
+                    lags.append(study);
+                }
                 const tests = [...(data.tests || [])].sort((a, b) => a.p_holm - b.p_holm || b.observed_matches - a.observed_matches);
                 for (const item of tests.slice(0, 5)) {
                     const row = document.createElement('div'); row.className = 'research-row';

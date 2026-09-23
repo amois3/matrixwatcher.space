@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import bisect
 import json
+import math
 import random
 import time
 from collections import defaultdict
@@ -33,6 +34,9 @@ PAIRS = (
 )
 WINDOWS = ((300, 3600), (3600, 21600))
 EPISODE_GAP = 1800
+PROSPECTIVE_START = datetime(2026, 9, 24, tzinfo=timezone.utc).timestamp()
+PROSPECTIVE_END = PROSPECTIVE_START + 120 * 86400
+STUDY_VERSION = "lag-v1-20260924"
 
 
 def source_episodes(records: list[dict], after: float, verified_quantum: set[float]) -> dict[str, list[float]]:
@@ -120,6 +124,32 @@ def analyze(episodes: dict[str, list[float]], iterations: int = 500, seed: int =
     }
 
 
+def prospective_status(records: list[dict], verified_quantum: set[float], now: float,
+                       final_path: Path, iterations: int = 500) -> dict:
+    """No rolling p-values: run exactly once after the frozen 120-day endpoint."""
+    common = {"study_version": STUDY_VERSION, "start_at": PROSPECTIVE_START,
+              "end_at": PROSPECTIVE_END,
+              "complete_days": max(0, min(120, int((now - PROSPECTIVE_START) // 86400)))}
+    if now < PROSPECTIVE_END:
+        return {**common, "status": "collecting_no_interim_test"}
+    try:
+        return json.loads(final_path.read_text())
+    except (OSError, json.JSONDecodeError):
+        pass
+    frozen_records = [record for record in records
+                      if isinstance(record.get("timestamp"), (int, float))
+                      and PROSPECTIVE_START <= record["timestamp"] < PROSPECTIVE_END]
+    episodes = source_episodes(frozen_records, PROSPECTIVE_START, verified_quantum)
+    result = {**common, "status": "prospective_screen_completed_not_replication",
+              "coverage_caveat": "Review source and pipeline coverage before interpreting these timing comparisons",
+              "analysis": analyze(episodes, iterations=iterations)}
+    final_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = final_path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(result, separators=(",", ":")))
+    temporary.replace(final_path)
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--logs", type=Path, default=Path("logs/anomalies"))
@@ -127,10 +157,17 @@ def main() -> None:
     parser.add_argument("--days", type=int, default=120)
     parser.add_argument("--iterations", type=int, default=500)
     args = parser.parse_args()
-    records = load_anomalies_from_logs(args.logs, args.days)
-    episodes = source_episodes(records, max(DETECTOR_EPOCH, time.time() - args.days * 86400),
-                               verified_quantum_times(args.logs.parent, args.days))
+    now = time.time()
+    final_path = args.out.with_name("prospective-final.json")
+    scan_days = args.days
+    if now >= PROSPECTIVE_END and not final_path.exists():
+        scan_days = max(args.days, math.ceil((now - PROSPECTIVE_START) / 86400) + 2)
+    records = load_anomalies_from_logs(args.logs, scan_days)
+    verified = verified_quantum_times(args.logs.parent, scan_days)
+    episodes = source_episodes(records, max(DETECTOR_EPOCH, now - args.days * 86400), verified)
     report = analyze(episodes, args.iterations)
+    report["prospective"] = prospective_status(
+        records, verified, now, final_path, args.iterations)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     temporary = args.out.with_suffix(".tmp")
     temporary.write_text(json.dumps(report, separators=(",", ":")))
