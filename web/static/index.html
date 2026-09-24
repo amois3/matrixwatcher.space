@@ -1411,6 +1411,18 @@
         .intro-step { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; line-height: 1.5; }
         .intro-step strong { display: block; color: var(--neon-blue); margin-bottom: 4px; }
         .intro-step span { color: var(--text-secondary); font-size: 13px; }
+        .experiment-status { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+        .experiment-status-item { min-width: 0; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-primary); }
+        .experiment-status-item strong { display: block; margin-bottom: 4px; color: var(--neon-blue); font-size: 12px; }
+        .experiment-status-item span { display: block; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+        .experiment-status-item a { color: var(--neon-blue); font-size: 12px; }
+        .push-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; margin-top: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
+        .push-controls strong { color: var(--text-primary); font-size: 13px; }
+        .push-controls button { padding: 7px 11px; border: 1px solid var(--neon-blue); border-radius: 6px; background: var(--bg-primary); color: var(--neon-blue); cursor: pointer; }
+        .push-controls button:disabled { opacity: .5; cursor: default; }
+        .push-controls label { display: inline-flex; align-items: center; gap: 7px; color: var(--text-secondary); font-size: 12px; }
+        .push-controls small { flex-basis: 100%; color: var(--text-muted); line-height: 1.5; }
+        #pushMessage { flex: 1 1 180px; color: var(--text-secondary); font-size: 12px; }
         .research-grid { display: grid; gap: 22px; }
         .research-group { min-width: 0; }
         .research-group h3 { margin: 0 0 5px; font-size: 16px; color: var(--text-primary); }
@@ -1420,6 +1432,7 @@
         .research-box { border: 1px solid var(--border); background: var(--bg-card); border-radius: 8px; padding: 16px; min-width: 0; }
         .research-box h3 { color: var(--neon-blue); font-size: 14px; margin: 0 0 10px; }
         .research-box p, .research-box small { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+        .research-row a { color: var(--neon-blue); font-size: 12px; }
         .research-box--wide { grid-column: 1 / -1; }
         #qualityAtlas > div:not(.research-note) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
         #lagLab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
@@ -1434,7 +1447,7 @@
         .seismic-facts strong { display: block; color: var(--neon-blue); font-size: 13px; }
         .seismic-facts span { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
         @media (max-width: 900px) { #qualityAtlas > div:not(.research-note) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        @media (max-width: 650px) { .intro-steps, .research-group-grid, .research-group-grid.context-grid, #lagLab, #forecastAudit, .network-targets { grid-template-columns: 1fr; } #qualityAtlas > div:not(.research-note) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 650px) { .intro-steps, .experiment-status, .research-group-grid, .research-group-grid.context-grid, #lagLab, #forecastAudit, .network-targets { grid-template-columns: 1fr; } #qualityAtlas > div:not(.research-note) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 400px) { #qualityAtlas > div:not(.research-note), .seismic-facts { grid-template-columns: 1fr; } }
         @media (max-width: 650px) {
             .install-banner { width: calc(100% - 24px); max-width: 430px; box-sizing: border-box; flex-direction: row; text-align: left; gap: 10px; padding: 10px 12px; }
@@ -1546,6 +1559,19 @@
                 <div class="intro-step"><strong>2 · Compare</strong><span>Look for unusual events together, then compare them with shifted-time controls.</span></div>
                 <div class="intro-step"><strong>3 · Test</strong><span>Record candidate rules before future observations. Only independently tested results can become signals.</span></div>
             </div>
+            <div class="experiment-status" aria-label="Live experiment status">
+                <div class="experiment-status-item"><strong>Today · observations</strong><span id="experimentLive">Loading today's readings and source coverage…</span><a href="#digestPanel">See today's digest</a></div>
+                <div class="experiment-status-item"><strong>Future-data study</strong><span id="experimentStudy">Checking the frozen study timeline…</span><a href="#prospectiveMultiscale">See study and controls</a></div>
+                <div class="experiment-status-item"><strong>Scientific conclusion</strong><span id="experimentConclusion">Checking published finding status…</span><a id="experimentFindingLink" href="#aboutModal">How results are verified</a></div>
+            </div>
+            <div class="push-controls" aria-label="Push notification settings">
+                <strong>Updates on your device</strong>
+                <button type="button" id="pushToggle" disabled>Checking support…</button>
+                <label><input type="checkbox" id="pushObservations" disabled> Also notify me about new 30-second coincidences</label>
+                <button type="button" id="pushTest" disabled>Send a test</button>
+                <span id="pushMessage" role="status">Checking browser support…</span>
+                <small>Research notifications announce reports ready for review, future-tested signals and independently replicated findings. Coincidence alerts are optional observations, never discovery claims. You can turn notifications off here at any time.</small>
+            </div>
         </section>
         <!-- Daily Digest Panel -->
         <section class="panel digest-section">
@@ -1649,6 +1675,7 @@
                         <h3>Are patterns stronger than chance?</h3>
                         <p>Historical leads are compared with timing controls; future outcomes decide whether any rule survives.</p>
                         <div class="research-group-grid">
+                            <div class="research-box research-box--wide"><h3>Reviewed findings</h3><div id="findingsPanel" role="status">Checking the public findings registry…</div></div>
                             <div class="research-box research-box--wide"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
                             <div class="research-box"><h3>Future Coincidence Screen · frozen protocol</h3><div id="prospectiveMultiscale" role="status">Loading prospective study status…</div></div>
                             <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
@@ -1750,6 +1777,11 @@
             </div>
 
             <div class="modal-section">
+                <h3>How will we know if something changes?</h3>
+                <p>The strip below the introduction updates from today's digest, live source coverage, the frozen future study report and the published findings registry. A recorded coincidence appears as an observation, not a discovery. The future screen publishes no interim significance test. After its fixed endpoint, the strip will say that a report needs review, even if a comparison looks promising. You can opt into PWA push notifications for a report ready for review, a newly published future-tested signal or an independently replicated finding; 30-second observation alerts are a separate option. A person must inspect coverage, timing controls and the full report, then seek independent replication before adding a finding to the reviewed registry and changing this site's introduction and README. Push delivery depends on browser and device permission and is not guaranteed.</p>
+            </div>
+
+            <div class="modal-section">
                 <h3>How We Avoid Fooling Ourselves</h3>
                 <p>We preserve raw observations, audit sensor coverage and use replay and within-month whole-day shifts of domain event trains as timing controls. Historical exploratory tests do not establish a discovery. The forecast diary scores a negative outcome only when target coverage is adequate.</p>
                 <ul>
@@ -1811,6 +1843,236 @@
 
         let isConnected = false;
         let currentHours = 72;
+        const experimentStatus = { digest: null, coverage: null, prospective: null, predictions: null, findings: null };
+
+        function renderExperimentStatus() {
+            const live = document.getElementById('experimentLive');
+            const study = document.getElementById('experimentStudy');
+            const conclusion = document.getElementById('experimentConclusion');
+            const findingLink = document.getElementById('experimentFindingLink');
+            findingLink.href = '#aboutModal';
+            findingLink.textContent = 'How results are verified';
+            findingLink.removeAttribute('target');
+            findingLink.removeAttribute('rel');
+            const d = experimentStatus.digest;
+            const c = experimentStatus.coverage;
+            const p = experimentStatus.prospective;
+            if (d && c) {
+                const total = Object.keys(c.sensors || {}).length;
+                const healthy = Object.values(c.sensors || {}).filter(sensor => sensor.status === 'ok').length;
+                const coverage = c.collector?.status === 'healthy' && c.pipeline?.status === 'ok' && healthy === total && total > 0
+                    ? `${healthy}/${total} sources healthy`
+                    : `coverage needs checking (${healthy}/${total} sources healthy)`;
+                const coincidences = Number(d.clusters_total) || 0;
+                live.textContent = `${Number(d.anomalies_today) || 0} flagged readings · ${coincidences} three-domain 30-second ${coincidences === 1 ? 'coincidence' : 'coincidences'} · ${coverage}. A coincidence is only an observation.`;
+            } else if (d) {
+                live.textContent = "Today's readings are available, but source coverage is unknown. Check the coverage panel before interpreting them.";
+            } else {
+                live.textContent = "Today's readings or source coverage are unavailable; no quiet-day conclusion is possible.";
+            }
+            if (!p || !p.study_version || p.status === 'stale') {
+                study.textContent = 'Future study report unavailable; no conclusion can be inferred.';
+            } else if (p.status === 'collecting_no_interim_test') {
+                study.textContent = `${p.complete_days}/120 complete days · no interim significance test. Endpoint: ${new Date(p.end_at * 1000).toISOString().slice(0, 10)} UTC.`;
+            } else if (p.status === 'exploratory_endpoint_screen_not_validated') {
+                study.textContent = 'Endpoint report ready for coverage and control review. This screen is exploratory, even if it shows an excess.';
+            } else if (p.status === 'insufficient_coverage_or_events_no_test') {
+                study.textContent = 'Endpoint reached, but coverage or events were insufficient for this timing test.';
+            } else {
+                study.textContent = 'Study status needs review; no finding is implied.';
+            }
+            if (experimentStatus.findings === null) {
+                conclusion.textContent = 'Published finding registry unavailable. No discovery claim can be checked.';
+            } else if (experimentStatus.findings.length) {
+                conclusion.textContent = `${experimentStatus.findings.length} independently replicated ${experimentStatus.findings.length === 1 ? 'finding' : 'findings'} published. Read the report and replication evidence.`;
+                findingLink.href = '#findingsPanel';
+                findingLink.textContent = 'See reviewed evidence';
+            } else if (experimentStatus.predictions === null) {
+                conclusion.textContent = 'No independently replicated finding is published. Signal status is temporarily unavailable.';
+            } else if (experimentStatus.predictions.length) {
+                conclusion.textContent = 'A future-data-tested signal is listed below. Independent replication and scientific interpretation must be checked separately.';
+            } else {
+                conclusion.textContent = 'No future-data-validated signal is published. Observed coincidences and exploratory leads are not confirmed discoveries.';
+            }
+        }
+
+        document.getElementById('experimentFindingLink').addEventListener('click', event => {
+            if (event.currentTarget.getAttribute('href') === '#aboutModal') {
+                event.preventDefault();
+                openAboutModal();
+            }
+        });
+
+        async function fetchFindings() {
+            try {
+                const response = await fetch('/api/research/findings');
+                if (!response.ok) throw new Error('Finding registry unavailable');
+                const data = await response.json();
+                if (data.status !== 'published_registry' || !Array.isArray(data.findings)) throw new Error('Invalid finding registry');
+                experimentStatus.findings = data.findings;
+            } catch (_) {
+                experimentStatus.findings = null;
+            }
+            renderExperimentStatus();
+            const panel = document.getElementById('findingsPanel');
+            panel.replaceChildren();
+            if (experimentStatus.findings === null) {
+                panel.textContent = 'The findings registry is unavailable. No claim can be checked right now.';
+            } else if (!experimentStatus.findings.length) {
+                panel.textContent = 'No cross-domain finding has passed independent replication. Future-data studies are still collecting or awaiting review.';
+            } else {
+                for (const finding of experimentStatus.findings) {
+                    const row = document.createElement('div'); row.className = 'research-row';
+                    const title = document.createElement('strong'); title.textContent = finding.title;
+                    const report = document.createElement('a'); report.href = finding.report_url;
+                    report.target = '_blank'; report.rel = 'noopener noreferrer'; report.textContent = 'Study report ↗';
+                    const replication = document.createElement('a'); replication.href = finding.replication_url;
+                    replication.target = '_blank'; replication.rel = 'noopener noreferrer'; replication.textContent = 'Independent replication ↗';
+                    row.append(title, report, document.createTextNode(' · '), replication);
+                    panel.append(row);
+                }
+            }
+        }
+
+        const pushState = { key: null, subscription: null, registered: false, busy: false };
+        const pushToggle = document.getElementById('pushToggle');
+        const pushTest = document.getElementById('pushTest');
+        const pushObservations = document.getElementById('pushObservations');
+        const pushMessage = document.getElementById('pushMessage');
+
+        function pushSupported() {
+            return window.isSecureContext && 'serviceWorker' in navigator &&
+                'PushManager' in window && 'Notification' in window;
+        }
+
+        function pushKeyBytes(value) {
+            const padded = value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=');
+            return Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+        }
+
+        function renderPushControls(message) {
+            const supported = pushSupported() && !!pushState.key;
+            pushToggle.disabled = !supported || pushState.busy || window.Notification?.permission === 'denied';
+            pushToggle.textContent = pushState.registered ? 'Turn off notifications'
+                : pushState.subscription ? 'Reconnect notifications' : 'Enable notifications';
+            pushObservations.disabled = !supported || !pushState.registered || pushState.busy;
+            pushTest.disabled = !supported || !pushState.registered || pushState.busy;
+            if (message) pushMessage.textContent = message;
+        }
+
+        async function pushPost(path, body, method = 'POST') {
+            const response = await fetch(path, {
+                method, headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body), cache: 'no-store'
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.detail || 'Push request failed');
+            return result;
+        }
+
+        async function initPushControls() {
+            if (!pushSupported()) {
+                pushMessage.textContent = 'Web Push is unavailable here. On iPhone or iPad, add this site to the Home Screen first.';
+                return;
+            }
+            try {
+                const response = await fetch('/api/push/config', { cache: 'no-store' });
+                if (!response.ok) throw new Error('Push configuration unavailable');
+                const config = await response.json();
+                if (!config.enabled || !config.public_key) throw new Error('Push is not configured yet');
+                pushState.key = config.public_key;
+                const registration = await navigator.serviceWorker.ready;
+                pushState.subscription = await registration.pushManager.getSubscription();
+                if (pushState.subscription) {
+                    const saved = await pushPost('/api/push/subscriptions/status',
+                        { endpoint: pushState.subscription.endpoint });
+                    pushState.registered = saved.subscribed;
+                    pushObservations.checked = saved.topics.includes('observations');
+                }
+                renderPushControls(Notification.permission === 'denied'
+                    ? 'Browser permission is blocked. Change it in site settings to enable alerts.'
+                    : pushState.registered ? 'Notifications are enabled on this device.'
+                    : 'Off until you choose to enable them.');
+            } catch (error) {
+                renderPushControls(error.message || 'Push settings could not be loaded.');
+            }
+        }
+
+        pushToggle.addEventListener('click', async () => {
+            if (pushState.busy || !pushState.key) return;
+            pushState.busy = true;
+            renderPushControls('Updating notification settings…');
+            try {
+                if (pushState.registered && pushState.subscription) {
+                    await pushPost('/api/push/subscriptions',
+                        { endpoint: pushState.subscription.endpoint }, 'DELETE');
+                    await pushState.subscription.unsubscribe();
+                    pushState.subscription = null;
+                    pushState.registered = false;
+                    pushObservations.checked = false;
+                    renderPushControls('Notifications are off on this device.');
+                } else {
+                    if (Notification.permission !== 'granted') {
+                        const permission = await Promise.race([
+                            Notification.requestPermission(),
+                            new Promise((_, reject) => setTimeout(() => reject(
+                                new Error('Browser permission did not respond. Check notification settings and try again.')), 45000))
+                        ]);
+                        if (permission !== 'granted') throw new Error('Notification permission was not granted.');
+                    }
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = pushState.subscription || await registration.pushManager.subscribe({
+                        userVisibleOnly: true, applicationServerKey: pushKeyBytes(pushState.key)
+                    });
+                    await pushPost('/api/push/subscriptions', {
+                        subscription: subscription.toJSON(),
+                        topics: pushObservations.checked ? ['research', 'observations'] : ['research']
+                    });
+                    pushState.subscription = subscription;
+                    pushState.registered = true;
+                    renderPushControls('Notifications enabled. Send a test to check this device.');
+                }
+            } catch (error) {
+                renderPushControls(error.message || 'Could not change notification settings.');
+            } finally {
+                pushState.busy = false;
+                renderPushControls();
+            }
+        });
+
+        pushObservations.addEventListener('change', async () => {
+            if (!pushState.registered || !pushState.subscription) return;
+            pushState.busy = true;
+            renderPushControls('Saving your observation preference…');
+            try {
+                await pushPost('/api/push/subscriptions', {
+                    subscription: pushState.subscription.toJSON(),
+                    topics: pushObservations.checked ? ['research', 'observations'] : ['research']
+                });
+                renderPushControls('Notification preferences saved.');
+            } catch (error) {
+                pushObservations.checked = !pushObservations.checked;
+                renderPushControls(error.message || 'Could not save preference.');
+            } finally {
+                pushState.busy = false;
+                renderPushControls();
+            }
+        });
+
+        pushTest.addEventListener('click', async () => {
+            if (!pushState.registered || !pushState.subscription) return;
+            pushState.busy = true;
+            renderPushControls('Sending a test…');
+            try {
+                await pushPost('/api/push/test', { endpoint: pushState.subscription.endpoint });
+                renderPushControls('Test accepted by the push service. Check device notifications.');
+            } catch (error) {
+                renderPushControls(error.message || 'Test notification failed.');
+            } finally {
+                pushState.busy = false;
+                renderPushControls();
+            }
+        });
 
         // About Modal
         function openAboutModal() {
@@ -1862,9 +2124,13 @@
                 
                 renderPredictions(data.predictions || []);
                 renderLevels(data.levels || []);
+                experimentStatus.predictions = data.predictions || [];
+                renderExperimentStatus();
                 
             } catch (error) {
                 console.error('Fetch error:', error);
+                experimentStatus.predictions = null;
+                renderExperimentStatus();
                 if (isConnected) {
                     isConnected = false;
                     updateStatus(false);
@@ -1878,6 +2144,8 @@
                 const response = await fetch('/api/coverage');
                 if (!response.ok) throw new Error('Coverage unavailable');
                 const data = await response.json();
+                experimentStatus.coverage = data;
+                renderExperimentStatus();
                 grid.replaceChildren();
                 const entries = Object.entries(data.sensors || {});
                 const healthy = entries.filter(([, sensor]) => sensor.status === 'ok').length;
@@ -1907,6 +2175,8 @@
                     ? 'Processing telemetry unavailable. Sensor freshness alone does not confirm that analysis is running.'
                     : `Processing: ${pipeline.status || 'unknown'} · ${pipeline.events_processed ?? 0} readings · ${pipeline.anomalies_detected ?? 0} anomalies · ${pipeline.clusters_persisted ?? 0} cluster records · ${pipeline.errors ?? 0} errors`;
             } catch (error) {
+                experimentStatus.coverage = null;
+                renderExperimentStatus();
                 grid.textContent = 'Coverage check unavailable. The page being reachable does not confirm that sensors are working.';
                 document.getElementById('pipelineCoverage').textContent = 'Processing status unknown';
                 document.getElementById('coverageCount').textContent = 'unknown';
@@ -2036,6 +2306,8 @@
                 const response = await fetch('/api/research/prospective-multiscale');
                 if (!response.ok) throw new Error('future screen HTTP');
                 const data = await response.json();
+                experimentStatus.prospective = data;
+                renderExperimentStatus();
                 if (!data.study_version) throw new Error('future screen unavailable');
                 future.replaceChildren();
                 const intro = document.createElement('p');
@@ -2058,7 +2330,7 @@
                 const caveat = document.createElement('div'); caveat.className = 'research-note';
                 caveat.textContent = 'A promising screen is not a validated signal. The day-level coverage control cannot settle causation or correct every reporting delay; independent replication is required.';
                 future.append(caveat);
-            } catch (_) { future.textContent = 'Future coincidence screen unavailable; no result can be inferred.'; }
+            } catch (_) { experimentStatus.prospective = null; renderExperimentStatus(); future.textContent = 'Future coincidence screen unavailable; no result can be inferred.'; }
             try {
                 const response = await fetch('/api/context/fireballs');
                 if (!response.ok) throw new Error('fireball HTTP');
@@ -2209,10 +2481,11 @@
         async function fetchDigest() {
             try {
                 const r = await fetch('/api/digest');
-                if (!r.ok) return;
+                if (!r.ok) throw new Error('Digest unavailable');
                 renderDigest(await r.json());
             } catch (e) {
-                // soft-fail: leave the loading state alone
+                experimentStatus.digest = null;
+                renderExperimentStatus();
             }
         }
 
@@ -2236,6 +2509,8 @@
             const panel = document.getElementById('digestPanel');
             const dateChip = document.getElementById('digestDate');
             if (!panel) return;
+            experimentStatus.digest = d;
+            renderExperimentStatus();
 
             const peak = (d.peak_index ?? 0).toFixed(0);
             const peakStatus = d.peak_status || 'normal';
@@ -2984,6 +3259,7 @@
         fetchDigest();
         fetchActivity();
         fetchCoverage();
+        fetchFindings();
         fetchEvidence();
         fetchResearch();
 
@@ -2992,12 +3268,16 @@
         setInterval(fetchDigest, 60000);
         setInterval(fetchActivity, 15000);
         setInterval(fetchCoverage, 60000);
+        setInterval(fetchFindings, 3600000);
         setInterval(fetchEvidence, 3600000);
         setInterval(fetchResearch, 3600000);
 
         // PWA - Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/static/sw.js').catch(() => {});
+            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(initPushControls)
+                .catch(() => { pushMessage.textContent = 'Service worker registration failed; notifications are unavailable.'; });
+        } else {
+            initPushControls();
         }
 
         // PWA - Install Banner Management

@@ -8,7 +8,7 @@
 //
 // Bump CACHE_NAME whenever the shell or assets change: old caches are deleted on activate,
 // so every client drops stale content on its next launch.
-const CACHE_NAME = 'matrix-watcher-v26';
+const CACHE_NAME = 'matrix-watcher-v27';
 const SHELL = ['/', '/static/manifest.json', '/static/icon-192.png', '/static/icon-512.png'];
 
 self.addEventListener('install', event => {
@@ -66,4 +66,72 @@ self.addEventListener('fetch', event => {
       })
     )
   );
+});
+
+self.addEventListener('push', event => {
+  let message = {};
+  try { message = event.data ? event.data.json() : {}; } catch (_) {}
+  const title = String(message.title || 'Matrix Watcher update');
+  const body = String(message.body || 'Open the site to review the latest observation.');
+  const path = typeof message.url === 'string' && message.url.startsWith('/') &&
+    !message.url.startsWith('//') ? message.url : '/';
+  event.waitUntil(self.registration.showNotification(title, {
+    body, icon: '/static/icon-192.png', badge: '/static/icon-192.png',
+    tag: String(message.tag || 'matrix-watcher-update'),
+    data: { url: path }
+  }));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const path = event.notification.data?.url || '/';
+  const url = new URL(path, self.location.origin).href;
+  event.waitUntil((async () => {
+    const windows = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const windowClient of windows) {
+      if (windowClient.url.startsWith(self.location.origin) && 'focus' in windowClient) {
+        await windowClient.navigate(url);
+        return windowClient.focus();
+      }
+    }
+    return clients.openWindow(url);
+  })());
+});
+
+self.addEventListener('pushsubscriptionchange', event => {
+  event.waitUntil((async () => {
+    try {
+      // A manual unsubscribe also changes the browser subscription. Rejoin
+      // only when the old endpoint is still opted in on the server.
+      if (!event.oldSubscription) return;
+      const statusResponse = await fetch('/api/push/subscriptions/status', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ endpoint: event.oldSubscription.endpoint })
+      });
+      if (!statusResponse.ok) return;
+      const status = await statusResponse.json();
+      if (!status.subscribed || !Array.isArray(status.topics)) return;
+      const response = await fetch('/api/push/config', { cache: 'no-store' });
+      const config = await response.json();
+      if (!config.public_key) return;
+      const padded = config.public_key.replace(/-/g, '+').replace(/_/g, '/')
+        .padEnd(Math.ceil(config.public_key.length / 4) * 4, '=');
+      const key = Uint8Array.from(atob(padded), character => character.charCodeAt(0));
+      const subscription = await self.registration.pushManager.subscribe({
+        userVisibleOnly: true, applicationServerKey: key
+      });
+      const saved = await fetch('/api/push/subscriptions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription: subscription.toJSON(), topics: status.topics })
+      });
+      if (saved.ok) {
+        await fetch('/api/push/subscriptions', {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: event.oldSubscription.endpoint })
+        });
+      }
+    } catch (_) {
+      // The page retries registration when it is opened again.
+    }
+  })());
 });

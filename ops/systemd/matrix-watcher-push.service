@@ -1,0 +1,13 @@
+[Unit]
+Description=Matrix Watcher opt-in Web Push delivery
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/amois/matrix-watcher
+ExecStart=/home/amois/matrix-watcher-python.sh -m src.monitoring.web_push dispatch
+StandardOutput=journal
+StandardError=journal
+Nice=15
+NoNewPrivileges=true
