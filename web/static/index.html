@@ -1537,7 +1537,7 @@
                 <div class="utc-time" id="utcTime">--:--:--</div>
                 <div class="utc-label">UTC</div>
             </div>
-            <div class="time-filter">
+            <div class="time-filter" role="group" aria-label="Anomaly Clusters time window" title="Changes the Anomaly Clusters panel only">
                 <button class="time-btn" data-hours="1">1H</button>
                 <button class="time-btn" data-hours="24">24H</button>
                 <button class="time-btn active" data-hours="72">3D</button>
@@ -2175,7 +2175,7 @@
                 const pipeline = data.pipeline || {};
                 document.getElementById('pipelineCoverage').textContent = pipeline.status === 'missing'
                     ? 'Processing telemetry unavailable. Sensor freshness alone does not confirm that analysis is running.'
-                    : `Processing: ${pipeline.status || 'unknown'} · ${pipeline.events_processed ?? 0} readings · ${pipeline.anomalies_detected ?? 0} anomalies · ${pipeline.clusters_persisted ?? 0} cluster records · ${pipeline.errors ?? 0} errors`;
+                    : `Processing since last restart: ${pipeline.status || 'unknown'} · ${pipeline.events_processed ?? 0} readings · ${pipeline.anomalies_detected ?? 0} anomalies · ${pipeline.clusters_persisted ?? 0} cluster records · ${pipeline.errors ?? 0} errors`;
             } catch (error) {
                 experimentStatus.coverage = null;
                 renderExperimentStatus();
@@ -2454,7 +2454,8 @@
                     title.textContent = `${item.source.replaceAll('_', ' ')} → ${item.target.replaceAll('_', ' ')}`;
                     const detail = document.createElement('small');
                     const lag = item.lag_min_seconds >= 3600 ? `${item.lag_min_seconds / 3600}–${item.lag_max_seconds / 3600} h` : `${item.lag_min_seconds / 60}–${item.lag_max_seconds / 60} min`;
-                    detail.textContent = `${lag} · ${item.issued} issued · ${item.scored} scored · ${item.unscorable} unscorable${item.descriptive_brier_skill == null ? '' : ` · descriptive Brier skill ${item.descriptive_brier_skill}`}`;
+                    const pending = Math.max(0, item.issued - item.scored - item.unscorable);
+                    detail.textContent = `${lag} · ${item.issued} issued · ${item.scored} scored${pending ? ` · ${pending} pending` : ''} · ${item.unscorable} unscorable${item.descriptive_brier_skill == null ? '' : ` · descriptive Brier skill ${item.descriptive_brier_skill}`}`;
                     row.append(title, detail); forecastAudit.append(row);
                 }
                 const caveat = document.createElement('div'); caveat.className = 'research-note';
@@ -2620,7 +2621,7 @@
                             <span style="color:var(--neon-purple);font-weight:600;">Day ${daysWatching()} of watching.</span>
                             No candidate has been validated on future data. Historical counts are
                             exploratory, and gaps in earlier observations limit what they can prove.
-                            The coverage panel above shows the latest source status, not whole-day completeness.
+                            Observation Coverage shows the latest source status, not whole-day completeness.
                         </div>
                     </div>
                 `;
@@ -2996,7 +2997,7 @@
                     <div class="empty-state" style="text-align:center;">
                         <div class="empty-state-icon"><svg class="mw-ic" style="width:44px;height:44px;color:var(--text-muted)"><use href="#ic-clusters"/></svg></div>
                         <div style="font-size:15px;color:var(--text-secondary);max-width:460px;line-height:1.65;">
-                            No three-domain coincidence is recorded in this selected time window.
+                            No three-domain coincidence is recorded in this selected time window. The time buttons above filter this panel only.
                             The 30-second rule has limited power when sources are polled minutes apart;
                             an empty panel is not evidence that no slower relationship exists.
                         </div>
@@ -3272,7 +3273,8 @@
         setInterval(fetchCoverage, 60000);
         setInterval(fetchFindings, 3600000);
         setInterval(fetchEvidence, 3600000);
-        setInterval(fetchResearch, 3600000);
+        // Keep station report ages and remote-context freshness current in an open tab.
+        setInterval(fetchResearch, 300000);
 
         // PWA - Service Worker
         if ('serviceWorker' in navigator) {
