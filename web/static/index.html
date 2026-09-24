@@ -455,7 +455,7 @@
         /* Main Container */
         .container {
             display: grid;
-            grid-template-columns: 2fr 3fr;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 1px;
             background: var(--border);
             min-height: calc(100vh - 75px);
@@ -463,16 +463,8 @@
             margin-bottom: 80px;
         }
 
-        /* Give the two bottom panels (Predictions, Anomaly Clusters) a taller,
-           less flat footprint so they look intentional and the closing frame
-           line sits comfortably below their centered empty states. */
-        .container > section.panel:nth-last-child(-n+2) {
-            min-height: 440px;
-        }
-
-        /* The first panel (Daily Digest) spans both columns so the 3-panel
-           grid stays balanced — otherwise the bottom-right cell is left empty. */
-        .container > section.panel:first-of-type {
+        /* Daily Digest spans both columns above the data and research panels. */
+        .container > .digest-section {
             grid-column: 1 / -1;
         }
 
@@ -1412,10 +1404,45 @@
         .evidence-card strong { display: block; color: var(--neon-blue); font: 600 16px 'JetBrains Mono', monospace; margin-bottom: 8px; }
         .evidence-card span { display: block; color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
         @media (max-width: 650px) { .evidence-grid { grid-template-columns: 1fr; } }
-        .research-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+        .site-intro { grid-column: 1 / -1; background: var(--bg-secondary); padding: 24px clamp(16px, 3vw, 40px); }
+        .site-intro h1 { margin: 0 0 8px; font-size: clamp(19px, 2.2vw, 28px); color: var(--text-primary); }
+        .site-intro > p { margin: 0 0 18px; max-width: 82ch; color: var(--text-secondary); line-height: 1.6; }
+        .intro-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+        .intro-step { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px; line-height: 1.5; }
+        .intro-step strong { display: block; color: var(--neon-blue); margin-bottom: 4px; }
+        .intro-step span { color: var(--text-secondary); font-size: 13px; }
+        .research-grid { display: grid; gap: 22px; }
+        .research-group { min-width: 0; }
+        .research-group h3 { margin: 0 0 5px; font-size: 16px; color: var(--text-primary); }
+        .research-group > p { margin: 0 0 12px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+        .research-group-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+        .research-group-grid.context-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         .research-box { border: 1px solid var(--border); background: var(--bg-card); border-radius: 8px; padding: 16px; min-width: 0; }
         .research-box h3 { color: var(--neon-blue); font-size: 14px; margin: 0 0 10px; }
         .research-box p, .research-box small { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+        .research-box--wide { grid-column: 1 / -1; }
+        #qualityAtlas > div:not(.research-note) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 16px; }
+        #lagLab { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+        #lagLab > p, #lagLab > .research-note { grid-column: 1 / -1; }
+        #forecastAudit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; }
+        #forecastAudit > p, #forecastAudit > .research-note { grid-column: 1 / -1; }
+        .network-targets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        .network-target { min-width: 0; }
+        .network-target > p { color: var(--text-primary); font-weight: 600; }
+        .seismic-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+        .seismic-facts div { background: var(--bg-primary); border-radius: 6px; padding: 10px; }
+        .seismic-facts strong { display: block; color: var(--neon-blue); font-size: 13px; }
+        .seismic-facts span { color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+        @media (max-width: 900px) { #qualityAtlas > div:not(.research-note) { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (max-width: 650px) { .intro-steps, .research-group-grid, .research-group-grid.context-grid, #lagLab, #forecastAudit, .network-targets { grid-template-columns: 1fr; } #qualityAtlas > div:not(.research-note) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 400px) { #qualityAtlas > div:not(.research-note), .seismic-facts { grid-template-columns: 1fr; } }
+        @media (max-width: 650px) {
+            .install-banner { width: calc(100% - 24px); max-width: 430px; box-sizing: border-box; flex-direction: row; text-align: left; gap: 10px; padding: 10px 12px; }
+            .install-banner-icon, .install-banner-text { display: none; }
+            .install-banner-title { font-size: 12px; margin: 0; }
+            .install-banner-buttons { width: auto; flex-direction: row; gap: 6px; }
+            .install-btn, .install-btn-close { width: auto; padding: 7px 9px; font-size: 11px; }
+        }
         .research-row { margin: 12px 0; }
         .research-row strong { display: block; font-size: 12px; margin-bottom: 5px; overflow-wrap: anywhere; }
         .research-track { height: 7px; border-radius: 6px; background: var(--bg-primary); overflow: hidden; }
@@ -1490,7 +1517,7 @@
             <span class="logo-text">MATRIX WATCHER</span>
         </div>
         <div class="tagline" onclick="openAboutModal()">
-            Observing correlations in chaos. We watch, we don't explain.
+            Watching public data. Testing unusual coincidences.
         </div>
         <div class="header-right">
             <div class="utc-clock">
@@ -1511,8 +1538,17 @@
     </header>
 
     <main class="container">
+        <section class="site-intro" aria-labelledby="introTitle">
+            <h1 id="introTitle">A live experiment in unusual coincidences</h1>
+            <p>We watch public measurements from the Earth, the sky, technology and human activity. The question is simple: do unusual events across unrelated fields line up more often than chance and reporting schedules would suggest? No hidden connection or reliable prediction has been confirmed.</p>
+            <div class="intro-steps">
+                <div class="intro-step"><strong>1 · Watch</strong><span>Check what each source reported and whether data is missing or late.</span></div>
+                <div class="intro-step"><strong>2 · Compare</strong><span>Look for unusual events together, then compare them with shifted-time controls.</span></div>
+                <div class="intro-step"><strong>3 · Test</strong><span>Record candidate rules before future observations. Only independently tested results can become signals.</span></div>
+            </div>
+        </section>
         <!-- Daily Digest Panel -->
-        <section class="panel">
+        <section class="panel digest-section">
             <div class="panel-header">
                 <span class="panel-icon"><svg class="mw-ic" style="color:var(--neon-blue)"><use href="#ic-digest"/></svg></span>
                 <span class="panel-title">Today's Digest</span>
@@ -1526,53 +1562,7 @@
             </div>
         </section>
 
-        <section class="panel coverage-panel" aria-labelledby="coverageTitle">
-            <div class="panel-header">
-                <span class="panel-icon" aria-hidden="true">◉</span>
-                <span class="panel-title" id="coverageTitle">Observation Coverage</span>
-                <span class="panel-count" id="coverageCount">—</span>
-            </div>
-            <div class="panel-content">
-                <p class="coverage-intro">Fresh data and complete data are different. This panel checks the last stored reading from every source and the processing pipeline. Earth tides are a calculated covariate; NASA, RIPE and both weather panels are context only.</p>
-                <div id="pipelineCoverage" class="coverage-intro" role="status">Checking processing pipeline…</div>
-                <div id="coverageGrid" class="coverage-grid" aria-live="polite">Checking sensors…</div>
-            </div>
-        </section>
-
-        <section class="panel coverage-panel" aria-labelledby="evidenceTitle">
-            <div class="panel-header">
-                <span class="panel-icon" aria-hidden="true">◎</span>
-                <span class="panel-title" id="evidenceTitle">Evidence Lab</span>
-                <span class="panel-count">Exploratory</span>
-            </div>
-            <div class="panel-content">
-                <p class="coverage-intro">Three fixed windows test different timescales. Each count is a distinct episode across at least three domains. The control shifts whole domain histories by complete days within each month. These historical comparisons are exploratory; even a small p-value would require confirmation on future data.</p>
-                <div id="evidenceGrid" class="evidence-grid" aria-live="polite">Waiting for the first analysis run…</div>
-            </div>
-        </section>
-
-        <section class="panel coverage-panel" aria-labelledby="researchTitle">
-            <div class="panel-header">
-                <span class="panel-icon" aria-hidden="true">◇</span>
-                <span class="panel-title" id="researchTitle">Discovery Workbench</span>
-                <span class="panel-count">Measured limits · exploratory leads</span>
-            </div>
-            <div class="panel-content">
-                <p class="coverage-intro">How much of a short event could the current sampling schedule have observed? Which predeclared delayed relationships deserve a future test? These historical views expose blind spots and candidate leads; they do not establish a discovery.</p>
-                <div class="research-grid">
-                    <div class="research-box"><h3>Observation Atlas · last 30 complete UTC days</h3><div id="qualityAtlas" role="status">Calculating observation opportunity…</div></div>
-                    <div class="research-box"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
-                    <div class="research-box"><h3>Future Coincidence Screen · frozen protocol</h3><div id="prospectiveMultiscale" role="status">Loading prospective study status…</div></div>
-                    <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
-                    <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
-                    <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
-                    <div class="research-box"><h3>Global Stations · six regions</h3><div id="stationContext" role="status">Loading airport METAR reports…</div></div>
-                    <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Recent Activity Panel (full-width: keeps the 2-col flow intact) -->
+        <!-- What happened: activity followed by the two outcome panels. -->
         <section class="panel" style="grid-column: 1 / -1;">
             <div class="panel-header">
                 <span class="panel-icon"><svg class="mw-ic" style="color:var(--neon-green)"><use href="#ic-activity"/></svg></span>
@@ -1616,6 +1606,75 @@
                 </div>
             </div>
         </section>
+        <section class="panel coverage-panel" aria-labelledby="coverageTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◉</span>
+                <span class="panel-title" id="coverageTitle">Observation Coverage</span>
+                <span class="panel-count" id="coverageCount">—</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">Are we actually seeing the data? This shows the last usable reading from every source and whether the processing pipeline is running. A late or missing source makes a quiet result less conclusive.</p>
+                <div id="pipelineCoverage" class="coverage-intro" role="status">Checking processing pipeline…</div>
+                <div id="coverageGrid" class="coverage-grid" aria-live="polite">Checking sensors…</div>
+            </div>
+        </section>
+
+        <section class="panel coverage-panel" aria-labelledby="evidenceTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◎</span>
+                <span class="panel-title" id="evidenceTitle">Evidence Lab</span>
+                <span class="panel-count">Exploratory</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">Did unusual readings from at least three different fields appear together? We compare 30-second, 5-minute and 15-minute windows with shifted-time controls. These checks use past data and are still exploratory.</p>
+                <div id="evidenceGrid" class="evidence-grid" aria-live="polite">Waiting for the first analysis run…</div>
+            </div>
+        </section>
+
+        <section class="panel coverage-panel" aria-labelledby="researchTitle">
+            <div class="panel-header">
+                <span class="panel-icon" aria-hidden="true">◇</span>
+                <span class="panel-title" id="researchTitle">Discovery Workbench</span>
+                <span class="panel-count">Measured limits · exploratory leads</span>
+            </div>
+            <div class="panel-content">
+                <p class="coverage-intro">Explore what we could have seen, which past patterns deserve a fair future test, and which extra feeds provide context. A lead here is a question, not a discovery.</p>
+                <div class="research-grid">
+                    <div class="research-group" aria-label="Can we observe an event?">
+                        <h3>Can we observe an event?</h3>
+                        <p>Sampling gaps can hide short events even when a feed is online.</p>
+                        <div class="research-group-grid"><div class="research-box research-box--wide"><h3>Observation Atlas · last 30 complete UTC days</h3><div id="qualityAtlas" role="status">Calculating observation opportunity…</div></div></div>
+                    </div>
+                    <div class="research-group" aria-label="Patterns and future tests">
+                        <h3>Are patterns stronger than chance?</h3>
+                        <p>Historical leads are compared with timing controls; future outcomes decide whether any rule survives.</p>
+                        <div class="research-group-grid">
+                            <div class="research-box research-box--wide"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
+                            <div class="research-box"><h3>Future Coincidence Screen · frozen protocol</h3><div id="prospectiveMultiscale" role="status">Loading prospective study status…</div></div>
+                            <div class="research-box"><h3>Forecast Audit · future outcomes</h3><div id="forecastAudit" role="status">Loading prospective ledger…</div></div>
+                        </div>
+                    </div>
+                    <div class="research-group" aria-label="Earth and sky">
+                        <h3>Earth and sky</h3>
+                        <p>Observed earthquakes and delayed sky catalogues are interesting; neither is an advance earthquake warning.</p>
+                        <div class="research-group-grid">
+                            <div class="research-box"><h3>Earthquake forecast status</h3><p>We collect worldwide USGS M4.5+ events and flag unusual seismic readings. An older module counted how often M6+ followed other observations and labelled a frequent past region. Those counts have <strong>not</strong> predicted the time, magnitude and place of a future quake in a prospective test. We do not publish them as forecasts.</p><div class="seismic-facts"><div><strong>Collection</strong><span>Live USGS events, with source time and collection time kept apart</span></div><div><strong>Prediction skill</strong><span>Unknown; no location forecast has passed a future-data test</span></div></div><p class="research-note">Do not use this site for earthquake warnings. See <a href="https://www.usgs.gov/faqs/can-you-predict-earthquakes" target="_blank" rel="noopener noreferrer">USGS on earthquake prediction ↗</a>.</p></div>
+                            <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
+                        </div>
+                    </div>
+                    <div class="research-group" aria-label="Independent context feeds">
+                        <h3>Independent context feeds</h3>
+                        <p>Network probes, weather models and airport reports help explain observations. They do not add anomaly votes.</p>
+                        <div class="research-group-grid context-grid">
+                            <div class="research-box research-box--wide"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
+                            <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
+                            <div class="research-box"><h3>Global Stations · six regions</h3><div id="stationContext" role="status">Loading airport METAR reports…</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- About Modal -->
@@ -1657,6 +1716,11 @@
             <div class="modal-section">
                 <h3>How an anomaly is detected</h3>
                 <p>Continuous measurements use rolling robust statistics where appropriate. Named events such as significant earthquakes and geomagnetic storms use explicit physical thresholds. News bursts use a fixed count of newly seen headlines. An unavailable feed is a coverage problem, never a normal reading.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>Can this predict the next earthquake?</h3>
+                <p>No. USGS events are observed after they occur. A legacy pattern tracker counted past M6+ events after other conditions and recorded where matched events had happened. The same quake could appear in successive hourly-aggregate polls, so those counts are not independent quake outcomes. Its most frequent past region was never tested as an advance location forecast. The tracker no longer updates or emits those seismic associations as predictions. A credible test would freeze a geographic region, magnitude threshold, time window and probability before future events, then compare every hit and miss with a seismic base-rate model and independent future data. This site is not an earthquake warning service.</p>
             </div>
 
             <div class="modal-section">
@@ -2028,10 +2092,12 @@
                     : `${data.fresh_probes}/${data.expected_probes} fresh probes pinging K-root. Network context only.`;
                 network.append(intro);
                 const targets = Object.keys(data.targets || {}).length ? data.targets : { k_root: { regions: data.regions || {}, hostname: 'k.root-servers.net' } };
+                const targetGrid = document.createElement('div'); targetGrid.className = 'network-targets';
                 for (const [targetKey, target] of Object.entries(targets)) {
+                    const targetPanel = document.createElement('div'); targetPanel.className = 'network-target';
                     const heading = document.createElement('p');
                     heading.textContent = `${target.hostname}: ${target.fresh_probes ?? data.fresh_probes}/${target.expected_probes ?? data.expected_probes} fresh probes`;
-                    network.append(heading);
+                    targetPanel.append(heading);
                     for (const [name, region] of Object.entries(target.regions || {})) {
                         const row = document.createElement('div'); row.className = 'research-row';
                         const title = document.createElement('strong'); title.textContent = name;
@@ -2040,9 +2106,11 @@
                         const reference = data.baseline?.status === 'frozen_reference'
                             ? data.baseline.targets?.[targetKey]?.regions?.[name]?.reference_median_latency_ms : null;
                         detail.textContent = `${region.fresh_probes}/${region.expected_probes} fresh · median ${region.median_latency_ms == null ? 'unavailable' : `${region.median_latency_ms} ms`} · ${loss} probes with packet loss${reference == null ? '' : ` · fixed reference ${reference} ms`}`;
-                        row.append(title, detail); network.append(row);
+                        row.append(title, detail); targetPanel.append(row);
                     }
+                    targetGrid.append(targetPanel);
                 }
+                network.append(targetGrid);
                 const baseline = document.createElement('div'); baseline.className = 'research-note';
                 baseline.textContent = data.baseline?.status === 'frozen_reference'
                     ? 'The 14-day probe reference is frozen. Differences from it are descriptive, not anomaly votes.'
@@ -2502,7 +2570,7 @@
                     ${directionHtml}
 
                     <div class="summary-meta">
-                        <span class="summary-observations has-tooltip" data-tooltip="Number of similar conditions observed. More patterns = more reliable prediction.">${observations.toLocaleString()} patterns</span>
+                        <span class="summary-observations has-tooltip" data-tooltip="Number of similar past conditions. Count alone does not prove forecast skill.">${observations.toLocaleString()} patterns</span>
                         ${updateStr ? `<span class="summary-updated">⟳ ${updateStr}</span>` : ''}
                         <button class="details-toggle" onclick="toggleAssetDetails('${assetId}')">Details ▼</button>
                     </div>
@@ -2526,7 +2594,7 @@
             // Tooltips
             const probTooltip = `Probability based on ${observations.toLocaleString()} similar situations in the past`;
             const timeTooltip = `Average time from precursor detection to event occurrence`;
-            const patternsTooltip = `Number of similar conditions observed. More patterns = more reliable estimate.`;
+            const patternsTooltip = `Number of similar past conditions. Count alone does not prove forecast skill.`;
 
             return `
                 <div class="prediction-summary" style="border-color: ${accentColor}; background: linear-gradient(135deg, var(--bg-card) 0%, ${accentColor}11 100%);">

@@ -181,11 +181,11 @@ class MatrixWatcher:
             active_predictions = [
                 p for p in predictions 
                 if p.get("timestamp", 0) > cutoff
-                and p.get("event") != "earthquake_moderate"  # Remove M5.0+ (too frequent)
+                and p.get("category") != "earthquake"  # Unvalidated legacy associations are not forecasts
             ]
             
             removed_count = len(predictions) - len(active_predictions)
-            logger.info(f"Refreshed predictions: {len(predictions)} → {len(active_predictions)} (removed {removed_count} old/M5.0+)")
+            logger.info(f"Refreshed predictions: {len(predictions)} → {len(active_predictions)} (removed {removed_count} old/unvalidated seismic)")
             
             # Update file with filtered predictions
             data["predictions"] = active_predictions
@@ -296,21 +296,20 @@ class MatrixWatcher:
             
             logger.info(f"💾 Merged: {len(existing_predictions)} existing + {len(new_predictions)} new = {len(merged_predictions)} total")
             
-            # Filter out old predictions (older than 24 hours) AND M5.0+
+            # Filter old entries and legacy seismic associations.
             current_time = time.time()
             cutoff = current_time - (24 * 3600)
             active_predictions = [
                 p for p in merged_predictions 
                 if p.get("timestamp", 0) > cutoff
-                and p.get("event") != "earthquake_moderate"  # Remove M5.0+ (too frequent)
+                and p.get("category") != "earthquake"  # Unvalidated legacy associations are not forecasts
             ]
             
             logger.info(f"💾 After filtering: {len(active_predictions)} active predictions")
             
             # Count by category
             crypto_count = sum(1 for p in active_predictions if p.get("category") == "crypto")
-            earthquake_count = sum(1 for p in active_predictions if p.get("category") == "earthquake")
-            logger.info(f"💾 Categories: {crypto_count} crypto, {earthquake_count} earthquake")
+            logger.info(f"💾 Categories: {crypto_count} crypto; no earthquake forecast is issued")
             
             # Sort by probability (desc), then by time (asc)
             active_predictions.sort(key=lambda x: (-x["probability"], x["avg_time_hours"]))

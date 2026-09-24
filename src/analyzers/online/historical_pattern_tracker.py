@@ -274,8 +274,7 @@ class _PriceHistory:
 class HistoricalPatternTracker:
     """Tracks historical patterns between conditions and events."""
     
-    # Extended lookback window: 72 hours (3 days)
-    LOOKBACK_WINDOW_HOURS = 6  # 6h: rare targets become predictable (headroom)
+    LOOKBACK_WINDOW_HOURS = 6
     
     def __init__(self, storage_path: str = "logs/patterns"):
         """Initialize pattern tracker.
@@ -345,20 +344,6 @@ class HistoricalPatternTracker:
                 "severity": "medium",
                 "description": "Blockchain anomaly (block time)",
                 "category": "blockchain",
-            },
-
-            # ============ EARTHQUAKE (2 events) ============
-            "earthquake_moderate": {
-                "check": lambda data: self._check_earthquake(data, min_magnitude=5.5),
-                "severity": "medium",
-                "description": "Earthquake M5.5+",
-                "category": "earthquake",
-            },
-            "earthquake_strong": {
-                "check": lambda data: self._check_earthquake(data, min_magnitude=6.0),
-                "severity": "high",
-                "description": "Earthquake M6.0+",
-                "category": "earthquake",
             },
 
             # ============ SPACE WEATHER (2 events) ============
@@ -543,16 +528,17 @@ class HistoricalPatternTracker:
             return results
 
         for event_type, base_pattern in self._patterns[condition_key].items():
+            # Legacy co-occurrence counts have never been prospectively scored
+            # for an earthquake's time, magnitude AND place. A frequent past
+            # region is not a location forecast; do not emit these as forecasts.
+            if event_type.startswith("earthquake_"):
+                continue
             # Filter by category if specified
             event_def = self._event_definitions.get(event_type, {})
             event_category = event_def.get("category", "other")
 
             # Skip "other" category events (internal use only)
             if event_category == "other":
-                continue
-
-            # Skip earthquake_moderate (M5.0+) - too frequent, not meaningful
-            if event_type == "earthquake_moderate":
                 continue
 
             # Apply category filter if specified
@@ -787,24 +773,6 @@ class HistoricalPatternTracker:
             return False
         except Exception as e:
             logger.debug(f"Error checking BTC volatility: {e}")
-            return False
-    
-    def _check_earthquake(self, data: dict, min_magnitude: float) -> bool:
-        """Check if significant earthquake occurred."""
-        try:
-            # Check if this is earthquake data
-            if 'max_magnitude' not in data:
-                return False
-            
-            max_mag = data.get('max_magnitude', 0)
-            
-            if max_mag >= min_magnitude:
-                logger.info(f"🌍 Earthquake detected: {max_mag} >= {min_magnitude}")
-                return True
-            
-            return False
-        except Exception as e:
-            logger.debug(f"Error checking earthquake: {e}")
             return False
     
     def _check_news_spike(self, data: dict) -> bool:
