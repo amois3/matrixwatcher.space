@@ -12,7 +12,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +20,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.analyzers.online.digest_generator import build_digest, date_str_utc
 from src.monitoring.coverage import get_coverage, merge_collector_health, _latest_reading
+from src.monitoring import web_push
 from src.analyzers.online.cluster_detector import source_domain
 
 logging.basicConfig(level=logging.INFO)
@@ -947,6 +948,13 @@ async def root():
     return FileResponse("web/static/index.html")
 
 
+@app.get("/sw.js")
+async def service_worker():
+    """Serve at origin root so the installed PWA is controlled at / too."""
+    return FileResponse("web/static/sw.js", media_type="application/javascript",
+                        headers={"Cache-Control": "no-cache"})
+
+
 @app.get("/sitemap.xml")
 async def sitemap():
     """Serve sitemap at root URL (Google standard)."""
@@ -969,6 +977,88 @@ async def llms_txt():
 async def health():
     """Health check."""
     return {"status": "ok", "timestamp": time.time()}
+
+
+def _require_push_origin(request: Request) -> None:
+    """Only this site's pages may mutate browser push subscriptions."""
+    origin = request.headers.get("origin")
+    if origin not in {"https://matrixwatcher.space", "http://localhost:5555",
+                      "http://127.0.0.1:5555"}:
+        raise HTTPException(status_code=403, detail="Same-origin request required")
+
+
+async def _push_body(request: Request) -> dict:
+    if int(request.headers.get("content-length") or 0) > 8192:
+        raise HTTPException(status_code=413, detail="Request too large")
+    body = await request.body()
+    if len(body) > 8192:
+        raise HTTPException(status_code=413, detail="Request too large")
+    try:
+        value = json.loads(body)
+    except (ValueError, UnicodeDecodeError):
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    if not isinstance(value, dict):
+        raise HTTPException(status_code=400, detail="Invalid request")
+    return value
+
+
+@app.get("/api/push/config")
+async def push_config():
+    """Expose only the public VAPID key, never the private signing key."""
+    key = web_push.public_key()
+    return {"enabled": bool(key), "public_key": key,
+            "topics": ["research", "observations"]}
+
+
+@app.post("/api/push/subscriptions")
+async def push_subscribe(request: Request):
+    _require_push_origin(request)
+    body = await _push_body(request)
+    if not web_push.public_key():
+        raise HTTPException(status_code=503, detail="Push is not configured")
+    try:
+        await asyncio.to_thread(web_push.subscribe, body.get("subscription"), body.get("topics"))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return {"subscribed": True}
+
+
+@app.delete("/api/push/subscriptions")
+async def push_unsubscribe(request: Request):
+    _require_push_origin(request)
+    body = await _push_body(request)
+    try:
+        await asyncio.to_thread(web_push.unsubscribe, body.get("endpoint"))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return {"subscribed": False}
+
+
+@app.post("/api/push/subscriptions/status")
+async def push_subscription_status(request: Request):
+    _require_push_origin(request)
+    body = await _push_body(request)
+    try:
+        topics = await asyncio.to_thread(web_push.subscription_topics, body.get("endpoint"))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return {"subscribed": topics is not None, "topics": topics or []}
+
+
+@app.post("/api/push/test")
+async def push_test(request: Request):
+    _require_push_origin(request)
+    body = await _push_body(request)
+    try:
+        delivered = await asyncio.to_thread(web_push.test_subscription, body.get("endpoint"))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except Exception:
+        logger.exception("Push test failed")
+        raise HTTPException(status_code=502, detail="Push service did not accept the message")
+    if not delivered:
+        raise HTTPException(status_code=502, detail="Push service did not accept the message")
+    return {"accepted": True}
 
 
 @app.get("/api/coverage")
@@ -1036,6 +1126,12 @@ async def research_prospective_multiscale():
         return report
     except (OSError, json.JSONDecodeError):
         return {"status": "unavailable"}
+
+
+@app.get("/api/research/findings")
+async def research_findings():
+    """Manually published findings with independent replication evidence."""
+    return {"status": "published_registry", "findings": web_push.public_findings()}
 
 
 @app.get("/api/context/fireballs")

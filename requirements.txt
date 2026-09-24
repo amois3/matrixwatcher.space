@@ -43,3 +43,4 @@ reverse_geocoder>=1.5.1
 pycountry>=24.0
 fastapi>=0.136.3
 uvicorn>=0.48.0
+pywebpush==2.5.0

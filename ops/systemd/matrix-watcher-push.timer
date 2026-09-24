@@ -1,0 +1,10 @@
+[Unit]
+Description=Check Matrix Watcher push events every two minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitInactiveSec=2min
+Unit=matrix-watcher-push.service
+
+[Install]
+WantedBy=timers.target
