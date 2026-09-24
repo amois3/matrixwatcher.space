@@ -1014,6 +1014,19 @@ async def research_lags():
         return {"status": "unavailable"}
 
 
+@app.get("/api/research/prospective-multiscale")
+async def research_prospective_multiscale():
+    """Frozen future screen; no interim significance or validated claim."""
+    try:
+        report = json.loads(Path("logs/research/prospective-multiscale.json").read_text())
+        if (report.get("status") == "collecting_no_interim_test"
+                and time.time() - report.get("generated_at", 0) > 172800):
+            return {"status": "stale", "generated_at": report.get("generated_at")}
+        return report
+    except (OSError, json.JSONDecodeError):
+        return {"status": "unavailable"}
+
+
 @app.get("/api/context/fireballs")
 async def context_fireballs():
     """Delayed NASA catalogue entries; publication lag is deliberately visible."""

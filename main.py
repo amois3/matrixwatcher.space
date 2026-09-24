@@ -26,6 +26,7 @@ from src.analyzers.online.anomaly_index import AnomalyIndexCalculator
 from src.analyzers.online.enhanced_message_generator import EnhancedMessageGenerator
 from src.analyzers.online.historical_pattern_tracker import HistoricalPatternTracker, Condition
 from src.analyzers.online.forecast_ledger import ForecastLedger
+from src.analyzers.online.timing import anomaly_clocks
 from src.sensors import (
     SystemSensor,
     TimeDriftSensor,
@@ -492,7 +493,7 @@ class MatrixWatcher:
                 self._pipeline_stats["anomalies_detected"] += 1
                 detected_at = time.time()
                 record = anomaly.to_dict()
-                record["detected_at"] = detected_at
+                record.update(anomaly_clocks(anomaly, event, detected_at))
                 self.storage.write_anomaly(record)
                 self.anomaly_detector.mark_persisted(anomaly)
                 if getattr(self, "forecast_ledger", None) is not None:

@@ -7,6 +7,7 @@ WorkingDirectory=/home/amois/matrix-watcher
 ExecStart=/home/amois/matrix-watcher-python.sh -m src.analyzers.offline.quality_atlas --days 30
 ExecStart=/home/amois/matrix-watcher-python.sh -m src.analyzers.offline.lag_lab --days 120 --iterations 500
 ExecStart=/home/amois/matrix-watcher-python.sh -m src.analyzers.offline.ripe_baseline
+ExecStart=/home/amois/matrix-watcher-python.sh -m src.analyzers.offline.prospective_multiscale
 StandardOutput=journal
 StandardError=journal
 Nice=15
