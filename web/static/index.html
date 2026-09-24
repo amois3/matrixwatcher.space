@@ -1560,7 +1560,7 @@
                 <div class="intro-step"><strong>3 · Test</strong><span>Record candidate rules before future observations. Only independently tested results can become signals.</span></div>
             </div>
             <div class="experiment-status" aria-label="Live experiment status">
-                <div class="experiment-status-item"><strong>Today · observations</strong><span id="experimentLive">Loading today's readings and source coverage…</span><a href="#digestPanel">See today's digest</a></div>
+                <div class="experiment-status-item"><strong>Today · observations</strong><span id="experimentLive">Loading today's readings and source coverage…</span><a href="#digestPanel">Today's digest</a> · <a href="#coverageGrid">Source coverage</a></div>
                 <div class="experiment-status-item"><strong>Future-data study</strong><span id="experimentStudy">Checking the frozen study timeline…</span><a href="#prospectiveMultiscale">See study and controls</a></div>
                 <div class="experiment-status-item"><strong>Scientific conclusion</strong><span id="experimentConclusion">Checking published finding status…</span><a id="experimentFindingLink" href="#aboutModal">How results are verified</a></div>
             </div>
@@ -1860,9 +1860,11 @@
             if (d && c) {
                 const total = Object.keys(c.sensors || {}).length;
                 const healthy = Object.values(c.sensors || {}).filter(sensor => sensor.status === 'ok').length;
-                const coverage = c.collector?.status === 'healthy' && c.pipeline?.status === 'ok' && healthy === total && total > 0
-                    ? `${healthy}/${total} sources healthy`
-                    : `coverage needs checking (${healthy}/${total} sources healthy)`;
+                const collector = c.collector?.status || 'unknown';
+                const pipeline = c.pipeline?.status || 'unknown';
+                const coverage = collector === 'healthy' && pipeline === 'ok' && healthy === total && total > 0
+                    ? `sources and analysis healthy (${healthy}/${total})`
+                    : `coverage needs checking: ${healthy}/${total} sources; collector ${collector}; analysis ${pipeline}`;
                 const coincidences = Number(d.clusters_total) || 0;
                 live.textContent = `${Number(d.anomalies_today) || 0} flagged readings · ${coincidences} three-domain 30-second ${coincidences === 1 ? 'coincidence' : 'coincidences'} · ${coverage}. A coincidence is only an observation.`;
             } else if (d) {
