@@ -1,5 +1,6 @@
 from src.analyzers.online.timing import anomaly_clocks
 from src.core.types import AnomalyEvent, Event, EventType
+from types import SimpleNamespace
 
 
 def _anomaly(source, timestamp, metadata=None):
@@ -43,3 +44,29 @@ def test_unknown_or_invalid_upstream_time_is_not_invented():
     bad = anomaly_clocks(_anomaly("earthquake", 1900, {"event_time": float("nan")}),
                          _observation("earthquake", 1800), 1801)
     assert bad["source_event_at"] is None
+
+
+def test_collector_persists_explicit_clocks_without_changing_legacy_timestamp():
+    from main import MatrixWatcher
+
+    anomaly = _anomaly("earthquake", 1000, {"event_time": 1000})
+    stored = []
+    watcher = MatrixWatcher.__new__(MatrixWatcher)
+    watcher.smart_analyzer = SimpleNamespace(record_event=lambda event: None)
+    watcher.pattern_tracker = SimpleNamespace(check_events=lambda payload: None)
+    watcher.anomaly_detector = SimpleNamespace(
+        process=lambda event: [anomaly], mark_persisted=lambda item: None)
+    watcher.storage = SimpleNamespace(write_anomaly=stored.append)
+    watcher.forecast_ledger = None
+    watcher._pipeline_stats = {"events_processed": 0, "anomalies_detected": 0,
+                               "last_event_at": None}
+    watcher._handle_anomaly = lambda item: None
+    watcher._write_pipeline_status = lambda force=False: None
+
+    watcher._process_data_event(_observation("earthquake", 1800, {"value": 1}))
+
+    assert len(stored) == 1
+    assert stored[0]["timestamp"] == stored[0]["source_event_at"] == 1000
+    assert stored[0]["observed_at"] == 1800
+    assert stored[0]["published_at"] is None
+    assert stored[0]["detected_at"] >= 1800
