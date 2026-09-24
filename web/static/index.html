@@ -1900,6 +1900,7 @@
                 selector.className = 'research-window-select';
                 selector.setAttribute('aria-label', 'Hypothetical event duration');
                 const windowLabels = {30: '30 seconds', 300: '5 minutes', 900: '15 minutes', 3600: '1 hour'};
+                const eventLabels = {30: '30-second', 300: '5-minute', 900: '15-minute', 3600: '1-hour'};
                 for (const seconds of data.windows_seconds || []) {
                     if (!windowLabels[seconds]) continue;
                     const option = document.createElement('option');
@@ -1912,7 +1913,7 @@
                 const rows = document.createElement('div');
                 const renderWindow = () => {
                     const seconds = selector.value;
-                    intro.textContent = `${data.period_start} to ${data.period_end}. Bars estimate when a hypothetical ${windowLabels[seconds].toLowerCase()} event could overlap a usable poll or stream sample.`;
+                    intro.textContent = `${data.period_start} to ${data.period_end}. Bars estimate when a hypothetical ${eventLabels[seconds]} event could overlap a usable poll or stream sample.`;
                     rows.replaceChildren();
                     const entries = Object.entries(data.sensors || {}).filter(([, item]) => item.mode === 'anomaly');
                     entries.sort((a, b) => (a[1].sampling_opportunity?.[seconds] || 0) - (b[1].sampling_opportunity?.[seconds] || 0));
