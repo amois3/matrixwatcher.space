@@ -130,3 +130,29 @@ def get_coverage(logs: Path = Path("logs"), config_path: Path = Path("config.jso
                     for status in ("ok", "partial", "stale", "missing", "disabled")},
         "sensors": sensors, "pipeline": pipeline,
     }
+
+
+def merge_collector_health(coverage: dict, health: dict | None) -> dict:
+    """Show a failed *current poll* even while its previous reading is fresh.
+
+    The raw-reading audit remains authoritative for observation age and quality.
+    A live collector error adds a warning, never fabricates a missing reading.
+    """
+    result = {**coverage, "sensors": {name: {**item, "issues": list(item.get("issues", []))}
+                                       for name, item in coverage["sensors"].items()}}
+    if not isinstance(health, dict) or not isinstance(health.get("sensors"), dict):
+        result["collector"] = {"status": "unavailable"}
+        return result
+    result["collector"] = {"status": health.get("status", "unknown")}
+    for name, sensor in result["sensors"].items():
+        live = health["sensors"].get(name)
+        if not isinstance(live, dict):
+            continue
+        state = live.get("status")
+        if state in ("error", "degraded", "rate_limited", "stopped"):
+            if sensor["status"] == "ok":
+                sensor["status"] = "partial"
+            sensor["issues"].append(f"Current collector status: {state}; latest saved reading may be older")
+    result["summary"] = {status: sum(s["status"] == status for s in result["sensors"].values())
+                         for status in ("ok", "partial", "stale", "missing", "disabled")}
+    return result

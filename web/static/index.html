@@ -1613,7 +1613,7 @@
                 <span class="panel-count" id="coverageCount">—</span>
             </div>
             <div class="panel-content">
-                <p class="coverage-intro">Are we actually seeing the data? This shows the last usable reading from every source and whether the processing pipeline is running. A late or missing source makes a quiet result less conclusive.</p>
+                <p class="coverage-intro">Are we actually seeing the data? This shows both the last saved reading and the current collector state for every source. A fresh old reading can coexist with a failed new poll. A gap makes a quiet result less conclusive.</p>
                 <div id="pipelineCoverage" class="coverage-intro" role="status">Checking processing pipeline…</div>
                 <div id="coverageGrid" class="coverage-grid" aria-live="polite">Checking sensors…</div>
             </div>
@@ -1881,7 +1881,7 @@
                 grid.replaceChildren();
                 const entries = Object.entries(data.sensors || {});
                 const healthy = entries.filter(([, sensor]) => sensor.status === 'ok').length;
-                document.getElementById('coverageCount').textContent = `${healthy}/${entries.length} sources · pipeline ${data.pipeline?.status || 'unknown'}`;
+                document.getElementById('coverageCount').textContent = `${healthy}/${entries.length} sources · collector ${data.collector?.status || 'unknown'}`;
                 for (const [name, sensor] of entries) {
                     const card = document.createElement('div');
                     card.className = 'coverage-card';
