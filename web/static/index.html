@@ -1821,7 +1821,8 @@
                     title.textContent = name.replaceAll('_', ' ');
                     const detail = document.createElement('small');
                     const age = sensor.age_seconds == null ? 'no recent reading' : `${Math.round(sensor.age_seconds / 60)} min ago`;
-                    detail.textContent = `${sensor.domain} · ${sensor.mode === 'anomaly' ? 'anomaly detection' : 'context only'} · ${age}`;
+                    const modeLabel = sensor.mode === 'anomaly' ? 'anomaly detection' : sensor.mode === 'covariate' ? 'calculated covariate' : 'context only';
+                    detail.textContent = `${sensor.domain} · ${modeLabel} · ${age}`;
                     card.append(state, title, detail);
                     if (sensor.issues?.length) {
                         const issue = document.createElement('small');
