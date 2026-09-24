@@ -8,7 +8,7 @@
 //
 // Bump CACHE_NAME whenever the shell or assets change: old caches are deleted on activate,
 // so every client drops stale content on its next launch.
-const CACHE_NAME = 'matrix-watcher-v25';
+const CACHE_NAME = 'matrix-watcher-v26';
 const SHELL = ['/', '/static/manifest.json', '/static/icon-192.png', '/static/icon-512.png'];
 
 self.addEventListener('install', event => {

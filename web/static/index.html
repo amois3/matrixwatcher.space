@@ -1422,6 +1422,7 @@
         .research-fill { height: 100%; background: var(--neon-blue); }
         .research-row small { display: block; margin-top: 4px; }
         .research-note { color: var(--text-muted); font-size: 11px; line-height: 1.5; }
+        .research-window-select { margin: 8px 0; padding: 5px 7px; color: var(--text-primary); background: var(--bg-primary); border: 1px solid var(--border); border-radius: 5px; font: inherit; }
     </style>
 </head>
 <body style="background:#0d0d12;color:#fff;">
@@ -1561,6 +1562,7 @@
                 <div class="research-grid">
                     <div class="research-box"><h3>Observation Atlas · last 30 complete UTC days</h3><div id="qualityAtlas" role="status">Calculating observation opportunity…</div></div>
                     <div class="research-box"><h3>Lag Lab · fixed directed pairs</h3><div id="lagLab" role="status">Calculating timing controls…</div></div>
+                    <div class="research-box"><h3>Future Coincidence Screen · frozen protocol</h3><div id="prospectiveMultiscale" role="status">Loading prospective study status…</div></div>
                     <div class="research-box"><h3>Sky Context · NASA fireballs</h3><div id="fireballContext" role="status">Loading delayed catalogue…</div></div>
                     <div class="research-box"><h3>Network Observatory · RIPE Atlas</h3><div id="networkContext" role="status">Loading regional probes…</div></div>
                     <div class="research-box"><h3>Weather Grid · six cities</h3><div id="weatherGridContext" role="status">Loading model values…</div></div>
@@ -1659,7 +1661,12 @@
 
             <div class="modal-section">
                 <h3>Coincidences across domains</h3>
-                <p>When anomalies fall in the same 30-second window, the level counts distinct domains, rather than the number of feeds. Solar wind, solar activity and geomagnetic Kp count as one heliophysics domain. A cluster is a temporal coincidence, not evidence of causation or statistical significance. Polling intervals and upstream reporting delays can make a short window miss real events.</p>
+                <p>When anomalies fall in the same 30-second window, the level counts distinct domains, rather than the number of feeds. Solar wind, solar activity and geomagnetic Kp count as one heliophysics domain. A cluster is a temporal coincidence, not evidence of causation or statistical significance. Polling intervals and upstream reporting delays can make a short window miss real events. The Observation Atlas lets you compare sampling opportunity for hypothetical 30-second, 5-minute, 15-minute and 1-hour events; these bars are not detector probabilities.</p>
+            </div>
+
+            <div class="modal-section">
+                <h3>Which time does a record mean?</h3>
+                <p>New anomaly records distinguish source event time, feed publication time, collector observation time and detector time when those values exist. Missing upstream times stay unknown. USGS earthquake origin is not when the collector first saw it; a weekly volcano report date is not eruption onset. The legacy historical archive is not backfilled with invented times.</p>
             </div>
 
             <div class="modal-section">
@@ -1669,7 +1676,7 @@
 
             <div class="modal-section">
                 <h3>From patterns to tested signals</h3>
-                <p>Historical condition → event frequencies are exploratory descriptions, not calibrated forecast probabilities. Evidence Lab compares three coincidence windows with shifted-time controls; Observation Atlas measures sampling opportunity; Lag Lab tests twelve directed lag comparisons. A frozen 120-day future-data screen and a five-rule Forecast Audit cover 24 September 2026 through 22 January 2027 UTC. A candidate is only eligible for the public signal panel after separate future-data evaluation:</p>
+                <p>Historical condition → event frequencies are exploratory descriptions, not calibrated forecast probabilities. Evidence Lab compares three coincidence windows with shifted-time controls; Observation Atlas measures sampling opportunity; Lag Lab tests twelve directed lag comparisons. A frozen 120-day lag screen and a five-rule Forecast Audit cover 24 September 2026 through 22 January 2027 UTC. A separate future observation-time coincidence screen covers 25 September 2026 through 23 January 2027 UTC. It excludes weekly volcanic reports and days with inadequate source coverage, does not issue interim p-values, and still requires independent replication. A candidate is only eligible for the public signal panel after separate future-data evaluation:</p>
                 <ul>
                     <li>Freeze the event definition, horizon and candidate before evaluating future data</li>
                     <li>Count independent event episodes and compare against a current, matched base rate</li>
@@ -1873,6 +1880,7 @@
         async function fetchResearch() {
             const quality = document.getElementById('qualityAtlas');
             const lags = document.getElementById('lagLab');
+            const future = document.getElementById('prospectiveMultiscale');
             const sky = document.getElementById('fireballContext');
             const network = document.getElementById('networkContext');
             const weatherGrid = document.getElementById('weatherGridContext');
@@ -1885,23 +1893,43 @@
                 if (data.status !== 'sampling_audit_not_detection_probability') throw new Error('quality stale');
                 quality.replaceChildren();
                 const intro = document.createElement('p');
-                intro.textContent = `${data.period_start} to ${data.period_end}. Bars show the share of time when a hypothetical 30-second event could overlap a usable poll or stream sample.`;
-                quality.append(intro);
-                const entries = Object.entries(data.sensors || {}).filter(([, item]) => item.mode === 'anomaly');
-                entries.sort((a, b) => (a[1].sampling_opportunity?.['30'] || 0) - (b[1].sampling_opportunity?.['30'] || 0));
-                for (const [name, item] of entries) {
-                    const share = Number(item.sampling_opportunity?.['30'] || 0);
-                    const row = document.createElement('div'); row.className = 'research-row';
-                    const title = document.createElement('strong'); title.textContent = name.replaceAll('_', ' ');
-                    const track = document.createElement('div'); track.className = 'research-track';
-                    const fill = document.createElement('div'); fill.className = 'research-fill'; fill.style.width = `${Math.round(share * 100)}%`;
-                    const note = document.createElement('small');
-                    note.textContent = `${Math.round(share * 100)}% sampling opportunity · ${item.observed_days}/${data.days} days · ${item.partial_records} partial readings`;
-                    track.append(fill); row.append(title, track, note); quality.append(row);
+                const selectorLabel = document.createElement('label');
+                selectorLabel.textContent = 'Hypothetical event duration: ';
+                const selector = document.createElement('select');
+                selector.className = 'research-window-select';
+                selector.setAttribute('aria-label', 'Hypothetical event duration');
+                const windowLabels = {30: '30 seconds', 300: '5 minutes', 900: '15 minutes', 3600: '1 hour'};
+                for (const seconds of data.windows_seconds || []) {
+                    if (!windowLabels[seconds]) continue;
+                    const option = document.createElement('option');
+                    option.value = String(seconds); option.textContent = windowLabels[seconds];
+                    selector.append(option);
                 }
+                selector.value = '30';
+                selectorLabel.append(selector);
+                const rows = document.createElement('div');
+                const renderWindow = () => {
+                    const seconds = selector.value;
+                    intro.textContent = `${data.period_start} to ${data.period_end}. Bars estimate when a hypothetical ${windowLabels[seconds].toLowerCase()} event could overlap a usable poll or stream sample.`;
+                    rows.replaceChildren();
+                    const entries = Object.entries(data.sensors || {}).filter(([, item]) => item.mode === 'anomaly');
+                    entries.sort((a, b) => (a[1].sampling_opportunity?.[seconds] || 0) - (b[1].sampling_opportunity?.[seconds] || 0));
+                    for (const [name, item] of entries) {
+                        const share = Number(item.sampling_opportunity?.[seconds] || 0);
+                        const row = document.createElement('div'); row.className = 'research-row';
+                        const title = document.createElement('strong'); title.textContent = name.replaceAll('_', ' ');
+                        const track = document.createElement('div'); track.className = 'research-track';
+                        const fill = document.createElement('div'); fill.className = 'research-fill'; fill.style.width = `${Math.round(share * 100)}%`;
+                        const note = document.createElement('small');
+                        note.textContent = `${Math.round(share * 100)}% sampling opportunity · ${item.observed_days}/${data.days} days · ${item.partial_records} partial readings`;
+                        track.append(fill); row.append(title, track, note); rows.append(row);
+                    }
+                };
+                selector.addEventListener('change', renderWindow);
                 const caveat = document.createElement('div'); caveat.className = 'research-note';
-                caveat.textContent = 'This is a schedule and data-quality audit, not detector sensitivity. Source reporting delay and detection thresholds can reduce the real chance of finding an event.';
-                quality.append(caveat);
+                caveat.textContent = 'This is a schedule and data-quality audit, not detector sensitivity or a coincidence test. Source reporting delay and detection thresholds can reduce the real chance of finding an event.';
+                quality.append(intro, selectorLabel, rows, caveat);
+                renderWindow();
             } catch (_) { quality.textContent = 'Observation audit unavailable; no coverage claim can be made.'; }
             try {
                 const response = await fetch('/api/research/lags');
@@ -1934,6 +1962,33 @@
                 caveat.textContent = 'Historical candidates require prospective confirmation. Anomaly timestamps mix USGS earthquake origin times with mostly observation times, so reporting delays can create apparent lags.';
                 lags.append(caveat);
             } catch (_) { lags.textContent = 'Lag analysis unavailable; no relationship claim can be made.'; }
+            try {
+                const response = await fetch('/api/research/prospective-multiscale');
+                if (!response.ok) throw new Error('future screen HTTP');
+                const data = await response.json();
+                if (!data.study_version) throw new Error('future screen unavailable');
+                future.replaceChildren();
+                const intro = document.createElement('p');
+                intro.textContent = `Observation-time coincidences across 30 seconds, 5 minutes and 15 minutes. Protocol: ${new Date(data.start_at * 1000).toISOString().slice(0, 10)} to ${new Date(data.end_at * 1000).toISOString().slice(0, 10)} UTC.`;
+                future.append(intro);
+                const status = document.createElement('p'); status.className = 'research-note';
+                if (data.status === 'collecting_no_interim_test') {
+                    status.textContent = `${data.complete_days}/120 complete days. No interim significance test. Old mixed-clock records and weekly volcano reports are excluded.`;
+                } else if (data.status === 'exploratory_endpoint_screen_not_validated') {
+                    status.textContent = 'The frozen endpoint screen is exploratory. Day-level coverage was checked; within-day gaps and upstream publication delays still limit interpretation.';
+                    for (const item of data.analysis?.windows || []) {
+                        const row = document.createElement('div'); row.className = 'research-row';
+                        row.textContent = `${item.seconds}s: ${item.observed_episodes} episodes; shifted mean ${item.null_mean_episodes}; adjusted p ${item.p_holm}`;
+                        future.append(row);
+                    }
+                } else {
+                    status.textContent = 'The endpoint lacked sufficient eligible coverage or independent-domain events for a timing test.';
+                }
+                future.append(status);
+                const caveat = document.createElement('div'); caveat.className = 'research-note';
+                caveat.textContent = 'A promising screen is not a validated signal. The day-level coverage control cannot settle causation or correct every reporting delay; independent replication is required.';
+                future.append(caveat);
+            } catch (_) { future.textContent = 'Future coincidence screen unavailable; no result can be inferred.'; }
             try {
                 const response = await fetch('/api/context/fireballs');
                 if (!response.ok) throw new Error('fireball HTTP');

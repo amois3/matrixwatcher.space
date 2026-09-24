@@ -15,7 +15,8 @@ from pathlib import Path
 
 from ...monitoring.coverage import SENSOR_MODES, _issues
 
-WINDOWS = (30, 300, 3600)
+WINDOWS = (30, 300, 900, 3600)
+ATLAS_VERSION = 2
 DAY_SECONDS = 86400
 
 
@@ -127,9 +128,9 @@ def build_atlas(logs: Path, config: dict, days: int = 30, now: float | None = No
             path = logs / sensor / f"{day.isoformat()}.jsonl"
             try:
                 stat = path.stat()
-                signature = [stat.st_size, stat.st_mtime_ns, interval]
+                signature = [stat.st_size, stat.st_mtime_ns, interval, ATLAS_VERSION]
             except OSError:
-                signature = [0, 0, interval]
+                signature = [0, 0, interval, ATLAS_VERSION]
             key = f"{sensor}/{day.isoformat()}"
             old = previous.get(key)
             row = old["row"] if old and old.get("signature") == signature else scan_day(

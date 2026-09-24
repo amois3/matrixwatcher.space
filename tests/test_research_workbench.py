@@ -24,6 +24,7 @@ def test_atlas_marks_partial_readings_as_unobserved(tmp_path):
     assert (row["count"], row["partial"], row["invalid"]) == (2, 1, 1)
     assert row["poll_coverage"] == round(1 / 1440, 4)
     assert row["sampling_opportunity"]["30"] == round(30 / 86400, 4)
+    assert row["sampling_opportunity"]["900"] == round(60 / 86400, 4)
     report = build_atlas(tmp_path, {"sensors": {"crypto": {"interval_seconds": 60}}},
                          days=1, now=start + 86400)
     assert report["sensors"]["crypto"]["partial_records"] == 1

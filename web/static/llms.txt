@@ -12,8 +12,9 @@
 ## Research status
 
 - Evidence Lab compares 30-second, 5-minute and 15-minute three-domain episodes with within-month shifted-time controls. Historical results are exploratory.
-- Observation Atlas estimates sampling opportunity, not detector power. Lag Lab tests twelve predefined source/lag comparisons with a timing control and multiple-comparison correction.
+- Observation Atlas estimates sampling opportunity for selectable 30-second, 5-minute, 15-minute and 1-hour hypothetical event durations, not detector power or joint-source availability. Lag Lab tests twelve predefined source/lag comparisons with a timing control and multiple-comparison correction.
 - A 120-day future-data lag screen and a five-rule Forecast Audit run from 2026-09-24 to 2027-01-22 UTC. The forecast diary scores binary outcomes only when target coverage is adequate. No rule is automatically promoted to a validated public signal.
+- A separate observation-time coincidence screen is frozen for 2026-09-25 to 2027-01-23 UTC. New anomaly records keep distinct source-event, publication, observation and detection clocks where available; absent upstream times remain null. Three windows are tested only at the endpoint, with whole missing days excluded from the timing control. Day-level coverage matching cannot remove within-day outages or reporting delays. This is an exploratory screen, not an automatic discovery.
 - Historical collection and processing gaps remain in the archive despite repaired code. A quiet dashboard cannot, by itself, rule out a short or delayed event.
 
 ## Links
@@ -22,3 +23,4 @@
 - Full current methods and limitations: https://github.com/amois3/matrixwatcher.space/blob/main/README.md
 - Live coverage: https://matrixwatcher.space/api/coverage
 - Historical timing-control report: https://matrixwatcher.space/api/evidence
+- Future observation-time screen: https://matrixwatcher.space/api/research/prospective-multiscale
