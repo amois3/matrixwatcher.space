@@ -1877,6 +1877,7 @@
             }
         }
 
+        let selectedAtlasWindow = '30';
         async function fetchResearch() {
             const quality = document.getElementById('qualityAtlas');
             const lags = document.getElementById('lagLab');
@@ -1905,7 +1906,8 @@
                     option.value = String(seconds); option.textContent = windowLabels[seconds];
                     selector.append(option);
                 }
-                selector.value = '30';
+                selector.value = [...selector.options].some(option => option.value === selectedAtlasWindow)
+                    ? selectedAtlasWindow : '30';
                 selectorLabel.append(selector);
                 const rows = document.createElement('div');
                 const renderWindow = () => {
@@ -1925,7 +1927,10 @@
                         track.append(fill); row.append(title, track, note); rows.append(row);
                     }
                 };
-                selector.addEventListener('change', renderWindow);
+                selector.addEventListener('change', () => {
+                    selectedAtlasWindow = selector.value;
+                    renderWindow();
+                });
                 const caveat = document.createElement('div'); caveat.className = 'research-note';
                 caveat.textContent = 'This is a schedule and data-quality audit, not detector sensitivity or a coincidence test. Source reporting delay and detection thresholds can reduce the real chance of finding an event.';
                 quality.append(intro, selectorLabel, rows, caveat);
