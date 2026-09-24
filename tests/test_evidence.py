@@ -17,6 +17,17 @@ def test_episodes_count_once_and_group_related_solar_feeds():
     assert analyze(events, iterations=10)["status"] == "exploratory_not_validated"
 
 
+def test_historical_wikimedia_source_is_not_an_independent_domain():
+    records = [
+        {"timestamp": 1780300000.0, "sensor_source": "news"},
+        {"timestamp": 1780300001.0, "sensor_source": "wikimedia_edits"},
+        {"timestamp": 1780300002.0, "sensor_source": "crypto"},
+    ]
+    events = domain_events(records)
+    assert {domain for _, domain in events} == {"human_activity", "markets"}
+    assert count_episodes(events, 30) == 0
+
+
 def test_month_shift_preserves_domain_counts_and_time_of_day():
     events = sorted((1780300000.0 + day * 86400, domain)
                     for day in range(10) for domain in ("markets", "geophysics"))

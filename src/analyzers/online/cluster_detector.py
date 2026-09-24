@@ -43,6 +43,7 @@ SOURCE_DOMAINS = {
     "space_weather": "heliophysics", "earthquake": "geophysics",
     "volcanic_activity": "geophysics", "earth_tides": "geophysics",
     "news": "human_activity", "wikipedia_edits": "human_activity",
+    "wikimedia_edits": "human_activity",  # Historical source name in anomaly logs.
     "crypto": "markets", "blockchain": "blockchain",
     "weather": "atmosphere", "weather_grid": "atmosphere",
     "remote_stations": "atmosphere", "quantum_rng": "quantum",
