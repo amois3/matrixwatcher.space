@@ -7,6 +7,7 @@ import logging
 import os
 import re
 import time
+import aiohttp
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.analyzers.online.digest_generator import build_digest, date_str_utc
-from src.monitoring.coverage import get_coverage, _latest_reading
+from src.monitoring.coverage import get_coverage, merge_collector_health, _latest_reading
 from src.analyzers.online.cluster_detector import source_domain
 
 logging.basicConfig(level=logging.INFO)
@@ -973,7 +974,17 @@ async def health():
 @app.get("/api/coverage")
 async def coverage():
     """Collector freshness, completeness and actual processing health."""
-    return get_coverage()
+    port = int(os.environ.get("MATRIX_WATCHER_HEALTH_PORT", "8080"))
+    live_health = None
+    try:
+        timeout = aiohttp.ClientTimeout(total=1.0)
+        async with aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(f"http://127.0.0.1:{port}/health") as response:
+                if response.status == 200:
+                    live_health = await response.json()
+    except (aiohttp.ClientError, asyncio.TimeoutError, ValueError):
+        pass
+    return merge_collector_health(get_coverage(), live_health)
 
 
 @app.get("/api/evidence")
