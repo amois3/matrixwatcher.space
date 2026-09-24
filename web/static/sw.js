@@ -6,8 +6,8 @@
 //                                offline fallback, and only full 200 responses are cached.
 //   - other static assets    -> cache-first, with the network filling the cache on a miss.
 //
-// Bump CACHE_NAME whenever the shell or assets change: old caches are deleted on activate,
-// so every client drops stale content on its next launch.
+// Bump CACHE_NAME and the /sw.js?v=... registration URL whenever the shell or assets
+// change: old caches are deleted on activate and the new URL bypasses CDN copies.
 const CACHE_NAME = 'matrix-watcher-v28';
 const SHELL = ['/', '/static/manifest.json', '/static/icon-192.png', '/static/icon-512.png', '/static/notification-badge.png'];
 
