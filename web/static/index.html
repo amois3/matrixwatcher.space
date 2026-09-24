@@ -3276,7 +3276,8 @@
 
         // PWA - Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(initPushControls)
+            // The versioned URL bypasses CDN copies of an older worker after a deploy.
+            navigator.serviceWorker.register('/sw.js?v=28', { scope: '/', updateViaCache: 'none' }).then(initPushControls)
                 .catch(() => { pushMessage.textContent = 'Service worker registration failed; notifications are unavailable.'; });
         } else {
             initPushControls();
